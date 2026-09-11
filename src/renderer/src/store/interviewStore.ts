@@ -47,6 +47,8 @@ interface InterviewState {
   showSessionEditor: boolean
   sessionEditorMode: 'create' | 'edit'
   activeSession: WorkSession | null
+  forceNextAsk: boolean
+  isSummarizing: boolean
 
   isSessionActive: boolean
   sessionStartTime: number | null
@@ -59,6 +61,8 @@ interface InterviewState {
   setSpeaking: (isSpeaking: boolean) => void
   setGenerating: (isGenerating: boolean) => void
   setProcessingScreenshot: (processing: boolean) => void
+  setForceNextAsk: (enabled: boolean) => void
+  setSummarizing: (value: boolean) => void
 
   addTranscript: (entry: TranscriptEntry) => void
   setCurrentTranscript: (text: string) => void
@@ -119,6 +123,8 @@ export const useInterviewStore = create<InterviewState>((set, get) => ({
   showSessionEditor: false,
   sessionEditorMode: 'create',
   activeSession: null,
+  forceNextAsk: false,
+  isSummarizing: false,
 
   isSessionActive: true,
   sessionStartTime: null,
@@ -131,6 +137,8 @@ export const useInterviewStore = create<InterviewState>((set, get) => ({
   setSpeaking: (isSpeaking) => set({ isSpeaking }),
   setGenerating: (isGenerating) => set({ isGenerating }),
   setProcessingScreenshot: (processing) => set({ isProcessingScreenshot: processing }),
+  setForceNextAsk: (enabled) => set({ forceNextAsk: enabled }),
+  setSummarizing: (value) => set({ isSummarizing: value }),
 
   addTranscript: (entry) =>
     set((state) => ({

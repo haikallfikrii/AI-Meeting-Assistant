@@ -47,8 +47,17 @@ export function Header(): React.JSX.Element {
             <span className="text-[10px] px-1.5 py-0.5 rounded bg-dark-800 text-dark-400 border border-dark-700 shrink-0">
               {modeLabel}
             </span>
-            <span className="text-[11px] text-dark-400 truncate max-w-[140px]" title={activeSession.title}>
-              {activeSession.title}
+            <span
+              className="text-[11px] text-dark-300 truncate max-w-[100px]"
+              title={activeSession.threadTitle || activeSession.title}
+            >
+              {activeSession.threadTitle || activeSession.title}
+            </span>
+            <span
+              className="text-[10px] text-dark-500 truncate max-w-[90px] hidden sm:inline"
+              title={activeSession.meetingLabel}
+            >
+              {activeSession.meetingLabel}
             </span>
           </>
         ) : null}
