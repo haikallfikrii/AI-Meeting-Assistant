@@ -54,6 +54,11 @@ export interface WorkSession {
   mode: SessionMode
   createdAt: number
   updatedAt: number
+  threadId: string
+  threadTitle: string
+  meetingLabel: string
+  timeOfDay: 'morning' | 'afternoon' | 'evening' | 'night'
+  summary: string
   context: SessionContext
   messages: SessionMessage[]
   answers: SessionAnswer[]
@@ -104,7 +109,13 @@ const api = {
   }): Promise<WorkSession> => ipcRenderer.invoke('create-session', input),
   updateSession: (
     id: string,
-    updates: { title?: string; mode?: SessionMode; context?: Partial<SessionContext> }
+    updates: {
+      title?: string
+      mode?: SessionMode
+      context?: Partial<SessionContext>
+      threadTitle?: string
+      summary?: string
+    }
   ): Promise<WorkSession | null> => ipcRenderer.invoke('update-session', id, updates),
   setActiveSession: (id: string): Promise<WorkSession | null> =>
     ipcRenderer.invoke('set-active-session', id),
@@ -112,6 +123,17 @@ const api = {
     ipcRenderer.invoke('delete-session', id),
   clearSessionConversation: (id: string): Promise<WorkSession | null> =>
     ipcRenderer.invoke('clear-session-conversation', id),
+  continueThread: (fromSessionId: string): Promise<WorkSession | null> =>
+    ipcRenderer.invoke('continue-thread', fromSessionId),
+  askQuestion: (question: string): Promise<{ success: boolean; error?: string }> =>
+    ipcRenderer.invoke('ask-question', question),
+  setForceNextQuestion: (enabled: boolean): Promise<boolean> =>
+    ipcRenderer.invoke('set-force-next-question', enabled),
+  getForceNextQuestion: (): Promise<boolean> => ipcRenderer.invoke('get-force-next-question'),
+  summarizeSession: (
+    sessionId?: string
+  ): Promise<{ success: boolean; summary?: string; session?: WorkSession; error?: string }> =>
+    ipcRenderer.invoke('summarize-session', sessionId),
 
   startCapture: (): Promise<{ success: boolean }> => ipcRenderer.invoke('start-capture'),
   stopCapture: (): Promise<{ success: boolean }> => ipcRenderer.invoke('stop-capture'),
@@ -228,6 +250,11 @@ const api = {
       callback(session)
     ipcRenderer.on('session-updated', handler)
     return () => ipcRenderer.removeListener('session-updated', handler)
+  },
+  onForceNextQuestionChanged: (callback: (enabled: boolean) => void): (() => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, enabled: boolean): void => callback(enabled)
+    ipcRenderer.on('force-next-question-changed', handler)
+    return () => ipcRenderer.removeListener('force-next-question-changed', handler)
   }
 }
 

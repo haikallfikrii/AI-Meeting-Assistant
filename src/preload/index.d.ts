@@ -35,6 +35,11 @@ export interface WorkSession {
   mode: SessionMode
   createdAt: number
   updatedAt: number
+  threadId: string
+  threadTitle: string
+  meetingLabel: string
+  timeOfDay: 'morning' | 'afternoon' | 'evening' | 'night'
+  summary: string
   context: SessionContext
   messages: SessionMessage[]
   answers: SessionAnswer[]
@@ -101,11 +106,24 @@ export interface Api {
   }) => Promise<WorkSession>
   updateSession: (
     id: string,
-    updates: { title?: string; mode?: SessionMode; context?: Partial<SessionContext> }
+    updates: {
+      title?: string
+      mode?: SessionMode
+      context?: Partial<SessionContext>
+      threadTitle?: string
+      summary?: string
+    }
   ) => Promise<WorkSession | null>
   setActiveSession: (id: string) => Promise<WorkSession | null>
   deleteSession: (id: string) => Promise<{ success: boolean; active: WorkSession | null }>
   clearSessionConversation: (id: string) => Promise<WorkSession | null>
+  continueThread: (fromSessionId: string) => Promise<WorkSession | null>
+  askQuestion: (question: string) => Promise<{ success: boolean; error?: string }>
+  setForceNextQuestion: (enabled: boolean) => Promise<boolean>
+  getForceNextQuestion: () => Promise<boolean>
+  summarizeSession: (
+    sessionId?: string
+  ) => Promise<{ success: boolean; summary?: string; session?: WorkSession; error?: string }>
 
   startCapture: () => Promise<{ success: boolean }>
   stopCapture: () => Promise<{ success: boolean }>
@@ -152,6 +170,7 @@ export interface Api {
   ) => () => void
   onScreenshotNoQuestion: (callback: (data: { message: string }) => void) => () => void
   onSessionUpdated: (callback: (session: WorkSession) => void) => () => void
+  onForceNextQuestionChanged: (callback: (enabled: boolean) => void) => () => void
 }
 
 declare global {

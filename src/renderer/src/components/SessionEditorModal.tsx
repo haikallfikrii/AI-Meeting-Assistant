@@ -45,7 +45,7 @@ export function SessionEditorModal(): React.ReactNode | null {
     if (!showSessionEditor) return
     if (sessionEditorMode === 'edit' && activeSession) {
       setMode(activeSession.mode)
-      setTitle(activeSession.title)
+      setTitle(activeSession.threadTitle || activeSession.title)
       setContext({ ...emptyContext(), ...activeSession.context })
     } else {
       setMode('interview')
@@ -67,7 +67,8 @@ export function SessionEditorModal(): React.ReactNode | null {
         const updated = await window.api.updateSession(activeSession.id, {
           title: title.trim() || undefined,
           mode,
-          context
+          context,
+          threadTitle: title.trim() || undefined
         })
         if (updated) setActiveSession(updated)
       } else {

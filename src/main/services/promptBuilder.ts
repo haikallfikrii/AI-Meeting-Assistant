@@ -136,6 +136,11 @@ export function buildSystemPrompt(ctx: ContextSettings): string {
     mode: normalizeSessionMode(ctx.sessionMode),
     createdAt: 0,
     updatedAt: 0,
+    threadId: 'temp',
+    threadTitle: 'temp',
+    meetingLabel: '',
+    timeOfDay: 'afternoon',
+    summary: '',
     context: {
       ...emptySessionContext(),
       targetRole: ctx.targetRole || '',

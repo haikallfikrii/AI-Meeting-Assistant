@@ -262,6 +262,48 @@ export class OpenAIService extends EventEmitter {
     this.conversationHistory = []
   }
 
+  async summarizeSession(): Promise<string> {
+    if (!this.client) {
+      throw new Error('OpenAI client not initialized')
+    }
+
+    const transcript = this.conversationHistory
+      .map((m) => `${m.role === 'user' ? 'Q' : 'A'}: ${m.content}`)
+      .join('\n\n')
+
+    if (!transcript.trim()) {
+      throw new Error('No conversation yet to summarize in this meeting session.')
+    }
+
+    const response = await this.client.chat.completions.create({
+      model: this.getChatModel(),
+      messages: [
+        {
+          role: 'system',
+          content: `You summarize a live meeting/interview session for the user.
+Write a clear, scannable summary with:
+1. **Overview** (2–3 sentences)
+2. **Key points discussed** (bullets)
+3. **Decisions / commitments** (bullets, if any)
+4. **Open questions / next steps** (bullets)
+Keep it concise. Use markdown. No fluff.`
+        },
+        {
+          role: 'user',
+          content: `Summarize this session conversation:\n\n${transcript}`
+        }
+      ],
+      max_completion_tokens: 800,
+      temperature: 0.4
+    })
+
+    const summary = response.choices[0]?.message?.content?.trim() || ''
+    if (!summary) {
+      throw new Error('Empty summary returned')
+    }
+    return summary
+  }
+
   async generateSolutionFromImage(
     imageBase64: string,
     questionText?: string,

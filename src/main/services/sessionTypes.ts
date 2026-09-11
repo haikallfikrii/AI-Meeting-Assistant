@@ -31,12 +31,23 @@ export interface SessionContext {
   chatNotes: string
 }
 
+export type TimeOfDay = 'morning' | 'afternoon' | 'evening' | 'night'
+
 export interface WorkSession {
   id: string
   title: string
   mode: SessionMode
   createdAt: number
   updatedAt: number
+  /** Groups related meetings under one project/interview thread */
+  threadId: string
+  /** Stable display name for the thread (e.g. Client A — App) */
+  threadTitle: string
+  /** Human label for this meeting occurrence */
+  meetingLabel: string
+  timeOfDay: TimeOfDay
+  /** Optional AI-generated meeting summary */
+  summary: string
   context: SessionContext
   /** LLM memory — previous turns in this session */
   messages: SessionMessage[]
@@ -64,6 +75,42 @@ export function createSessionId(): string {
   return `ses_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
 }
 
+export function createThreadId(): string {
+  return `thr_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
+}
+
+export function getTimeOfDay(date = new Date()): TimeOfDay {
+  const hour = date.getHours()
+  if (hour >= 5 && hour < 11) return 'morning'
+  if (hour >= 11 && hour < 17) return 'afternoon'
+  if (hour >= 17 && hour < 21) return 'evening'
+  return 'night'
+}
+
+export function timeOfDayLabel(tod: TimeOfDay): string {
+  switch (tod) {
+    case 'morning':
+      return 'Morning'
+    case 'afternoon':
+      return 'Afternoon'
+    case 'evening':
+      return 'Evening'
+    case 'night':
+      return 'Night'
+  }
+}
+
+export function formatMeetingLabel(date = new Date()): string {
+  const tod = getTimeOfDay(date)
+  const day = date.toLocaleDateString(undefined, {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short'
+  })
+  const time = date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
+  return `${day} · ${timeOfDayLabel(tod)} · ${time}`
+}
+
 export function defaultSessionTitle(mode: SessionMode, context: SessionContext): string {
   if (mode === 'interview') {
     const company = context.companyName.trim()
@@ -89,12 +136,22 @@ export function normalizeSession(raw: Partial<WorkSession> & { id?: string }): W
   const mode = normalizeSessionMode(raw.mode)
   const context = { ...emptySessionContext(), ...(raw.context || {}) }
   const now = Date.now()
+  const id = raw.id || createSessionId()
+  const threadTitle = raw.threadTitle?.trim() || defaultSessionTitle(mode, context)
+  const createdAt = raw.createdAt || now
+  const tod = raw.timeOfDay || getTimeOfDay(new Date(createdAt))
+
   return {
-    id: raw.id || createSessionId(),
-    title: raw.title?.trim() || defaultSessionTitle(mode, context),
+    id,
+    title: raw.title?.trim() || `${threadTitle} · ${formatMeetingLabel(new Date(createdAt))}`,
     mode,
-    createdAt: raw.createdAt || now,
+    createdAt,
     updatedAt: raw.updatedAt || now,
+    threadId: raw.threadId || id,
+    threadTitle,
+    meetingLabel: raw.meetingLabel || formatMeetingLabel(new Date(createdAt)),
+    timeOfDay: tod,
+    summary: typeof raw.summary === 'string' ? raw.summary : '',
     context,
     messages: Array.isArray(raw.messages) ? raw.messages : [],
     answers: Array.isArray(raw.answers) ? raw.answers : []

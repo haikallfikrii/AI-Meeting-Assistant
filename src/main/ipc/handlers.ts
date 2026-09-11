@@ -29,6 +29,8 @@ let screenshotService: ScreenshotService | null = null
 let visionService: VisionService | null = null
 let mainWindow: BrowserWindow | null = null
 let isCapturing = false
+/** When true, the next final transcript is force-answered (manual mic / safety net). */
+let forceNextTranscriptAsQuestion = false
 
 function persistExchange(meta: { sessionId: string | null; question: string; answer: string }): void {
   if (!meta.sessionId || !meta.question || !meta.answer) return
@@ -39,6 +41,10 @@ function persistExchange(meta: { sessionId: string | null; question: string; ans
 }
 
 function wireOpenAIServiceEvents(service: OpenAIService): void {
+  service.removeAllListeners('stream')
+  service.removeAllListeners('complete')
+  service.removeAllListeners('exchange')
+
   service.on('stream', (chunk) => {
     mainWindow?.webContents.send('answer-stream', chunk)
   })
@@ -50,6 +56,31 @@ function wireOpenAIServiceEvents(service: OpenAIService): void {
   service.on('exchange', (meta) => {
     persistExchange(meta)
   })
+}
+
+function ensureOpenAIService(): OpenAIService {
+  const settings = settingsManager?.getSettings()
+  if (!settings?.openaiApiKey) {
+    throw new Error('API key not configured. Please add it in Settings.')
+  }
+
+  const provider = settings.llmProvider || 'openai'
+  const activeSession = sessionManager?.getActiveSession() || null
+
+  if (!openaiService) {
+    openaiService = new OpenAIService({
+      apiKey: settings.openaiApiKey,
+      provider,
+      baseUrl: settings.apiBaseUrl,
+      model: settings.openaiModel || DEFAULT_CHAT_MODELS[provider],
+      session: activeSession
+    })
+    wireOpenAIServiceEvents(openaiService)
+  } else if (activeSession) {
+    openaiService.loadSession(activeSession)
+  }
+
+  return openaiService
 }
 
 export function initializeIpcHandlers(window: BrowserWindow): void {
@@ -160,6 +191,68 @@ export function initializeIpcHandlers(window: BrowserWindow): void {
     return session
   })
 
+  ipcMain.handle('continue-thread', (_event, fromSessionId: string) => {
+    const session = sessionManager?.continueThread(fromSessionId)
+    if (openaiService && session) {
+      openaiService.loadSession(session)
+    }
+    return session
+  })
+
+  ipcMain.handle('ask-question', async (_event, question: string) => {
+    const text = question?.trim()
+    if (!text) {
+      return { success: false, error: 'Empty question' }
+    }
+    try {
+      const service = ensureOpenAIService()
+      mainWindow?.webContents.send('question-detected', {
+        text,
+        confidence: 1,
+        questionType: 'direct'
+      })
+      await service.generateAnswer(text)
+      return { success: true }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to answer'
+      mainWindow?.webContents.send('answer-error', errorMessage)
+      return { success: false, error: errorMessage }
+    }
+  })
+
+  ipcMain.handle('set-force-next-question', (_event, enabled: boolean) => {
+    forceNextTranscriptAsQuestion = Boolean(enabled)
+    mainWindow?.webContents.send('force-next-question-changed', forceNextTranscriptAsQuestion)
+    return forceNextTranscriptAsQuestion
+  })
+
+  ipcMain.handle('get-force-next-question', () => forceNextTranscriptAsQuestion)
+
+  ipcMain.handle('summarize-session', async (_event, sessionId?: string) => {
+    try {
+      const targetId = sessionId || sessionManager?.getActiveSession()?.id
+      if (!targetId) {
+        return { success: false, error: 'No active session' }
+      }
+      const session = sessionManager?.getSession(targetId)
+      if (!session) {
+        return { success: false, error: 'Session not found' }
+      }
+
+      const service = ensureOpenAIService()
+      service.loadSession(session)
+      const summary = await service.summarizeSession()
+      const updated = sessionManager?.setSummary(targetId, summary)
+      if (updated) {
+        mainWindow?.webContents.send('session-updated', updated)
+      }
+      return { success: true, summary, session: updated }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to summarize'
+      return { success: false, error: errorMessage }
+    }
+  })
+
   // Fetch chat models from the configured OpenAI-compatible provider
   ipcMain.handle(
     'fetch-openai-models',
@@ -252,8 +345,27 @@ export function initializeIpcHandlers(window: BrowserWindow): void {
         questionDetector?.addTranscript(event.text, event.isFinal)
         mainWindow?.webContents.send('transcript', event)
 
-        // Try early detection for faster response on high-confidence questions
-        if (event.isFinal && questionDetector && openaiService) {
+        if (!event.isFinal || !openaiService) return
+
+        // Manual safety net: next utterance after Mic Ask is always answered
+        if (forceNextTranscriptAsQuestion) {
+          forceNextTranscriptAsQuestion = false
+          mainWindow?.webContents.send('force-next-question-changed', false)
+          mainWindow?.webContents.send('question-detected', {
+            text: event.text,
+            confidence: 1,
+            questionType: 'direct'
+          })
+          try {
+            await openaiService.generateAnswer(event.text)
+          } catch (error) {
+            mainWindow?.webContents.send('answer-error', (error as Error).message)
+          }
+          return
+        }
+
+        // Auto early detection for high-confidence questions
+        if (questionDetector) {
           const earlyDetection = questionDetector.checkEarlyDetection(event.text)
           if (earlyDetection) {
             console.log('Early question detection triggered:', earlyDetection.text)
@@ -312,6 +424,8 @@ export function initializeIpcHandlers(window: BrowserWindow): void {
 
   ipcMain.handle('stop-capture', async () => {
     isCapturing = false
+    forceNextTranscriptAsQuestion = false
+    mainWindow?.webContents.send('force-next-question-changed', false)
 
     if (whisperService) {
       whisperService.stop()
@@ -319,12 +433,9 @@ export function initializeIpcHandlers(window: BrowserWindow): void {
       whisperService = null
     }
 
-    if (openaiService) {
-      openaiService.removeAllListeners()
-      openaiService = null
-    }
+    // Keep openaiService alive so manual Ask / Summarize still work after Stop
+    // (listeners remain wired)
 
-    // Remove question detector listeners to prevent duplicates on next start
     questionDetector?.removeAllListeners()
     questionDetector?.clearBuffer()
     console.log('Audio capture stopped')

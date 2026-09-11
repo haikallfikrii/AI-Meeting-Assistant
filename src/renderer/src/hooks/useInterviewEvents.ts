@@ -102,6 +102,10 @@ export function useInterviewEvents(): void {
       useInterviewStore.getState().setActiveSession(session)
     })
 
+    const unsubForceNext = window.api.onForceNextQuestionChanged((enabled) => {
+      useInterviewStore.getState().setForceNextAsk(enabled)
+    })
+
     return () => {
       console.log('Cleaning up IPC event listeners')
       unsubTranscript()
@@ -115,6 +119,7 @@ export function useInterviewEvents(): void {
       unsubQuestionDetectedFromImage()
       unsubScreenshotNoQuestion()
       unsubSessionUpdated()
+      unsubForceNext()
       listenersSetUp.current = false
     }
   }, [

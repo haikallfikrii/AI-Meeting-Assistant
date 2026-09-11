@@ -1,16 +1,19 @@
 import { app } from 'electron'
 import * as fs from 'fs'
 import * as path from 'path'
+import { SessionMode, normalizeSessionMode } from './promptBuilder'
 import {
   SessionAnswer,
   SessionMessage,
   WorkSession,
   createSessionId,
+  createThreadId,
   defaultSessionTitle,
   emptySessionContext,
+  formatMeetingLabel,
+  getTimeOfDay,
   normalizeSession
 } from './sessionTypes'
-import { SessionMode, normalizeSessionMode } from './promptBuilder'
 
 const MAX_MESSAGES_PER_SESSION = 80
 const MAX_ANSWERS_PER_SESSION = 100
@@ -74,17 +77,28 @@ export class SessionManager {
     partial?: {
       title?: string
       context?: Partial<WorkSession['context']>
+      threadId?: string
+      threadTitle?: string
     }
   ): WorkSession {
     const context = { ...emptySessionContext(), ...(partial?.context || {}) }
     const now = Date.now()
+    const id = createSessionId()
+    const threadTitle = partial?.threadTitle?.trim() || defaultSessionTitle(mode, context)
+    const meetingLabel = formatMeetingLabel(new Date(now))
+
     return normalizeSession({
-      id: createSessionId(),
+      id,
       mode,
-      title: partial?.title,
+      title: partial?.title?.trim() || `${threadTitle} · ${meetingLabel}`,
       context,
       createdAt: now,
       updatedAt: now,
+      threadId: partial?.threadId || createThreadId(),
+      threadTitle,
+      meetingLabel,
+      timeOfDay: getTimeOfDay(new Date(now)),
+      summary: '',
       messages: [],
       answers: []
     })
@@ -114,12 +128,33 @@ export class SessionManager {
     return session
   }
 
+  /**
+   * Start a fresh meeting under the same project/interview thread.
+   * Copies context; conversation memory starts empty for this meeting.
+   */
+  continueThread(fromSessionId: string): WorkSession | null {
+    const source = this.getSession(fromSessionId)
+    if (!source) return null
+
+    const session = this.buildNewSession(source.mode, {
+      context: { ...source.context },
+      threadId: source.threadId,
+      threadTitle: source.threadTitle
+    })
+    this.data.sessions.unshift(session)
+    this.data.activeSessionId = session.id
+    this.persist()
+    return session
+  }
+
   updateSession(
     id: string,
     updates: {
       title?: string
       mode?: SessionMode
       context?: Partial<WorkSession['context']>
+      summary?: string
+      threadTitle?: string
     }
   ): WorkSession | null {
     const idx = this.data.sessions.findIndex((s) => s.id === id)
@@ -130,22 +165,36 @@ export class SessionManager {
     const context = updates.context
       ? { ...current.context, ...updates.context }
       : current.context
-    const title =
-      updates.title?.trim() ||
-      (updates.context || updates.mode
-        ? defaultSessionTitle(mode, context)
-        : current.title)
+    const threadTitle =
+      updates.threadTitle?.trim() ||
+      (updates.context ? defaultSessionTitle(mode, context) : current.threadTitle)
 
     const next: WorkSession = {
       ...current,
       mode,
       context,
-      title,
+      threadTitle,
+      title: updates.title?.trim() || `${threadTitle} · ${current.meetingLabel}`,
+      summary: updates.summary !== undefined ? updates.summary : current.summary,
       updatedAt: Date.now()
     }
+
+    // Keep thread title in sync across siblings when context renamed
+    if (updates.threadTitle || updates.context) {
+      this.data.sessions = this.data.sessions.map((s) =>
+        s.threadId === current.threadId && s.id !== id
+          ? { ...s, threadTitle, updatedAt: Date.now() }
+          : s
+      )
+    }
+
     this.data.sessions[idx] = next
     this.persist()
     return next
+  }
+
+  setSummary(id: string, summary: string): WorkSession | null {
+    return this.updateSession(id, { summary })
   }
 
   setActiveSession(id: string): WorkSession | null {
@@ -168,11 +217,7 @@ export class SessionManager {
     return { success: true, active: this.getActiveSession() }
   }
 
-  appendExchange(
-    sessionId: string,
-    question: string,
-    answer: string
-  ): WorkSession | null {
+  appendExchange(sessionId: string, question: string, answer: string): WorkSession | null {
     const idx = this.data.sessions.findIndex((s) => s.id === sessionId)
     if (idx < 0) return null
 
@@ -216,6 +261,7 @@ export class SessionManager {
       ...this.data.sessions[idx],
       messages: [],
       answers: [],
+      summary: '',
       updatedAt: Date.now()
     }
     this.data.sessions[idx] = next
@@ -223,9 +269,6 @@ export class SessionManager {
     return next
   }
 
-  /**
-   * One-time migration from legacy flat settings context → first session.
-   */
   migrateFromLegacySettings(legacy: {
     sessionMode?: string
     targetRole?: string
@@ -248,13 +291,15 @@ export class SessionManager {
       resumeDescription: legacy.resumeDescription || '',
       answerBank: legacy.answerBank || ''
     }
-    this.data.sessions[0] = {
+    const threadTitle = defaultSessionTitle(mode, context)
+    this.data.sessions[0] = normalizeSession({
       ...only,
       mode,
       context,
-      title: defaultSessionTitle(mode, context),
+      threadTitle,
+      title: `${threadTitle} · ${only.meetingLabel}`,
       updatedAt: Date.now()
-    }
+    })
     this.persist()
   }
 }

@@ -1,5 +1,17 @@
-import { AlertCircle, Camera, Loader2, Play, Square, Trash2, Volume2 } from 'lucide-react'
+import {
+  AlertCircle,
+  Camera,
+  Loader2,
+  Mic,
+  Play,
+  Send,
+  Sparkles,
+  Square,
+  Trash2,
+  Volume2
+} from 'lucide-react'
 import { useInterview } from '../hooks/useInterview'
+import { useInterviewStore } from '../store/interviewStore'
 
 export function StatusBar(): React.JSX.Element {
   const {
@@ -13,13 +25,28 @@ export function StatusBar(): React.JSX.Element {
     captureAndAnalyzeScreenshot,
     answers,
     currentAnswer,
-    clearHistory
+    clearHistory,
+    transcripts,
+    currentTranscript
   } = useInterview()
+
+  const {
+    forceNextAsk,
+    setForceNextAsk,
+    isSummarizing,
+    setSummarizing,
+    setError,
+    setCurrentQuestion,
+    activeSession,
+    setActiveSession
+  } = useInterviewStore()
 
   const getStatusText = (): string => {
     if (error) return 'Error'
+    if (isSummarizing) return 'Summarizing meeting...'
     if (isProcessingScreenshot) return 'Analyzing screenshot...'
     if (isGenerating) return 'Generating answer...'
+    if (forceNextAsk) return 'Mic armed — speak, then AI will answer'
     if (isSpeaking) return 'Listening...'
     if (isCapturing) return 'Listening to interviewer (System Audio)'
     return ''
@@ -27,8 +54,10 @@ export function StatusBar(): React.JSX.Element {
 
   const getStatusColor = (): string => {
     if (error) return 'text-red-400'
+    if (isSummarizing) return 'text-amber-400'
     if (isProcessingScreenshot) return 'text-orange-400'
     if (isGenerating) return 'text-purple-400'
+    if (forceNextAsk) return 'text-amber-300'
     if (isSpeaking) return 'text-green-400'
     if (isCapturing) return 'text-blue-400'
     return 'text-dark-400'
@@ -40,11 +69,53 @@ export function StatusBar(): React.JSX.Element {
 
   const hasContent = answers.length > 0 || currentAnswer
 
+  const askLatest = async (): Promise<void> => {
+    const text = (currentTranscript || transcripts[transcripts.length - 1]?.text || '').trim()
+    if (!text) {
+      setError('No transcript yet to send. Wait for speech, or arm Mic Ask and speak.')
+      return
+    }
+    try {
+      setError(null)
+      setCurrentQuestion(text)
+      const result = await window.api.askQuestion(text)
+      if (!result.success) setError(result.error || 'Failed to ask')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to ask')
+    }
+  }
+
+  const toggleMicAsk = async (): Promise<void> => {
+    if (!isCapturing) {
+      setError('Start listening first, then arm Mic Ask and speak the question.')
+      return
+    }
+    const next = !forceNextAsk
+    await window.api.setForceNextQuestion(next)
+    setForceNextAsk(next)
+    setError(null)
+  }
+
+  const summarize = async (): Promise<void> => {
+    try {
+      setSummarizing(true)
+      setError(null)
+      const result = await window.api.summarizeSession(activeSession?.id)
+      if (!result.success) {
+        setError(result.error || 'Summarize failed')
+        return
+      }
+      if (result.session) setActiveSession(result.session)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Summarize failed')
+    } finally {
+      setSummarizing(false)
+    }
+  }
+
   return (
     <div className="px-3 py-0.5 bg-dark-850 border-b border-dark-700">
-      {/* Main Controls Row */}
       <div className="flex items-center justify-between gap-3 min-h-[32px]">
-        {/* Status Indicator - Left */}
         <div className="flex items-center gap-2 min-w-0 flex-1">
           {isCapturing && (
             <div className="relative flex-shrink-0 animate-pulse">
@@ -64,9 +135,46 @@ export function StatusBar(): React.JSX.Element {
           )}
         </div>
 
-        {/* Action Buttons - Right */}
-        <div className="flex items-center gap-2 flex-shrink-0">
-          {/* Secondary Action: Screenshot */}
+        <div className="flex items-center gap-1.5 flex-shrink-0">
+          <button
+            onClick={toggleMicAsk}
+            disabled={!isCapturing || isGenerating}
+            className={`px-2 py-1 rounded-md text-xs font-medium transition-all flex items-center gap-1 disabled:opacity-50
+              ${
+                forceNextAsk
+                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                  : 'bg-dark-800 text-dark-300 hover:bg-dark-700 border border-dark-700'
+              }`}
+            title="Arm mic: your next spoken line will be answered (re-ask without interviewer repeating)"
+          >
+            <Mic className="w-3.5 h-3.5" />
+            <span>Mic Ask</span>
+          </button>
+
+          <button
+            onClick={askLatest}
+            disabled={isGenerating || (!transcripts.length && !currentTranscript)}
+            className="px-2 py-1 rounded-md text-xs font-medium bg-dark-800 text-dark-300 hover:bg-dark-700 border border-dark-700 flex items-center gap-1 disabled:opacity-50"
+            title="Force-answer the latest transcript line"
+          >
+            <Send className="w-3.5 h-3.5" />
+            <span>Ask</span>
+          </button>
+
+          <button
+            onClick={summarize}
+            disabled={isSummarizing || isGenerating}
+            className="px-2 py-1 rounded-md text-xs font-medium bg-dark-800 text-dark-300 hover:bg-dark-700 border border-dark-700 flex items-center gap-1 disabled:opacity-50"
+            title="Summarize this meeting session"
+          >
+            {isSummarizing ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Sparkles className="w-3.5 h-3.5" />
+            )}
+            <span>Summary</span>
+          </button>
+
           <button
             onClick={captureAndAnalyzeScreenshot}
             disabled={isProcessingScreenshot || isGenerating}
@@ -89,12 +197,11 @@ export function StatusBar(): React.JSX.Element {
             ) : (
               <>
                 <Camera className="w-3.5 h-3.5" />
-                <span>Screenshot</span>
+                <span>Shot</span>
               </>
             )}
           </button>
 
-          {/* Primary Action: Start/Stop */}
           <button
             onClick={isCapturing ? stopInterview : handleStart}
             disabled={isGenerating || isProcessingScreenshot}
@@ -130,10 +237,9 @@ export function StatusBar(): React.JSX.Element {
             <button
               onClick={clearHistory}
               className="flex items-center gap-1 px-2 py-1 text-xs text-dark-400 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors"
-              title="Clear all answers"
+              title="Clear live answers"
             >
               <Trash2 className="w-3 h-3" />
-              <span>Clear</span>
             </button>
           )}
         </div>
