@@ -1,0 +1,3 @@
+provider: generic
+url: https://kalfi.app/auto-updates
+updaterCacheDirName: Kalfi-updater
