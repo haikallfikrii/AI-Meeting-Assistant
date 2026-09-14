@@ -1,58 +1,279 @@
-(() => {
-  const year = document.getElementById('year')
-  if (year) year.textContent = String(new Date().getFullYear())
+/* Kalfi landing — chrome, stealth toggle, BYOK cost model, Stripe handoff */
 
-  const cfg = window.KALFI_CONFIG || { apiBaseUrl: '', stripePriceId: '' }
-  const subscribeBtn = document.getElementById('subscribe-btn')
+(function () {
+  'use strict'
 
-  async function startCheckout() {
-    if (!subscribeBtn) return
+  var CONFIG = window.KALFI_CONFIG || {}
 
-    if (!cfg.apiBaseUrl || !cfg.stripePriceId) {
-      subscribeBtn.textContent = 'Pro checkout — connect API first'
-      subscribeBtn.disabled = true
-      alert(
-        'Backend belum live.\n\n1) Deploy apps/api ke VPS\n2) Isi stripePriceId di js config\n3) Set apiBaseUrl ke https://api.domain-anda.com'
-      )
-      return
+  /* ---------- header, nav, reveal ---------- */
+
+  function chrome() {
+    var bar = document.getElementById('topbar')
+    var progress = document.getElementById('progress')
+    var burger = document.getElementById('burger')
+    var drawer = document.getElementById('drawer')
+
+    var onScroll = function () {
+      var doc = document.documentElement
+      var max = doc.scrollHeight - window.innerHeight
+      var ratio = max > 0 ? window.scrollY / max : 0
+      if (progress) progress.style.width = (ratio * 100).toFixed(2) + '%'
+      if (bar) bar.setAttribute('data-scrolled', String(window.scrollY > 8))
     }
 
-    subscribeBtn.disabled = true
-    subscribeBtn.textContent = 'Redirecting…'
+    window.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('resize', onScroll)
+    onScroll()
 
-    try {
-      const res = await fetch(`${cfg.apiBaseUrl.replace(/\/$/, '')}/v1/billing/checkout`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          priceId: cfg.stripePriceId,
-          successUrl: `${window.location.origin}/?checkout=success`,
-          cancelUrl: `${window.location.origin}/#pricing`
-        })
+    if (burger && drawer) {
+      burger.addEventListener('click', function () {
+        var open = drawer.getAttribute('data-open') !== 'true'
+        drawer.setAttribute('data-open', String(open))
+        burger.setAttribute('aria-expanded', String(open))
       })
-      const data = await res.json()
-      if (!res.ok || !data.url) {
-        throw new Error(data.error || 'Checkout failed')
-      }
-      window.location.href = data.url
-    } catch (err) {
-      console.error(err)
-      alert(err instanceof Error ? err.message : 'Checkout failed')
-      subscribeBtn.disabled = false
-      subscribeBtn.textContent = 'Subscribe with Stripe'
+      drawer.addEventListener('click', function (e) {
+        if (e.target.tagName === 'A') {
+          drawer.setAttribute('data-open', 'false')
+          burger.setAttribute('aria-expanded', 'false')
+        }
+      })
     }
+
+    var year = document.getElementById('year')
+    if (year) year.textContent = String(new Date().getFullYear())
   }
 
-  subscribeBtn?.addEventListener('click', startCheckout)
-  document.getElementById('nav-subscribe')?.addEventListener('click', (e) => {
-    if (cfg.apiBaseUrl && cfg.stripePriceId) {
-      e.preventDefault()
-      startCheckout()
+  function reveal() {
+    var nodes = document.querySelectorAll('[data-reveal]')
+    if (!('IntersectionObserver' in window)) {
+      Array.prototype.forEach.call(nodes, function (n) {
+        n.setAttribute('data-shown', 'true')
+      })
+      return
     }
-  })
+    var io = new IntersectionObserver(
+      function (entries) {
+        entries.forEach(function (entry) {
+          if (!entry.isIntersecting) return
+          entry.target.setAttribute('data-shown', 'true')
+          io.unobserve(entry.target)
+        })
+      },
+      { rootMargin: '0px 0px -8% 0px', threshold: 0.12 }
+    )
+    Array.prototype.forEach.call(nodes, function (n) {
+      io.observe(n)
+    })
+  }
 
-  const params = new URLSearchParams(window.location.search)
-  if (params.get('checkout') === 'success') {
-    alert('Payment started / completed. Open the Kalfi desktop app and sign in to unlock Pro.')
+  /* ---------- stealth demo ---------- */
+
+  function stealth() {
+    var toggle = document.getElementById('stealth-toggle')
+    var card = document.getElementById('leak-card')
+    var label = document.getElementById('stealth-state')
+    var tag = document.getElementById('leak-tag')
+    if (!toggle || !card) return
+
+    var apply = function () {
+      var on = toggle.checked
+      card.setAttribute('data-shown', String(!on))
+      if (label) label.textContent = on ? 'on' : 'off'
+      if (tag) {
+        tag.textContent = on ? 'clean' : 'overlay visible to everyone'
+        tag.style.color = on ? '' : 'var(--alert)'
+      }
+    }
+
+    toggle.addEventListener('change', apply)
+    apply()
+  }
+
+  /* ---------- BYOK cost model ---------- */
+
+  var MODELS = [
+    { id: 'gpt-4o-mini', label: 'GPT-4o mini — cheap default', inp: 0.15, out: 0.6 },
+    { id: 'gemini-flash', label: 'Gemini 2.0 Flash — cheapest', inp: 0.1, out: 0.4 },
+    { id: 'gpt-4.1-mini', label: 'GPT-4.1 mini — sharper', inp: 0.4, out: 1.6 },
+    { id: 'claude-haiku', label: 'Claude 3.5 Haiku — best phrasing', inp: 0.8, out: 4.0 },
+    { id: 'gpt-4o', label: 'GPT-4o — interview day', inp: 2.5, out: 10.0 }
+  ]
+
+  var ASSUME = {
+    questionsPerMinute: 0.8,
+    inputTokens: 900,
+    outputTokens: 220,
+    sttPerMinute: 0.006
+  }
+
+  var RIVALS = { pro: 12, finalRound: 25, parakeet: 149.9 }
+
+  function money(n) {
+    return '$' + n.toFixed(2)
+  }
+
+  function calculator() {
+    var sessions = document.getElementById('calc-sessions')
+    var minutes = document.getElementById('calc-minutes')
+    var model = document.getElementById('calc-model')
+    var stt = document.getElementById('calc-stt')
+    if (!sessions || !minutes || !model) return
+
+    MODELS.forEach(function (m) {
+      var opt = document.createElement('option')
+      opt.value = m.id
+      opt.textContent = m.label
+      model.appendChild(opt)
+    })
+
+    var out = {
+      sessions: document.getElementById('out-sessions'),
+      minutes: document.getElementById('out-minutes'),
+      stt: document.getElementById('out-stt'),
+      amount: document.getElementById('bar-byok-amt'),
+      detail: document.getElementById('byok-detail'),
+      verdict: document.getElementById('verdict'),
+      bars: {
+        byok: document.getElementById('bar-byok'),
+        pro: document.getElementById('bar-pro'),
+        frai: document.getElementById('bar-frai'),
+        parakeet: document.getElementById('bar-parakeet')
+      }
+    }
+
+    var update = function () {
+      var calls = Number(sessions.value)
+      var mins = Number(minutes.value)
+      var picked = MODELS.filter(function (m) {
+        return m.id === model.value
+      })[0]
+      var totalMinutes = calls * mins
+      var questions = totalMinutes * ASSUME.questionsPerMinute
+
+      var tokenCost =
+        (questions * ASSUME.inputTokens * picked.inp) / 1e6 +
+        (questions * ASSUME.outputTokens * picked.out) / 1e6
+      var sttCost = stt && stt.checked ? totalMinutes * ASSUME.sttPerMinute : 0
+      var byok = tokenCost + sttCost
+
+      if (out.sessions) out.sessions.textContent = String(calls)
+      if (out.minutes) out.minutes.textContent = String(mins)
+      if (out.stt) {
+        out.stt.textContent = stt && stt.checked ? 'on · $0.006 / min' : 'off · text only'
+      }
+      if (out.amount) out.amount.textContent = money(byok)
+      if (out.detail) {
+        out.detail.textContent =
+          Math.round(questions) +
+          ' answers over ' +
+          totalMinutes +
+          ' min · ' +
+          money(tokenCost) +
+          ' models' +
+          (sttCost ? ' + ' + money(sttCost) + ' transcription' : '')
+      }
+
+      var scale = Math.max(byok, RIVALS.parakeet)
+      var setBar = function (el, value) {
+        if (el) el.style.width = Math.max(1.2, (value / scale) * 100) + '%'
+      }
+      setBar(out.bars.byok, byok)
+      setBar(out.bars.pro, RIVALS.pro)
+      setBar(out.bars.frai, RIVALS.finalRound)
+      setBar(out.bars.parakeet, RIVALS.parakeet)
+
+      if (out.verdict) {
+        var savedYear = (RIVALS.parakeet - byok) * 12
+        if (byok < RIVALS.pro) {
+          out.verdict.innerHTML =
+            'At this usage your own key costs <strong>' +
+            money(byok) +
+            '</strong> a month — cheaper than our own Pro plan, and <strong>' +
+            money(savedYear) +
+            '</strong> a year below ParakeetAI. Stay on Free.'
+        } else {
+          out.verdict.innerHTML =
+            'At this usage your key costs <strong>' +
+            money(byok) +
+            '</strong> a month, so <strong>Pro at $12 flat</strong> is the better deal — and still ' +
+            money(RIVALS.parakeet - RIVALS.pro) +
+            ' a month under ParakeetAI.'
+        }
+      }
+    }
+
+    ;[sessions, minutes].forEach(function (el) {
+      el.addEventListener('input', update)
+    })
+    model.addEventListener('change', update)
+    if (stt) stt.addEventListener('change', update)
+    update()
+  }
+
+  /* ---------- Stripe handoff ---------- */
+
+  function billing() {
+    var buttons = document.querySelectorAll('[data-subscribe]')
+    var note = document.getElementById('pro-note')
+    var ready = Boolean(CONFIG.apiBaseUrl && CONFIG.stripePriceId)
+
+    if (note) {
+      note.textContent = ready
+        ? 'Secure checkout by Stripe. Cancel any time in the customer portal.'
+        : 'Checkout opens once the billing API is switched on. Until then, run the app free with your own key.'
+    }
+
+    Array.prototype.forEach.call(buttons, function (btn) {
+      btn.addEventListener('click', function () {
+        if (!ready) {
+          var target = document.getElementById('cost')
+          if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          if (note) {
+            note.textContent =
+              'Billing is not live yet on this domain. The free BYOK path is available right now — see the numbers above.'
+          }
+          return
+        }
+
+        var original = btn.textContent
+        btn.disabled = true
+        btn.textContent = 'Opening Stripe…'
+
+        fetch(CONFIG.apiBaseUrl.replace(/\/$/, '') + '/billing/checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ priceId: CONFIG.stripePriceId })
+        })
+          .then(function (res) {
+            return res.json()
+          })
+          .then(function (data) {
+            if (data && data.url) {
+              window.location.href = data.url
+              return
+            }
+            throw new Error('no checkout url')
+          })
+          .catch(function () {
+            btn.disabled = false
+            btn.textContent = original
+            if (note) note.textContent = 'Could not reach checkout. Try again in a moment.'
+          })
+      })
+    })
+  }
+
+  function init() {
+    chrome()
+    reveal()
+    stealth()
+    calculator()
+    billing()
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init)
+  } else {
+    init()
   }
 })()
