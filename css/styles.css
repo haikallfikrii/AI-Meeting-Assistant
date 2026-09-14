@@ -2574,9 +2574,15 @@ details p {
   display: grid;
   gap: 28px;
   align-items: start;
-  width: 100%;
-  max-width: 100%;
+  /* Do NOT set width:100% here — it overrides .shell gutters when both classes share one element */
   min-width: 0;
+  box-sizing: border-box;
+}
+
+.shell.timeline {
+  width: min(var(--shell), calc(100% - (var(--gut) * 2)));
+  max-width: min(var(--shell), calc(100% - (var(--gut) * 2)));
+  margin-inline: auto;
 }
 
 @media (min-width: 960px) {
