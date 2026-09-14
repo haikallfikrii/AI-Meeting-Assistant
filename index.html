@@ -79,96 +79,116 @@
         <a href="blog/">Blog</a>
         <a href="#download">Download</a>
       </div>
-      <div class="topbar__progress" id="progress"></div>
     </header>
 
     <main id="main">
       <div id="top"></div>
 
-      <!-- HERO + LIVE DEMO -->
-      <section class="shell hero" id="demo">
-        <div>
-          <span class="tagline">macOS overlay · $14 BYOK</span>
-          <h1>The answer is on screen before the pause gets awkward.</h1>
-          <p class="hero__lead">
-            Kalfi listens to your call from your own Mac, catches the question, and writes one line
-            you can actually say out loud. BYOK is $14/mo with your OpenAI or OpenRouter key — or $19
-            if we host the models. Final Round lists around $150.
-          </p>
-          <div class="hero__cta">
-            <a class="btn btn--solid" href="#download">Download for Mac</a>
-            <button class="btn btn--line" type="button" data-demo-focus>
-              Run the demo <span class="kbd">⌘↵</span>
-            </button>
-          </div>
-          <dl class="facts">
-            <div>
-              <dt>Modes</dt>
-              <dd>Interview · Client · Chat</dd>
-            </div>
-            <div>
-              <dt>Audio in</dt>
-              <dd>System, mic, or both</dd>
-            </div>
-            <div>
-              <dt>Your key</dt>
-              <dd>Stays on device</dd>
-            </div>
-          </dl>
-        </div>
-
-        <div class="appwin" data-reveal>
-          <div class="appwin__bar">
-            <span class="appwin__lights"><i></i><i></i><i></i></span>
-            <span class="appwin__title">Kalfi — live session</span>
-            <span class="appwin__badge"><span class="pulse"></span><span id="demo-status">listening</span></span>
-          </div>
-
-          <div class="tabs" role="tablist" aria-label="Session mode">
-            <button role="tab" type="button" data-mode="interview" aria-selected="true">Interview</button>
-            <button role="tab" type="button" data-mode="client" aria-selected="false">Client meeting</button>
-            <button role="tab" type="button" data-mode="chat" aria-selected="false">Random chat</button>
-          </div>
-
-          <div class="demo__body">
-            <div>
-              <div class="pane-label">
-                <span>Live transcript</span>
-                <span id="demo-source">system + mic</span>
+      <!-- HERO: sticky frame — copy on top, demo peeks then expands -->
+      <section class="hero-stack" id="demo">
+        <div class="hero-pin" id="hero-stage">
+          <div class="hero-sticky">
+            <div class="shell hero-copy" id="hero-copy">
+              <span class="tagline hero-in">macOS overlay · $14 BYOK</span>
+              <h1 class="hero-in" style="--d: 1">
+                The answer is on screen before the pause gets awkward.
+              </h1>
+              <p class="hero__lead hero-in" style="--d: 2">
+                Kalfi listens to your call from your own Mac, catches the question, and writes one line
+                you can actually say out loud. BYOK is $14/mo with your OpenAI or OpenRouter key — or $19
+                if we host the models. Final Round lists around $150.
+              </p>
+              <div class="hero__cta hero-in" style="--d: 3">
+                <a class="btn btn--solid" href="#download">Download for Mac</a>
+                <button class="btn btn--line" type="button" data-demo-focus>
+                  Run the demo <span class="kbd">⌘↵</span>
+                </button>
               </div>
-              <div class="transcript" id="transcript" aria-live="polite"></div>
-            </div>
-
-            <div>
-              <div class="pane-label">
-                <span>Suggested reply</span>
-                <span id="demo-model">gpt-4o-mini</span>
-              </div>
-              <div class="answer" id="answer" data-done="false">
-                <p class="answer__empty">Press Play, or hit Ask to force an answer on the last line.</p>
-              </div>
-            </div>
-
-            <div class="controls">
-              <div class="ctrl">
-                <span>Length</span>
-                <div class="seg" id="seg-length">
-                  <button type="button" data-val="brief" aria-pressed="false">Brief</button>
-                  <button type="button" data-val="balanced" aria-pressed="true">Balanced</button>
-                  <button type="button" data-val="detailed" aria-pressed="false">Detailed</button>
+              <dl class="facts hero-in" style="--d: 4">
+                <div>
+                  <dt>Modes</dt>
+                  <dd>Interview · Client · Chat</dd>
                 </div>
-              </div>
-              <div class="ctrl">
-                <span>Tone</span>
-                <div class="seg" id="seg-tone">
-                  <button type="button" data-val="formal" aria-pressed="false">Formal</button>
-                  <button type="button" data-val="neutral" aria-pressed="true">Neutral</button>
-                  <button type="button" data-val="casual" aria-pressed="false">Casual</button>
+                <div>
+                  <dt>Audio in</dt>
+                  <dd>System, mic, or both</dd>
                 </div>
-              </div>
-              <div class="demo__run">
-                <button class="btn btn--line btn--sm" type="button" id="demo-toggle">Pause</button>
-                <button class="btn btn--accent btn--sm" type="button" id="demo-ask">Ask</button>
+                <div>
+                  <dt>Your key</dt>
+                  <dd>Stays on device</dd>
+                </div>
+              </dl>
+            </div>
+
+            <div class="hero-demo-slot">
+              <div class="hero-demo-wrap" id="hero-demo-wrap">
+                <div class="hero-demo-glow" aria-hidden="true"></div>
+                <div class="appwin hero-demo" id="hero-demo">
+                  <div class="appwin__bar">
+                    <span class="appwin__lights"><i></i><i></i><i></i></span>
+                    <span class="appwin__title">Kalfi — live session</span>
+                    <span class="appwin__badge"
+                      ><span class="pulse"></span><span id="demo-status">listening</span></span
+                    >
+                  </div>
+
+                  <div class="tabs" role="tablist" aria-label="Session mode">
+                    <button role="tab" type="button" data-mode="interview" aria-selected="true">
+                      Interview
+                    </button>
+                    <button role="tab" type="button" data-mode="client" aria-selected="false">
+                      Client meeting
+                    </button>
+                    <button role="tab" type="button" data-mode="chat" aria-selected="false">
+                      Random chat
+                    </button>
+                  </div>
+
+                  <div class="demo__body">
+                    <div>
+                      <div class="pane-label">
+                        <span>Live transcript</span>
+                        <span id="demo-source">system + mic</span>
+                      </div>
+                      <div class="transcript" id="transcript" aria-live="polite"></div>
+                    </div>
+
+                    <div>
+                      <div class="pane-label">
+                        <span>Suggested reply</span>
+                        <span id="demo-model">gpt-4o-mini</span>
+                      </div>
+                      <div class="answer" id="answer" data-done="false">
+                        <p class="answer__empty">
+                          Press Play, or hit Ask to force an answer on the last line.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div class="controls">
+                      <div class="ctrl">
+                        <span>Length</span>
+                        <div class="seg" id="seg-length">
+                          <button type="button" data-val="brief" aria-pressed="false">Brief</button>
+                          <button type="button" data-val="balanced" aria-pressed="true">Balanced</button>
+                          <button type="button" data-val="detailed" aria-pressed="false">Detailed</button>
+                        </div>
+                      </div>
+                      <div class="ctrl">
+                        <span>Tone</span>
+                        <div class="seg" id="seg-tone">
+                          <button type="button" data-val="formal" aria-pressed="false">Formal</button>
+                          <button type="button" data-val="neutral" aria-pressed="true">Neutral</button>
+                          <button type="button" data-val="casual" aria-pressed="false">Casual</button>
+                        </div>
+                      </div>
+                      <div class="demo__run">
+                        <button class="btn btn--line btn--sm" type="button" id="demo-toggle">Pause</button>
+                        <button class="btn btn--accent btn--sm" type="button" id="demo-ask">Ask</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -186,7 +206,7 @@
           </p>
         </div>
         <div class="shell">
-          <div class="steps" data-reveal>
+          <div class="steps" data-reveal data-reveal-stagger>
             <article class="step">
               <span class="step__num">01</span>
               <h3>Load the context once</h3>
@@ -250,7 +270,7 @@
             </label>
           </div>
 
-          <div class="stealth-lab" data-reveal>
+          <div class="stealth-lab" data-reveal data-reveal-stagger>
             <!-- Shared screen: Meet only -->
             <div class="desk" id="desk-shared">
               <span class="desk__caption" id="leak-tag">Shared screen · clean</span>
@@ -655,7 +675,7 @@
         </div>
 
         <div class="shell">
-          <div class="plans" data-reveal>
+          <div class="plans" data-reveal data-reveal-stagger>
             <article class="plan">
               <div class="plan__top">
                 <h3>BYOK</h3>
