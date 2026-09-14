@@ -13,26 +13,47 @@
     var drawer = document.getElementById('drawer')
     var lastY = window.scrollY || 0
     var compact = false
+    // accumulated direction so a few stray pixels never flip the bar
+    var drift = 0
+    var ticking = false
 
-    var onScroll = function () {
+    var paint = function () {
+      ticking = false
       if (!bar) return
       var y = window.scrollY || 0
+      var dy = y - lastY
       bar.setAttribute('data-scrolled', String(y > 8))
 
-      if (y < 28) {
+      if (y < 40) {
         compact = false
-      } else if (y > lastY + 4 && y > 70) {
-        compact = true
-      } else if (y < lastY - 4) {
-        compact = false
+        drift = 0
+      } else if (dy > 0) {
+        drift = Math.max(drift, 0) + dy
+        if (drift > 26) {
+          compact = true
+          drift = 0
+        }
+      } else if (dy < 0) {
+        drift = Math.min(drift, 0) + dy
+        if (drift < -34) {
+          compact = false
+          drift = 0
+        }
       }
+
       bar.setAttribute('data-compact', String(compact))
       lastY = y
     }
 
+    var onScroll = function () {
+      if (ticking) return
+      ticking = true
+      window.requestAnimationFrame(paint)
+    }
+
     window.addEventListener('scroll', onScroll, { passive: true })
     window.addEventListener('resize', onScroll)
-    onScroll()
+    paint()
 
     if (burger && drawer) {
       burger.addEventListener('click', function () {
@@ -48,25 +69,196 @@
       })
     }
 
-    // Mega menu: keep aria-expanded in sync for keyboard users
-    Array.prototype.forEach.call(document.querySelectorAll('.nav-item'), function (item) {
-      var trigger = item.querySelector('.nav-item__trigger')
-      if (!trigger) return
-      item.addEventListener('mouseenter', function () {
-        trigger.setAttribute('aria-expanded', 'true')
-      })
-      item.addEventListener('mouseleave', function () {
-        trigger.setAttribute('aria-expanded', 'false')
-      })
-      trigger.addEventListener('click', function () {
-        var open = trigger.getAttribute('aria-expanded') !== 'true'
-        trigger.setAttribute('aria-expanded', String(open))
-        item.classList.toggle('is-open', open)
-      })
-    })
+    megaMenus()
 
     var year = document.getElementById('year')
     if (year) year.textContent = String(new Date().getFullYear())
+  }
+
+  /* ---------- mega menu: hover bridge + leave delay + click to pin ---------- */
+
+  var MEGA_LEAVE_DELAY = 180
+
+  function megaMenus() {
+    var items = document.querySelectorAll('.nav-item')
+    if (!items.length) return
+
+    var closeTimer = null
+
+    var setOpen = function (item, open) {
+      var trigger = item.querySelector('.nav-item__trigger')
+      item.classList.toggle('is-open', open)
+      if (trigger) trigger.setAttribute('aria-expanded', String(open))
+      if (open) {
+        item.removeAttribute('data-closed')
+      } else {
+        item.removeAttribute('data-pinned')
+        item.setAttribute('data-closed', 'true')
+      }
+    }
+
+    var closeAll = function (except) {
+      Array.prototype.forEach.call(items, function (item) {
+        if (item === except) return
+        setOpen(item, false)
+      })
+    }
+
+    var open = function (item) {
+      if (closeTimer) {
+        clearTimeout(closeTimer)
+        closeTimer = null
+      }
+      closeAll(item)
+      setOpen(item, true)
+    }
+
+    var scheduleClose = function (item) {
+      if (closeTimer) clearTimeout(closeTimer)
+      closeTimer = setTimeout(function () {
+        closeTimer = null
+        if (item.getAttribute('data-pinned') === 'true') return
+        if (item.matches(':hover') || item.contains(document.activeElement)) return
+        setOpen(item, false)
+      }, MEGA_LEAVE_DELAY)
+    }
+
+    Array.prototype.forEach.call(items, function (item) {
+      var trigger = item.querySelector('.nav-item__trigger')
+      var mega = item.querySelector('.mega')
+      if (!trigger || !mega) return
+
+      item.addEventListener('mouseenter', function () {
+        open(item)
+      })
+
+      item.addEventListener('mouseleave', function () {
+        scheduleClose(item)
+      })
+
+      // Click pins the menu open so it survives a wandering cursor
+      trigger.addEventListener('click', function (e) {
+        e.preventDefault()
+        e.stopPropagation()
+        var pinned = item.getAttribute('data-pinned') === 'true'
+        if (pinned) {
+          setOpen(item, false)
+          return
+        }
+        open(item)
+        item.setAttribute('data-pinned', 'true')
+      })
+
+      mega.addEventListener('click', function (e) {
+        if (e.target.closest('a')) setOpen(item, false)
+      })
+
+      item.addEventListener('focusin', function () {
+        open(item)
+      })
+
+      item.addEventListener('focusout', function () {
+        scheduleClose(item)
+      })
+    })
+
+    document.addEventListener('click', function (e) {
+      if (e.target.closest && e.target.closest('.nav-item')) return
+      closeAll()
+    })
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== 'Escape') return
+      closeAll()
+    })
+  }
+
+  /* ---------- workflow timeline: scroll-linked light on the line ---------- */
+
+  function timeline() {
+    var stream = document.getElementById('timeline-stream')
+    if (!stream) return
+
+    var beam = stream.querySelector('.timeline__beam')
+    var cards = Array.prototype.slice.call(stream.querySelectorAll('.tl-card'))
+    var links = Array.prototype.slice.call(document.querySelectorAll('.timeline__dots a'))
+    if (!beam || cards.length < 2) return
+
+    var reduced =
+      window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+    var dotOf = function (card) {
+      return card.querySelector('.tl-card__mark span') || card
+    }
+
+    var span = { top: 28, len: 0 }
+    var ticking = false
+
+    // Pin the beam between the first and last step dots so the light lines
+    // up with the markers instead of the raw card box.
+    var measure = function () {
+      var streamTop = stream.getBoundingClientRect().top
+      var firstRect = dotOf(cards[0]).getBoundingClientRect()
+      var lastRect = dotOf(cards[cards.length - 1]).getBoundingClientRect()
+      var start = firstRect.top - streamTop + firstRect.height / 2
+      var end = lastRect.top - streamTop + lastRect.height / 2
+      span.top = start
+      span.len = Math.max(end - start, 1)
+      beam.style.setProperty('--tl-top', span.top + 'px')
+      beam.style.setProperty('--tl-len', span.len + 'px')
+    }
+
+    var paint = function () {
+      ticking = false
+      if (reduced) return
+
+      measure()
+      var streamTop = stream.getBoundingClientRect().top
+      // reference line sits just above centre of the viewport
+      var mark = window.innerHeight * 0.46
+      var progress = (mark - streamTop - span.top) / span.len
+      var p = Math.min(1, Math.max(0, progress))
+
+      beam.style.setProperty('--tl-p', String(p))
+      stream.setAttribute('data-lit', String(progress > -0.15 && progress < 1.35))
+
+      // active card = last one whose dot the light has reached
+      var activeIndex = -1
+      cards.forEach(function (card, i) {
+        var rect = dotOf(card).getBoundingClientRect()
+        if (rect.top + rect.height / 2 <= mark + 8) activeIndex = i
+      })
+      if (activeIndex < 0 && streamTop < mark) activeIndex = 0
+
+      cards.forEach(function (card, i) {
+        card.setAttribute('data-lit', String(i <= activeIndex))
+        card.setAttribute('data-active', String(i === activeIndex))
+      })
+
+      links.forEach(function (link, i) {
+        link.classList.toggle('is-active', i === activeIndex)
+      })
+    }
+
+    var onScroll = function () {
+      if (ticking) return
+      ticking = true
+      window.requestAnimationFrame(paint)
+    }
+
+    measure()
+
+    if (reduced) {
+      beam.style.setProperty('--tl-p', '1')
+      cards.forEach(function (card) {
+        card.setAttribute('data-lit', 'true')
+      })
+      return
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('resize', onScroll)
+    paint()
   }
 
   function heroMotion() {
@@ -701,6 +893,7 @@
   function init() {
     chrome()
     heroMotion()
+    timeline()
     reveal()
     stealth()
     brandPreview()
