@@ -9,15 +9,10 @@
 
   function chrome() {
     var bar = document.getElementById('topbar')
-    var progress = document.getElementById('progress')
     var burger = document.getElementById('burger')
     var drawer = document.getElementById('drawer')
 
     var onScroll = function () {
-      var doc = document.documentElement
-      var max = doc.scrollHeight - window.innerHeight
-      var ratio = max > 0 ? window.scrollY / max : 0
-      if (progress) progress.style.width = (ratio * 100).toFixed(2) + '%'
       if (bar) bar.setAttribute('data-scrolled', String(window.scrollY > 8))
     }
 
@@ -43,8 +38,45 @@
     if (year) year.textContent = String(new Date().getFullYear())
   }
 
+  function heroMotion() {
+    var pin = document.getElementById('hero-stage')
+    var copy = document.getElementById('hero-copy')
+    if (!pin || !copy) return
+
+    var reduced =
+      window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (reduced) {
+      pin.style.setProperty('--p', '1')
+      copy.setAttribute('data-faded', 'false')
+      return
+    }
+
+    var ticking = false
+    var update = function () {
+      ticking = false
+      var rect = pin.getBoundingClientRect()
+      var travel = Math.max(pin.offsetHeight - window.innerHeight, 1)
+      var raw = (-rect.top) / travel
+      // Finish expand ~58% through the pin so the full window holds sticky longer
+      var p = Math.min(1, Math.max(0, raw / 0.58))
+      var eased = 1 - Math.pow(1 - p, 1.15)
+      pin.style.setProperty('--p', String(eased))
+      copy.setAttribute('data-faded', String(eased > 0.52))
+    }
+
+    var onScroll = function () {
+      if (ticking) return
+      ticking = true
+      window.requestAnimationFrame(update)
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('resize', onScroll)
+    update()
+  }
+
   function reveal() {
-    var nodes = document.querySelectorAll('[data-reveal]')
+    var nodes = document.querySelectorAll('[data-reveal], [data-reveal-stagger]')
     if (!('IntersectionObserver' in window)) {
       Array.prototype.forEach.call(nodes, function (n) {
         n.setAttribute('data-shown', 'true')
@@ -59,7 +91,7 @@
           io.unobserve(entry.target)
         })
       },
-      { rootMargin: '0px 0px -8% 0px', threshold: 0.12 }
+      { rootMargin: '0px 0px -10% 0px', threshold: 0.12 }
     )
     Array.prototype.forEach.call(nodes, function (n) {
       io.observe(n)
@@ -324,6 +356,7 @@
 
   function init() {
     chrome()
+    heroMotion()
     reveal()
     stealth()
     brandPreview()

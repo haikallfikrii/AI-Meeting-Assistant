@@ -7,3 +7,4 @@ out
 .env
 apps/api/data
 apps/api/dist
+web/landing/.shots
