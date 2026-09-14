@@ -6,7 +6,7 @@
     <title>Kalfi — live answers in interviews and client calls, on your own API key</title>
     <meta
       name="description"
-      content="Kalfi is a macOS overlay that listens to your call, catches the question, and writes a line you can say out loud. Free with your own OpenAI or OpenRouter key, or $12/mo hosted."
+      content="Kalfi is a macOS overlay that listens to your call, catches the question, and writes a line you can say out loud. BYOK $14/mo or Hosted AI $19/mo — vs ~$150 tools."
     />
     <link rel="canonical" href="https://ai.chatlm.tech/" />
     <meta name="theme-color" content="#080a0f" />
@@ -14,7 +14,7 @@
     <meta property="og:title" content="Kalfi — live answers in interviews and client calls" />
     <meta
       property="og:description"
-      content="Bring your own OpenAI or OpenRouter key and the app stays free. Interview, client meeting and chat modes with session memory."
+      content="Stealth desktop copilot with custom branding. $14 BYOK or $19 hosted — a fraction of Final Round at ~$150/mo."
     />
     <meta property="og:url" content="https://ai.chatlm.tech/" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -33,8 +33,9 @@
         "operatingSystem": "macOS",
         "description": "Real-time AI copilot for interviews and client meetings with bring-your-own-key support.",
         "offers": [
-          { "@type": "Offer", "name": "Free (BYOK)", "price": "0", "priceCurrency": "USD" },
-          { "@type": "Offer", "name": "Pro (hosted)", "price": "12", "priceCurrency": "USD" }
+          { "@type": "Offer", "name": "BYOK", "price": "14", "priceCurrency": "USD" },
+          { "@type": "Offer", "name": "Hosted", "price": "19", "priceCurrency": "USD" },
+          { "@type": "Offer", "name": "Team", "price": "49", "priceCurrency": "USD" }
         ]
       }
     </script>
@@ -57,6 +58,7 @@
           <a href="#cost">Cost</a>
           <a href="#pricing">Pricing</a>
           <a href="#compare">Compare</a>
+          <a href="blog/">Blog</a>
         </nav>
         <div class="topbar__actions">
           <a class="btn btn--line btn--sm" href="#download">Download</a>
@@ -74,6 +76,7 @@
         <a href="#cost">Cost</a>
         <a href="#pricing">Pricing</a>
         <a href="#compare">Compare</a>
+        <a href="blog/">Blog</a>
         <a href="#download">Download</a>
       </div>
       <div class="topbar__progress" id="progress"></div>
@@ -85,12 +88,12 @@
       <!-- HERO + LIVE DEMO -->
       <section class="shell hero" id="demo">
         <div>
-          <span class="tagline">macOS overlay · BYOK</span>
+          <span class="tagline">macOS overlay · $14 BYOK</span>
           <h1>The answer is on screen before the pause gets awkward.</h1>
           <p class="hero__lead">
             Kalfi listens to your call from your own Mac, catches the question, and writes one line
-            you can actually say out loud. Point it at your own OpenAI or OpenRouter key and the app
-            costs nothing to run.
+            you can actually say out loud. BYOK is $14/mo with your OpenAI or OpenRouter key — or $19
+            if we host the models. Final Round lists around $150.
           </p>
           <div class="hero__cta">
             <a class="btn btn--solid" href="#download">Download for Mac</a>
@@ -233,8 +236,8 @@
           <span class="tagline">Stealth</span>
           <h2>Flip the switch and watch it leave the shared screen.</h2>
           <p>
-            Kalfi uses a panel window with content protection and no meeting bot. Toggle stealth off
-            below to see exactly what you would be leaking without it.
+            Same Google Meet call, same Kalfi overlay you actually run. Content protection keeps the
+            panel off the shared screen — toggle stealth off to see what you would leak without it.
           </p>
         </div>
 
@@ -247,44 +250,129 @@
             </label>
           </div>
 
-          <div class="stealth" data-reveal>
-            <div class="screenmock">
-              <div class="screenmock__tag">
-                <span>What the room sees — shared screen</span>
-                <span id="leak-tag" class="dim">clean</span>
-              </div>
-              <div class="tiles">
-                <div class="tile tile--active">
-                  <span class="tile__av">HK</span>
-                  <span>You (presenting)</span>
+          <div class="stealth-lab" data-reveal>
+            <!-- Shared screen: Meet only -->
+            <div class="desk" id="desk-shared">
+              <span class="desk__caption" id="leak-tag">Shared screen · clean</span>
+              <div class="meet">
+                <div class="meet__top">
+                  <span><strong>Checkout sync — Sprint 14</strong> · meet.google.com</span>
+                  <span>11:42 AM | 42:18</span>
                 </div>
-                <div class="tile"><span class="tile__av">RN</span><span>Rina</span></div>
-                <div class="tile"><span class="tile__av">DV</span><span>David</span></div>
-                <div class="tile"><span class="tile__av">AM</span><span>Amir</span></div>
+                <div class="meet__grid">
+                  <div class="meet__tile meet__tile--speak">
+                    <div class="meet__face"><span class="meet__av meet__av--a">HK</span></div>
+                    <span class="meet__name">You (presenting)</span>
+                    <span class="meet__mic">on</span>
+                  </div>
+                  <div class="meet__tile">
+                    <div class="meet__face"><span class="meet__av meet__av--b">RN</span></div>
+                    <span class="meet__name">Rina · Product</span>
+                    <span class="meet__mic">on</span>
+                  </div>
+                  <div class="meet__tile">
+                    <div class="meet__face"><span class="meet__av meet__av--c">DV</span></div>
+                    <span class="meet__name">David · Eng</span>
+                    <span class="meet__mic meet__mic--off">off</span>
+                  </div>
+                  <div class="meet__tile">
+                    <div class="meet__face"><span class="meet__av meet__av--d">AM</span></div>
+                    <span class="meet__name">Amir · Design</span>
+                    <span class="meet__mic">on</span>
+                  </div>
+                </div>
+                <div class="meet__bar">
+                  <span class="meet__btn" aria-label="Microphone">Mic</span>
+                  <span class="meet__btn" aria-label="Camera">Cam</span>
+                  <span class="meet__btn" aria-label="Captions">CC</span>
+                  <span class="meet__btn" aria-label="Raise hand">Hand</span>
+                  <span class="meet__btn" aria-label="Present">Share</span>
+                  <span class="meet__btn meet__btn--end">Leave</span>
+                </div>
               </div>
-              <div class="overlay-card" id="leak-card" data-shown="false">
-                <strong>Kalfi · suggested reply</strong>
-                We can ship checkout by the 30th if scope stays card plus receipt email.
+              <div class="kalfi-float" id="leak-card" data-shown="false">
+                <div class="kalfi-float__bar">
+                  <span class="appwin__lights"><i></i><i></i><i></i></span>
+                  <span class="kalfi-float__title">Kalfi — live session</span>
+                  <span class="kalfi-float__live"><span class="pulse"></span>drafting</span>
+                </div>
+                <div class="kalfi-float__tabs">
+                  <span>Interview</span>
+                  <span class="is-on">Client meeting</span>
+                  <span>Chat</span>
+                </div>
+                <div class="kalfi-float__body">
+                  <div class="kalfi-float__label">Suggested reply</div>
+                  <div class="kalfi-float__ans">
+                    We can ship checkout by the 30th if scope stays card plus receipt email.
+                  </div>
+                  <div class="kalfi-float__meta">client · balanced · neutral · ~8s to say</div>
+                </div>
               </div>
             </div>
 
-            <div class="screenmock">
-              <div class="screenmock__tag">
-                <span>What you see — your display</span>
-                <span class="dim">overlay on top</span>
-              </div>
-              <div class="tiles">
-                <div class="tile tile--active">
-                  <span class="tile__av">HK</span>
-                  <span>You (presenting)</span>
+            <!-- Your display: Meet + Kalfi -->
+            <div class="desk">
+              <span class="desk__caption">Your display · overlay on top</span>
+              <div class="meet">
+                <div class="meet__top">
+                  <span><strong>Checkout sync — Sprint 14</strong> · meet.google.com</span>
+                  <span>11:42 AM | 42:18</span>
                 </div>
-                <div class="tile"><span class="tile__av">RN</span><span>Rina</span></div>
-                <div class="tile"><span class="tile__av">DV</span><span>David</span></div>
-                <div class="tile"><span class="tile__av">AM</span><span>Amir</span></div>
+                <div class="meet__grid">
+                  <div class="meet__tile meet__tile--speak">
+                    <div class="meet__face"><span class="meet__av meet__av--a">HK</span></div>
+                    <span class="meet__name">You (presenting)</span>
+                    <span class="meet__mic">on</span>
+                  </div>
+                  <div class="meet__tile">
+                    <div class="meet__face"><span class="meet__av meet__av--b">RN</span></div>
+                    <span class="meet__name">Rina · Product</span>
+                    <span class="meet__mic">on</span>
+                  </div>
+                  <div class="meet__tile">
+                    <div class="meet__face"><span class="meet__av meet__av--c">DV</span></div>
+                    <span class="meet__name">David · Eng</span>
+                    <span class="meet__mic meet__mic--off">off</span>
+                  </div>
+                  <div class="meet__tile">
+                    <div class="meet__face"><span class="meet__av meet__av--d">AM</span></div>
+                    <span class="meet__name">Amir · Design</span>
+                    <span class="meet__mic">on</span>
+                  </div>
+                </div>
+                <div class="meet__bar">
+                  <span class="meet__btn" aria-label="Microphone">Mic</span>
+                  <span class="meet__btn" aria-label="Camera">Cam</span>
+                  <span class="meet__btn" aria-label="Captions">CC</span>
+                  <span class="meet__btn" aria-label="Raise hand">Hand</span>
+                  <span class="meet__btn" aria-label="Present">Share</span>
+                  <span class="meet__btn meet__btn--end">Leave</span>
+                </div>
               </div>
-              <div class="overlay-card" data-shown="true">
-                <strong>Kalfi · suggested reply</strong>
-                We can ship checkout by the 30th if scope stays card plus receipt email.
+              <div class="kalfi-float" data-shown="true">
+                <div class="kalfi-float__bar">
+                  <span class="appwin__lights"><i></i><i></i><i></i></span>
+                  <span class="kalfi-float__title">Kalfi — live session</span>
+                  <span class="kalfi-float__live"><span class="pulse"></span>listening</span>
+                </div>
+                <div class="kalfi-float__tabs">
+                  <span>Interview</span>
+                  <span class="is-on">Client meeting</span>
+                  <span>Chat</span>
+                </div>
+                <div class="kalfi-float__body">
+                  <div class="kalfi-float__label">Live transcript</div>
+                  <p class="kalfi-float__q">
+                    <strong style="color: var(--fg-faint)">Rina</strong> — Can checkout ship before
+                    the campaign on the 30th?
+                  </p>
+                  <div class="kalfi-float__label">Suggested reply</div>
+                  <div class="kalfi-float__ans">
+                    We can ship checkout by the 30th if scope stays card plus receipt email.
+                  </div>
+                  <div class="kalfi-float__meta">client · balanced · neutral · ~8s to say</div>
+                </div>
               </div>
             </div>
           </div>
@@ -302,9 +390,9 @@
           <span class="tagline">Personal stealth</span>
           <h2>Make it look like Notes — not like an AI copilot.</h2>
           <p>
-            Competitors hide the dock icon and still light up Activity Monitor as Cluely, Final Round,
-            or Parakeet. Kalfi lets you set your own display name and logo, so the overlay and process
-            title look like any boring Mac utility you choose.
+            Competitors hide the dock icon and still appear in Activity Monitor under brand names like
+            Cluely, Final Round, or Parakeet. Kalfi lets you set your own display name and logo, so the
+            overlay and process title look like a boring Mac utility you chose — not a known AI brand.
           </p>
         </div>
 
@@ -359,23 +447,90 @@
                 </div>
               </div>
 
-              <div class="am-panel">
-                <div class="am-panel__head">Activity Monitor · CPU</div>
-                <div class="am-row am-row--rival">
-                  <span>Cluely</span>
-                  <span class="am-tag am-tag--bad">detectable</span>
+              <div class="am-mac" aria-label="Activity Monitor preview">
+                <div class="am-mac__titlebar">
+                  <span class="am-mac__lights"><i></i><i></i><i></i></span>
+                  <span class="am-mac__win-title">Activity Monitor</span>
                 </div>
-                <div class="am-row am-row--rival">
-                  <span>Final Round AI</span>
-                  <span class="am-tag am-tag--bad">detectable</span>
+                <div class="am-mac__toolbar">
+                  <span>View ▾</span>
+                  <span>All Processes</span>
+                  <div class="am-mac__tabs">
+                    <span class="is-on">CPU</span>
+                    <span>Memory</span>
+                    <span>Energy</span>
+                    <span>Disk</span>
+                    <span>Network</span>
+                  </div>
                 </div>
-                <div class="am-row am-row--rival">
-                  <span>ParakeetAI</span>
-                  <span class="am-tag am-tag--bad">detectable</span>
-                </div>
-                <div class="am-row am-row--you">
-                  <span id="brand-am-name">Notes Helper</span>
-                  <span class="am-tag am-tag--ok">your name</span>
+                <table class="am-mac__table">
+                  <thead>
+                    <tr>
+                      <th>Process Name</th>
+                      <th>% CPU</th>
+                      <th>CPU Time</th>
+                      <th>Threads</th>
+                      <th>PID</th>
+                      <th>User</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr class="is-warn">
+                      <td>Cluely <span class="am-mac__pill am-mac__pill--bad">brand name</span></td>
+                      <td>12.4</td>
+                      <td>00:04:12</td>
+                      <td>28</td>
+                      <td>1842</td>
+                      <td>you</td>
+                    </tr>
+                    <tr class="is-warn">
+                      <td>Final Round AI <span class="am-mac__pill am-mac__pill--bad">brand name</span></td>
+                      <td>9.1</td>
+                      <td>00:02:48</td>
+                      <td>22</td>
+                      <td>2011</td>
+                      <td>you</td>
+                    </tr>
+                    <tr class="is-warn">
+                      <td>ParakeetAI <span class="am-mac__pill am-mac__pill--bad">brand name</span></td>
+                      <td>7.6</td>
+                      <td>00:01:55</td>
+                      <td>19</td>
+                      <td>2204</td>
+                      <td>you</td>
+                    </tr>
+                    <tr class="is-hot">
+                      <td>
+                        <span id="brand-am-name">Notes Helper</span>
+                        <span class="am-mac__pill am-mac__pill--ok">your brand</span>
+                      </td>
+                      <td>3.2</td>
+                      <td>00:00:41</td>
+                      <td>14</td>
+                      <td>3188</td>
+                      <td>you</td>
+                    </tr>
+                    <tr>
+                      <td>Google Chrome Helper</td>
+                      <td>4.8</td>
+                      <td>01:12:03</td>
+                      <td>16</td>
+                      <td>902</td>
+                      <td>you</td>
+                    </tr>
+                    <tr>
+                      <td>WindowServer</td>
+                      <td>2.1</td>
+                      <td>18:04:22</td>
+                      <td>8</td>
+                      <td>156</td>
+                      <td>root</td>
+                    </tr>
+                  </tbody>
+                </table>
+                <div class="am-mac__foot">
+                  <span>CPU Load: User 18% · System 7% · Idle 75%</span>
+                  <span>Processes: 412 · Threads: 2,184</span>
                 </div>
               </div>
             </div>
@@ -391,11 +546,11 @@
       <!-- COST CALCULATOR -->
       <section class="band" id="cost">
         <div class="shell band__head" data-reveal>
-          <span class="tagline">Bring your own key</span>
+          <span class="tagline">Real monthly cost</span>
           <h2>Do the maths before you sign a $150 subscription.</h2>
           <p>
-            With BYOK you pay the model, not a middleman. Move the sliders to see what your month
-            actually costs against the plans everyone else sells.
+            Final Round markets around $150/mo for live help. Kalfi BYOK is $14 plus your own model
+            spend — or $19 flat if we host the models. Move the sliders.
           </p>
         </div>
 
@@ -420,7 +575,7 @@
 
               <div class="field">
                 <div class="field__top">
-                  <label for="calc-model">Model on your key</label>
+                  <label for="calc-model">Model on your key (BYOK path)</label>
                 </div>
                 <select id="calc-model"></select>
               </div>
@@ -441,29 +596,29 @@
               <div class="bars">
                 <div class="bar bar--you">
                   <div class="bar__top">
-                    <span>Kalfi Free · your key</span>
+                    <span>Kalfi BYOK · $14 + your key</span>
                     <span class="bar__amount" id="bar-byok-amt">$0.00</span>
                   </div>
                   <div class="bar__track"><div class="bar__fill" id="bar-byok"></div></div>
-                  <p class="bar__note" id="byok-detail">estimated provider spend</p>
+                  <p class="bar__note" id="byok-detail">$14 plan + estimated provider spend</p>
                 </div>
 
                 <div class="bar bar--pro">
                   <div class="bar__top">
-                    <span>Kalfi Pro · hosted</span>
-                    <span class="bar__amount">$12.00</span>
+                    <span>Kalfi Hosted · our models</span>
+                    <span class="bar__amount">$19.00</span>
                   </div>
                   <div class="bar__track"><div class="bar__fill" id="bar-pro"></div></div>
-                  <p class="bar__note">flat, no key setup, quota included</p>
+                  <p class="bar__note">flat — no key setup, quota included</p>
                 </div>
 
                 <div class="bar">
                   <div class="bar__top">
-                    <span>Final Round AI · Pro</span>
-                    <span class="bar__amount">$25.00</span>
+                    <span>Final Round AI</span>
+                    <span class="bar__amount">$150.00</span>
                   </div>
                   <div class="bar__track"><div class="bar__fill" id="bar-frai"></div></div>
-                  <p class="bar__note">list entry price for live sessions</p>
+                  <p class="bar__note">list monthly price for live sessions</p>
                 </div>
 
                 <div class="bar">
@@ -479,9 +634,9 @@
               <p class="verdict" id="verdict"></p>
 
               <p class="assumptions">
-                Assumes ~0.8 answered questions per minute, ~900 input and ~220 output tokens per
-                answer. Token prices are public list rates and change often — treat this as an
-                estimate, then check your provider dashboard.
+                BYOK total = $14 Kalfi plan + provider tokens/STT. Hosted is a flat $19. Assumes ~0.8
+                answered questions per minute, ~900 input and ~220 output tokens per answer. Token
+                prices change — treat this as an estimate.
               </p>
             </div>
           </div>
@@ -492,10 +647,10 @@
       <section class="band" id="pricing">
         <div class="shell band__head" data-reveal>
           <span class="tagline">Pricing</span>
-          <h2>Two doors. Neither one is a trial that expires on you.</h2>
+          <h2>Three clear packs. Still a fraction of $150 tools.</h2>
           <p>
-            Technical users bring a key and stay free. Everyone else pays a flat fee and never sees a
-            provider dashboard.
+            Bring your own key for $14, let us host models for $19, or run a small team on one bill.
+            Cancel any time in Stripe.
           </p>
         </div>
 
@@ -503,42 +658,67 @@
           <div class="plans" data-reveal>
             <article class="plan">
               <div class="plan__top">
-                <h3>Free</h3>
-                <span class="chip chip--signal">BYOK</span>
+                <h3>BYOK</h3>
+                <span class="chip chip--signal">Your key</span>
               </div>
-              <div class="plan__price">$0<span> / forever</span></div>
+              <div class="plan__price">$14<span> / month</span></div>
               <p class="plan__desc">
-                The full desktop app. You pay your provider directly for what you use.
+                Full desktop app. You pay OpenAI or OpenRouter directly for usage on top.
               </p>
               <ul class="plan__feats">
                 <li>Interview, client meeting and chat modes</li>
                 <li>System + mic capture, Ask and Mic Ask</li>
                 <li>Custom display name + logo (stealth branding)</li>
                 <li>Meeting summaries and project threads</li>
-                <li>OpenAI, OpenRouter or any compatible base URL</li>
-                <li>Key encrypted on device, never sent to us</li>
+                <li>OpenAI, OpenRouter or compatible base URL</li>
+                <li>Key encrypted on device</li>
               </ul>
-              <a class="btn btn--line" href="#download">Download the app</a>
+              <button class="btn btn--line" type="button" data-subscribe data-plan="byok">
+                Start BYOK
+              </button>
             </article>
 
             <article class="plan plan--hi">
               <div class="plan__top">
-                <h3>Pro</h3>
-                <span class="chip">Hosted</span>
+                <h3>Hosted</h3>
+                <span class="chip">Our AI</span>
               </div>
-              <div class="plan__price">$12<span> / month</span></div>
+              <div class="plan__price">$19<span> / month</span></div>
               <p class="plan__desc">
-                No key, no provider account. We carry the model bill and the setup.
+                No provider account. We carry chat + transcription with a fair monthly quota.
               </p>
               <ul class="plan__feats">
-                <li>Everything in Free</li>
-                <li>Hosted chat and transcription through our API</li>
+                <li>Everything in BYOK</li>
+                <li>Hosted models through our API</li>
                 <li>Login on any Mac you own</li>
-                <li>Cancel or change card in Stripe portal</li>
-                <li>Monthly fair-use quota, shown in app</li>
+                <li>Quota shown in-app</li>
+                <li>Stripe customer portal</li>
               </ul>
-              <button class="btn btn--accent" type="button" data-subscribe>Subscribe with Stripe</button>
+              <button class="btn btn--accent" type="button" data-subscribe data-plan="hosted">
+                Subscribe Hosted
+              </button>
               <p class="note" id="pro-note" style="margin-top: 12px"></p>
+            </article>
+
+            <article class="plan">
+              <div class="plan__top">
+                <h3>Team</h3>
+                <span class="chip">3 seats</span>
+              </div>
+              <div class="plan__price">$49<span> / month</span></div>
+              <p class="plan__desc">
+                Three Hosted seats on one invoice — for agencies and interview coaches.
+              </p>
+              <ul class="plan__feats">
+                <li>3× Hosted seats</li>
+                <li>Shared billing portal</li>
+                <li>Stealth branding per seat</li>
+                <li>Priority setup help</li>
+                <li>Need more seats? Contact us</li>
+              </ul>
+              <a class="btn btn--line" href="mailto:hello@chatlm.tech?subject=Kalfi%20Team%20plan"
+                >Talk to us</a
+              >
             </article>
           </div>
         </div>
@@ -575,20 +755,20 @@
                   <td class="is-us">Settings → your brand</td>
                 </tr>
                 <tr>
-                  <td class="row-label">Activity Monitor fingerprint</td>
-                  <td>Recognizable name</td>
-                  <td>Recognizable name</td>
-                  <td>Recognizable name</td>
-                  <td>Recognizable name</td>
-                  <td class="is-us">Shows your display name</td>
+                  <td class="row-label">Process list name</td>
+                  <td>Recognizable brand</td>
+                  <td>Recognizable brand</td>
+                  <td>Recognizable brand</td>
+                  <td>Recognizable brand</td>
+                  <td class="is-us">Your custom display name</td>
                 </tr>
                 <tr>
                   <td class="row-label">Live in-call answers</td>
-                  <td>Pro plan only</td>
+                  <td>Paid plan</td>
                   <td>Subscription or credits</td>
                   <td>Assist shortcut</td>
                   <td>After free session</td>
-                  <td class="is-us">Free with your key</td>
+                  <td class="is-us">BYOK or Hosted</td>
                 </tr>
                 <tr>
                   <td class="row-label">Bring your own key</td>
@@ -596,7 +776,7 @@
                   <td class="dim">not offered</td>
                   <td class="dim">not offered</td>
                   <td class="dim">not offered</td>
-                  <td class="is-us">Primary path</td>
+                  <td class="is-us">$14 / mo plan</td>
                 </tr>
                 <tr>
                   <td class="row-label">Client / sales meetings</td>
@@ -616,11 +796,11 @@
                 </tr>
                 <tr>
                   <td class="row-label">Entry price</td>
-                  <td>~$25 / mo</td>
+                  <td>~$150 / mo</td>
                   <td>~$149.90 / mo</td>
                   <td>Paid plans</td>
                   <td>Paid after trial</td>
-                  <td class="is-us">$0 or $12 / mo</td>
+                  <td class="is-us">$14 BYOK · $19 Hosted</td>
                 </tr>
               </tbody>
             </table>
@@ -709,6 +889,8 @@
       <div class="shell foot__row">
         <span>© <span id="year">2026</span> Kalfi — desktop AI for interviews and meetings.</span>
         <span>
+          <a href="blog/">Blog</a>
+          ·
           <a href="https://github.com/haikallfikrii/AI-Meeting-Assistant" target="_blank" rel="noopener"
             >Source</a
           >
@@ -719,11 +901,12 @@
 
     <script>
       window.KALFI_CONFIG = {
-        // Set once apps/api is live behind HTTPS, e.g. "https://api.chatlm.tech"
-        apiBaseUrl: '',
-        // Stripe price id for the Pro plan, e.g. "price_123"
+        apiBaseUrl: 'https://api.srv835792.hstgr.cloud',
         stripePriceId: '',
-        proPrice: 12
+        byokPrice: 14,
+        hostedPrice: 19,
+        teamPrice: 49,
+        proPrice: 19
       }
     </script>
     <script src="js/demo.js" defer></script>
