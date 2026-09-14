@@ -53,11 +53,13 @@
         <nav class="topnav" aria-label="Primary">
           <a href="#demo">Demo</a>
           <a href="#flow">How it works</a>
+          <a href="#install">Install</a>
           <a href="#stealth">Stealth</a>
           <a href="#brand">Brand</a>
           <a href="#cost">Cost</a>
           <a href="#pricing">Pricing</a>
           <a href="#compare">Compare</a>
+          <a href="#faq">FAQ</a>
           <a href="blog/">Blog</a>
         </nav>
         <div class="topbar__actions">
@@ -71,11 +73,13 @@
       <div class="shell drawer" id="drawer" data-open="false">
         <a href="#demo">Demo</a>
         <a href="#flow">How it works</a>
+        <a href="#install">Install</a>
         <a href="#stealth">Stealth</a>
         <a href="#brand">Brand</a>
         <a href="#cost">Cost</a>
         <a href="#pricing">Pricing</a>
         <a href="#compare">Compare</a>
+        <a href="#faq">FAQ</a>
         <a href="blog/">Blog</a>
         <a href="#download">Download</a>
       </div>
@@ -854,8 +858,137 @@
         </div>
       </section>
 
+      <!-- HOW TO INSTALL -->
+      <section class="band band--tight" id="install">
+        <div class="shell band__head" data-reveal>
+          <span class="tagline">First-time setup</span>
+          <h2>How to install Kalfi (beginner-friendly).</h2>
+          <p>
+            You do not need to be a developer. Follow the steps for your computer. On Mac, Apple may
+            show a scary “damaged” warning — that is normal for our unsigned build, and the fix is
+            below.
+          </p>
+        </div>
+
+        <div class="shell install-grid" data-reveal data-reveal-stagger>
+          <article class="install-card" id="install-mac">
+            <h3>Mac (macOS)</h3>
+            <p class="install-card__lead">
+              Use the file named like <code>kalfi-…-mac.dmg</code> (not the older name without
+              <code>-mac</code>).
+            </p>
+
+            <h4>1. Download &amp; open the installer</h4>
+            <ol class="install-steps">
+              <li>Click <strong>Download for Mac</strong> on this page (or the macOS chip).</li>
+              <li>Wait until the download finishes. In Chrome/Safari, check the downloads arrow or the Downloads folder.</li>
+              <li>Double-click the <code>.dmg</code> file. A small window opens with the Kalfi icon.</li>
+              <li>Drag the <strong>Kalfi</strong> icon onto the <strong>Applications</strong> folder icon in that window.</li>
+              <li>Wait a few seconds. Then open <strong>Finder → Applications</strong> and look for Kalfi.</li>
+            </ol>
+
+            <h4>2. If Mac says “Kalfi is damaged and can’t be opened”</h4>
+            <p>
+              This does <strong>not</strong> mean the file is broken. macOS is blocking apps that are
+              not signed by Apple yet. Try <strong>Method A</strong> first (no Terminal).
+            </p>
+
+            <div class="install-callout">
+              <p class="install-callout__title">Method A — Privacy &amp; Security (easiest)</p>
+              <ol class="install-steps">
+                <li>Open <strong>System Settings</strong> (Apple menu  at the top-left → System Settings).</li>
+                <li>Click <strong>Privacy &amp; Security</strong> in the left sidebar.</li>
+                <li>Scroll down to the <strong>Security</strong> section.</li>
+                <li>
+                  If you see a message about Kalfi being blocked, click
+                  <strong>Open Anyway</strong>.
+                </li>
+                <li>Confirm with <strong>Open Anyway</strong> / enter your Mac password if asked.</li>
+                <li>Go back to <strong>Applications</strong> and open Kalfi again.</li>
+              </ol>
+              <p class="install-note">
+                Tip: the “Open Anyway” button often appears only <em>after</em> you tried to open
+                Kalfi once and got the damaged warning.
+              </p>
+            </div>
+
+            <div class="install-callout">
+              <p class="install-callout__title">Method B — Right-click Open</p>
+              <ol class="install-steps">
+                <li>Open <strong>Finder → Applications</strong>.</li>
+                <li>Find <strong>Kalfi</strong>.</li>
+                <li>
+                  Hold the <strong>Control</strong> key and click Kalfi once
+                  (or right-click with a two-button mouse / two-finger click on trackpad).
+                </li>
+                <li>Choose <strong>Open</strong> from the menu.</li>
+                <li>In the dialog, click <strong>Open</strong> again.</li>
+              </ol>
+            </div>
+
+            <div class="install-callout install-callout--alt">
+              <p class="install-callout__title">Method C — only if A and B still fail</p>
+              <p>
+                This uses Terminal once. Copy and paste carefully — you do not need to understand the
+                command.
+              </p>
+              <ol class="install-steps">
+                <li>
+                  Open <strong>Spotlight</strong>: press
+                  <kbd>Command (⌘)</kbd> + <kbd>Space</kbd>, type <strong>Terminal</strong>, press
+                  Enter.
+                </li>
+                <li>Click once inside the Terminal window so the cursor is blinking.</li>
+                <li>
+                  Copy this whole line, paste it into Terminal, then press Enter:
+                </li>
+              </ol>
+              <pre class="install-code" tabindex="0"><code>xattr -cr /Applications/Kalfi.app</code></pre>
+              <ol class="install-steps" start="4">
+                <li>If nothing dramatic happens, that is good — the command usually prints no message.</li>
+                <li>Open Kalfi again from Applications.</li>
+              </ol>
+              <p class="install-note">
+                If Kalfi is not in Applications yet, drag it there first, then run the command again.
+              </p>
+            </div>
+
+            <h4>3. First launch checklist</h4>
+            <ol class="install-steps">
+              <li>Allow microphone / screen audio prompts if macOS asks (needed to hear the call).</li>
+              <li>Open Settings in the app and paste your OpenAI or OpenRouter API key.</li>
+              <li>Start a session and join your meeting.</li>
+            </ol>
+          </article>
+
+          <article class="install-card" id="install-win">
+            <h3>Windows</h3>
+            <ol class="install-steps">
+              <li>Download the Windows installer (<code>.exe</code>, name like <code>kalfi-…-win-setup.exe</code>).</li>
+              <li>Double-click the file in your Downloads folder.</li>
+              <li>
+                If Windows shows <strong>Windows protected your PC</strong> (SmartScreen):
+                click <strong>More info</strong>, then <strong>Run anyway</strong>.
+              </li>
+              <li>Follow the installer screens (Next → Install).</li>
+              <li>Open Kalfi from the Start menu or desktop shortcut, then add your API key in Settings.</li>
+            </ol>
+          </article>
+
+          <article class="install-card" id="install-linux">
+            <h3>Linux</h3>
+            <ol class="install-steps">
+              <li>Download the <code>.AppImage</code> (or <code>.deb</code> if you prefer).</li>
+              <li>For AppImage: right-click the file → Properties → allow “executable” / run as program (wording varies by desktop).</li>
+              <li>Double-click to run, or from a terminal: <code>chmod +x kalfi-*.AppImage && ./kalfi-*.AppImage</code>.</li>
+              <li>Open Settings and paste your API key.</li>
+            </ol>
+          </article>
+        </div>
+      </section>
+
       <!-- FAQ -->
-      <section class="band band--tight">
+      <section class="band band--tight" id="faq">
         <div class="shell band__head" data-reveal>
           <span class="tagline">Questions</span>
           <h2>The things people ask before downloading.</h2>
@@ -863,6 +996,26 @@
         <div class="shell">
         <div class="faq" data-reveal>
           <details open>
+            <summary>Mac says “Kalfi is damaged and can’t be opened” — is my download broken?</summary>
+            <p>
+              No. That message is Apple’s Gatekeeper blocking an app that is not Apple-notarized yet.
+              The file is fine. Follow
+              <a href="#install-mac">How to install → Mac</a>: try
+              <strong>System Settings → Privacy &amp; Security → Open Anyway</strong>, or Control-click
+              → Open. Only if those fail, use the one-line Terminal fix
+              (<code>xattr -cr /Applications/Kalfi.app</code>) shown in the install guide.
+            </p>
+          </details>
+          <details>
+            <summary>How do I install Kalfi for the first time?</summary>
+            <p>
+              See the full step-by-step guide:
+              <a href="#install">How to install</a>
+              (Mac, Windows, and Linux). Prefer the file named
+              <code>kalfi-…-mac.dmg</code> on Mac.
+            </p>
+          </details>
+          <details>
             <summary>Does my API key ever touch your server?</summary>
             <p>
               No. On the Free plan the key lives in macOS encrypted storage and talks straight to
@@ -902,7 +1055,8 @@
                 >GitHub Releases</a
               >
               (DMG, NSIS installer, AppImage/deb). Stealth overlay behaviour is still most polished on
-              macOS; Win/Linux install cleanly and run the same BYOK session loop.
+              macOS; Win/Linux install cleanly and run the same BYOK session loop. See
+              <a href="#install">install steps</a> for SmartScreen and AppImage notes.
             </p>
           </details>
         </div>
@@ -916,9 +1070,10 @@
             <div>
               <h2>Install it, paste a key, join your next call.</h2>
               <p data-download-blurb>
-                We detect your OS and point you at the matching installer. Builds are unsigned for
-                now — on Mac use right-click → Open the first time; on Windows allow the SmartScreen
-                prompt if it appears.
+                We detect your OS and point you at the matching installer. On Mac, if you see
+                “damaged and can’t be opened”, the file is fine — follow
+                <a href="#install-mac">install steps</a> (Open Anyway). Windows may show SmartScreen;
+                choose More info → Run anyway.
               </p>
             </div>
             <div class="download-panel">
@@ -962,6 +1117,7 @@
                 >
               </div>
               <div class="download-alt">
+                <a class="btn btn--line btn--sm" href="#install">Install help</a>
                 <button class="btn btn--line btn--sm" type="button" data-subscribe>Get Pro instead</button>
                 <a
                   class="download-all"
