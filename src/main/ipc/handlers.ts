@@ -18,6 +18,11 @@ import { WorkSession } from '../services/sessionTypes'
 import { VisionService } from '../services/visionService'
 import { WhisperService } from '../services/whisperService'
 import { applyOverlayWindowBehavior } from '../windowOverlay'
+import {
+  applyRuntimeBranding,
+  clearStoredBrandLogo,
+  pickAndStoreBrandLogo
+} from '../services/branding'
 
 let whisperService: WhisperService | null = null
 let openaiService: OpenAIService | null = null
@@ -98,6 +103,9 @@ export function initializeIpcHandlers(window: BrowserWindow): void {
     settingsManager.updateSettings({})
   }
 
+  const bootSettings = settingsManager.getSettings()
+  applyRuntimeBranding(mainWindow, bootSettings.brandName, bootSettings.brandLogoPath)
+
   // Settings handlers
   ipcMain.handle('get-settings', () => {
     return settingsManager?.getSettings()
@@ -114,7 +122,33 @@ export function initializeIpcHandlers(window: BrowserWindow): void {
       mainWindow.setOpacity(updates.windowOpacity)
     }
 
-    return settingsManager?.getSettings()
+    const next = settingsManager?.getSettings()
+    if (next) applyRuntimeBranding(mainWindow, next.brandName, next.brandLogoPath)
+
+    return next
+  })
+
+  ipcMain.handle('pick-brand-logo', async () => {
+    try {
+      const stored = await pickAndStoreBrandLogo(mainWindow)
+      if (!stored) return settingsManager?.getSettings()
+      settingsManager?.updateSettings({ brandLogoPath: stored.path })
+      const next = settingsManager?.getSettings()
+      if (next) applyRuntimeBranding(mainWindow, next.brandName, next.brandLogoPath)
+      return next
+    } catch (error) {
+      console.error('pick-brand-logo failed:', error)
+      throw error
+    }
+  })
+
+  ipcMain.handle('clear-brand-logo', () => {
+    const current = settingsManager?.getSettings()
+    clearStoredBrandLogo(current?.brandLogoPath)
+    settingsManager?.updateSettings({ brandLogoPath: '' })
+    const next = settingsManager?.getSettings()
+    if (next) applyRuntimeBranding(mainWindow, next.brandName, next.brandLogoPath)
+    return next
   })
 
   ipcMain.handle('has-api-keys', () => {

@@ -14,6 +14,8 @@ export function Header(): React.JSX.Element {
   } = useInterviewStore()
 
   const isAlwaysOnTop = settings.alwaysOnTop
+  const brandLabel = settings.brandName?.trim() || 'Kalfi'
+  const brandLogo = settings.brandLogoDataUrl?.trim() || ''
 
   const handleMinimize = (): void => {
     window.api.minimizeWindow()
@@ -39,10 +41,20 @@ export function Header(): React.JSX.Element {
   return (
     <header className="flex items-center justify-between px-4 py-1.5 bg-dark-900 border-b border-dark-700 select-none app-drag">
       <div className="flex items-center gap-2 min-w-0">
-        <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-primary shadow-sm shrink-0">
-          <Mic className="h-3.5 w-3.5 text-primary-foreground" />
-        </div>
-        <span className="text-xs font-bold text-dark-100 tracking-wide shrink-0">Kalfi</span>
+        {brandLogo ? (
+          <img
+            src={brandLogo}
+            alt=""
+            className="h-6 w-6 rounded-lg object-cover shrink-0 border border-dark-600"
+          />
+        ) : (
+          <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-primary shadow-sm shrink-0">
+            <Mic className="h-3.5 w-3.5 text-primary-foreground" />
+          </div>
+        )}
+        <span className="text-xs font-bold text-dark-100 tracking-wide shrink-0 truncate max-w-[120px]">
+          {brandLabel}
+        </span>
         {activeSession ? (
           <>
             <span className="text-[10px] px-1.5 py-0.5 rounded bg-dark-800 text-dark-400 border border-dark-700 shrink-0">

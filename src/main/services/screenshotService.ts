@@ -44,8 +44,7 @@ export class ScreenshotService {
         sources.map((s) => s.name)
       )
 
-      // Filter out the AI assistant app window
-      // Common patterns: "Kalfi", legacy "Interview Copilot", etc.
+      // Filter out this overlay (default + any custom brand title)
       const appWindowPatterns = [
         'Kalfi',
         'kalfi',
@@ -53,6 +52,7 @@ export class ScreenshotService {
         'interview-copilot',
         'interview',
         'electron',
+        this.appWindowTitle || '',
         this.appWindowTitle?.toLowerCase() || ''
       ].filter(Boolean)
 
