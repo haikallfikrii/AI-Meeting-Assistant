@@ -44,44 +44,115 @@
   <body>
     <a class="skip" href="#main">Skip to content</a>
 
-    <header class="topbar" id="topbar">
-      <div class="shell topbar__inner">
-        <a class="wordmark" href="#top">
-          <span class="wordmark__mark">K</span>
-          Kalfi
-        </a>
-        <nav class="topnav" aria-label="Primary">
-          <a href="#demo">Demo</a>
-          <a href="#flow">How it works</a>
-          <a href="docs/">Docs</a>
-          <a href="#stealth">Stealth</a>
-          <a href="#brand">Brand</a>
-          <a href="#cost">Cost</a>
-          <a href="#pricing">Pricing</a>
-          <a href="#compare">Compare</a>
-          <a href="#faq">FAQ</a>
-          <a href="blog/">Blog</a>
-        </nav>
-        <div class="topbar__actions">
-          <a class="btn btn--line btn--sm" href="#download">Download</a>
-          <button class="btn btn--accent btn--sm" type="button" data-subscribe>Get Pro</button>
-          <button class="burger" type="button" id="burger" aria-label="Menu" aria-expanded="false">
-            <span></span><span></span>
-          </button>
+    <header class="topbar" id="topbar" data-compact="false" data-scrolled="false">
+      <div class="topbar__float">
+        <div class="topbar__inner">
+          <a class="wordmark" href="#top">
+            <span class="wordmark__mark">K</span>
+            <span class="wordmark__text">Kalfi</span>
+          </a>
+          <nav class="topnav" aria-label="Primary">
+            <div class="nav-item">
+              <button type="button" class="nav-item__trigger" aria-expanded="false">
+                Product
+                <svg viewBox="0 0 12 12" width="10" height="10" aria-hidden="true">
+                  <path d="M2.2 4.2 6 8l3.8-3.8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+              <div class="mega" role="menu">
+                <a href="#demo" role="menuitem">
+                  <strong>Live demo</strong>
+                  <span>Watch the overlay catch a question</span>
+                </a>
+                <a href="#flow" role="menuitem">
+                  <strong>How it works</strong>
+                  <span>The session loop from setup to summary</span>
+                </a>
+                <a href="#stealth" role="menuitem">
+                  <strong>Stealth</strong>
+                  <span>Stay off the shared screen</span>
+                </a>
+                <a href="#brand" role="menuitem">
+                  <strong>Custom brand</strong>
+                  <span>Your name and logo in the process list</span>
+                </a>
+              </div>
+            </div>
+            <div class="nav-item">
+              <button type="button" class="nav-item__trigger" aria-expanded="false">
+                Pricing
+                <svg viewBox="0 0 12 12" width="10" height="10" aria-hidden="true">
+                  <path d="M2.2 4.2 6 8l3.8-3.8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+              <div class="mega" role="menu">
+                <a href="#cost" role="menuitem">
+                  <strong>Cost model</strong>
+                  <span>BYOK vs hosted vs ~$150 tools</span>
+                </a>
+                <a href="#pricing" role="menuitem">
+                  <strong>Plans</strong>
+                  <span>$14 BYOK · $19 Hosted · $49 Team</span>
+                </a>
+                <a href="#compare" role="menuitem">
+                  <strong>Compare</strong>
+                  <span>Side-by-side with the usual suspects</span>
+                </a>
+              </div>
+            </div>
+            <div class="nav-item">
+              <button type="button" class="nav-item__trigger" aria-expanded="false">
+                Resources
+                <svg viewBox="0 0 12 12" width="10" height="10" aria-hidden="true">
+                  <path d="M2.2 4.2 6 8l3.8-3.8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+              <div class="mega" role="menu">
+                <a href="docs/" role="menuitem">
+                  <strong>Docs</strong>
+                  <span>Install, setup, daily use</span>
+                </a>
+                <a href="#faq" role="menuitem">
+                  <strong>FAQ</strong>
+                  <span>Gatekeeper, keys, and rules of the room</span>
+                </a>
+                <a href="blog/" role="menuitem">
+                  <strong>Blog</strong>
+                  <span>Comparisons with the prices left in</span>
+                </a>
+              </div>
+            </div>
+          </nav>
+          <div class="topbar__actions">
+            <a class="btn btn--line btn--sm" href="#download">Download</a>
+            <button class="btn btn--accent btn--sm" type="button" data-subscribe>Get Pro</button>
+            <button class="burger" type="button" id="burger" aria-label="Menu" aria-expanded="false">
+              <span></span><span></span>
+            </button>
+          </div>
         </div>
       </div>
-      <div class="shell drawer" id="drawer" data-open="false">
-        <a href="#demo">Demo</a>
-        <a href="#flow">How it works</a>
-        <a href="docs/">Docs</a>
-        <a href="#stealth">Stealth</a>
-        <a href="#brand">Brand</a>
-        <a href="#cost">Cost</a>
-        <a href="#pricing">Pricing</a>
-        <a href="#compare">Compare</a>
-        <a href="#faq">FAQ</a>
-        <a href="blog/">Blog</a>
-        <a href="#download">Download</a>
+      <div class="drawer" id="drawer" data-open="false">
+        <div class="drawer__group">
+          <p>Product</p>
+          <a href="#demo">Live demo</a>
+          <a href="#flow">How it works</a>
+          <a href="#stealth">Stealth</a>
+          <a href="#brand">Custom brand</a>
+        </div>
+        <div class="drawer__group">
+          <p>Pricing</p>
+          <a href="#cost">Cost model</a>
+          <a href="#pricing">Plans</a>
+          <a href="#compare">Compare</a>
+        </div>
+        <div class="drawer__group">
+          <p>Resources</p>
+          <a href="docs/">Docs</a>
+          <a href="#faq">FAQ</a>
+          <a href="blog/">Blog</a>
+        </div>
+        <a class="drawer__cta" href="#download">Download</a>
       </div>
     </header>
 
@@ -254,56 +325,93 @@
         </div>
       </section>
 
-      <!-- HOW IT WORKS -->
+      <!-- WORKFLOW TIMELINE -->
       <section class="band band--tight" id="flow">
-        <div class="shell band__head" data-reveal>
-          <span class="tagline">The loop</span>
-          <h2>Context in, one speakable line out, summary at the end.</h2>
-          <p>
-            Not a transcript dump. Kalfi keeps the job or project in a thread, so the second meeting
-            already knows what you promised in the first.
-          </p>
-        </div>
-        <div class="shell">
-          <div class="steps" data-reveal data-reveal-stagger>
-            <article class="step">
-              <span class="step__num">01</span>
-              <h3>Load the context once</h3>
-              <p>
-                Pick a mode and fill only the fields that mode needs — JD and resume for interviews,
-                scope and open decisions for client work.
-              </p>
-              <ul class="step__list">
-                <li>3 modes, separate forms</li>
-                <li>Length + tone per session</li>
-                <li>Key encrypted via safeStorage</li>
-              </ul>
+        <div class="shell timeline" data-reveal>
+          <aside class="timeline__rail">
+            <span class="tagline">Workflow</span>
+            <h2>One loop. Every call.</h2>
+            <p>
+              From loading context to speaking the line to closing the meeting — the same path,
+              tightened each time you reuse the thread.
+            </p>
+            <ol class="timeline__dots" aria-label="Workflow steps">
+              <li><a href="#tl-1"><span>01</span> Context</a></li>
+              <li><a href="#tl-2"><span>02</span> Listen</a></li>
+              <li><a href="#tl-3"><span>03</span> Answer</a></li>
+              <li><a href="#tl-4"><span>04</span> Close</a></li>
+            </ol>
+          </aside>
+
+          <div class="timeline__stream">
+            <article class="tl-card" id="tl-1">
+              <div class="tl-card__mark" aria-hidden="true"><span></span></div>
+              <div class="tl-card__body">
+                <span class="tl-card__num">01</span>
+                <h3>Load the context once</h3>
+                <p>
+                  Pick Interview, Client, or Chat. Fill only what that mode needs — JD and resume,
+                  project scope, or a chat topic. Length, tone, and meeting language stick to the
+                  session so you are not re-typing before every call.
+                </p>
+                <ul>
+                  <li>Three modes, separate forms</li>
+                  <li>Key stays in encrypted storage</li>
+                  <li>Reuse the same thread next week</li>
+                </ul>
+              </div>
             </article>
-            <article class="step">
-              <span class="step__num">02</span>
-              <h3>Listen the way the call runs</h3>
-              <p>
-                Mix meeting audio and your own mic, so a question you repeat out loud still gets an
-                answer. Ask and Mic Ask override detection when it misses.
-              </p>
-              <ul class="step__list">
-                <li>System + mic mixing</li>
-                <li>Force-answer any line</li>
-                <li>Floats over fullscreen Meet</li>
-              </ul>
+
+            <article class="tl-card" id="tl-2">
+              <div class="tl-card__mark" aria-hidden="true"><span></span></div>
+              <div class="tl-card__body">
+                <span class="tl-card__num">02</span>
+                <h3>Listen the way the call runs</h3>
+                <p>
+                  Mix system audio from Meet/Zoom with your mic, or pick one. The overlay floats
+                  above fullscreen so you never leave the call to “check the AI.”
+                </p>
+                <ul>
+                  <li>System + mic mixing</li>
+                  <li>Floats over fullscreen apps</li>
+                  <li>Ask / Mic Ask when detection misses</li>
+                </ul>
+              </div>
             </article>
-            <article class="step">
-              <span class="step__num">03</span>
-              <h3>Close the meeting properly</h3>
-              <p>
-                Generate a summary, browse past meetings without hijacking the live one, then start
-                the next meeting inside the same project thread.
-              </p>
-              <ul class="step__list">
-                <li>Per-meeting summaries</li>
-                <li>Browse-only history</li>
-                <li>Pagi / Siang / Sore / Malam labels</li>
-              </ul>
+
+            <article class="tl-card" id="tl-3">
+              <div class="tl-card__mark" aria-hidden="true"><span></span></div>
+              <div class="tl-card__body">
+                <span class="tl-card__num">03</span>
+                <h3>Say one speakable line</h3>
+                <p>
+                  Not a transcript dump. Kalfi writes a line you can actually say out loud — short
+                  enough for the pause, tuned to the tone you set, grounded in the session context.
+                </p>
+                <ul>
+                  <li>Brief / balanced / detailed</li>
+                  <li>Formal / neutral / casual</li>
+                  <li>Force-answer any transcript line</li>
+                </ul>
+              </div>
+            </article>
+
+            <article class="tl-card" id="tl-4">
+              <div class="tl-card__mark" aria-hidden="true"><span></span></div>
+              <div class="tl-card__body">
+                <span class="tl-card__num">04</span>
+                <h3>Close the meeting properly</h3>
+                <p>
+                  Generate a summary, browse history without hijacking the live session, then start
+                  the next meeting inside the same project thread — so meeting two already knows
+                  what you promised in meeting one.
+                </p>
+                <ul>
+                  <li>Per-meeting summaries</li>
+                  <li>Browse-only history</li>
+                  <li>Thread continuity across calls</li>
+                </ul>
+              </div>
             </article>
           </div>
         </div>

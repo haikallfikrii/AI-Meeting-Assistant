@@ -11,9 +11,23 @@
     var bar = document.getElementById('topbar')
     var burger = document.getElementById('burger')
     var drawer = document.getElementById('drawer')
+    var lastY = window.scrollY || 0
+    var compact = false
 
     var onScroll = function () {
-      if (bar) bar.setAttribute('data-scrolled', String(window.scrollY > 8))
+      if (!bar) return
+      var y = window.scrollY || 0
+      bar.setAttribute('data-scrolled', String(y > 8))
+
+      if (y < 28) {
+        compact = false
+      } else if (y > lastY + 4 && y > 70) {
+        compact = true
+      } else if (y < lastY - 4) {
+        compact = false
+      }
+      bar.setAttribute('data-compact', String(compact))
+      lastY = y
     }
 
     window.addEventListener('scroll', onScroll, { passive: true })
@@ -33,6 +47,23 @@
         }
       })
     }
+
+    // Mega menu: keep aria-expanded in sync for keyboard users
+    Array.prototype.forEach.call(document.querySelectorAll('.nav-item'), function (item) {
+      var trigger = item.querySelector('.nav-item__trigger')
+      if (!trigger) return
+      item.addEventListener('mouseenter', function () {
+        trigger.setAttribute('aria-expanded', 'true')
+      })
+      item.addEventListener('mouseleave', function () {
+        trigger.setAttribute('aria-expanded', 'false')
+      })
+      trigger.addEventListener('click', function () {
+        var open = trigger.getAttribute('aria-expanded') !== 'true'
+        trigger.setAttribute('aria-expanded', String(open))
+        item.classList.toggle('is-open', open)
+      })
+    })
 
     var year = document.getElementById('year')
     if (year) year.textContent = String(new Date().getFullYear())
@@ -454,6 +485,8 @@
       if (menu) menu.hidden = true
       if (btn) btn.setAttribute('aria-expanded', 'false')
     })
+    var copy = document.getElementById('hero-copy')
+    if (copy) copy.removeAttribute('data-dl-open')
   }
 
   function paintOsIcons() {
@@ -565,6 +598,10 @@
         if (open) {
           menu.hidden = false
           btn.setAttribute('aria-expanded', 'true')
+          var copy = document.getElementById('hero-copy')
+          if (copy && widget.classList.contains('dl--hero')) {
+            copy.setAttribute('data-dl-open', 'true')
+          }
         }
       })
 
