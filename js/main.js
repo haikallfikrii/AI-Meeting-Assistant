@@ -356,6 +356,19 @@
 
   /* ---------- multi-OS downloads ---------- */
 
+  var OS_ICONS = {
+    mac:
+      '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.7 12.4c0-2.3 1.9-3.4 2-3.5-1.1-1.6-2.8-1.8-3.4-1.8-1.4-.2-2.8.9-3.5.9-.7 0-1.9-.8-3.1-.8-1.6 0-3.1 1-3.9 2.4-1.7 2.9-.4 7.2 1.2 9.6.8 1.1 1.7 2.4 3 2.3 1.2-.1 1.6-.7 3.1-.7s1.8.7 3.1.7c1.3 0 2.1-1.1 2.9-2.2.9-1.3 1.3-2.5 1.3-2.6-.1 0-2.5-1-2.5-3.8zM14.8 5.7c.6-.8 1.1-1.9.9-3-.9 0-2 .6-2.7 1.4-.6.7-1.1 1.8-.9 2.9 1 .1 2-.5 2.7-1.3z"/></svg>',
+    win:
+      '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 5.2 10.4 4.1v7.1H3V5.2zm0 13.6 7.4 1.1v-7.2H3v6.1zM11.3 4 21 2.5v8.7h-9.7V4zM11.3 21.5 21 20.1v-8.4h-9.7v9.8z"/></svg>',
+    linux:
+      '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.1 2.2c-.8 0-1.5.7-1.6 1.7-.2 1.3.3 2.6.7 3.6-.9.4-2.2 1.4-2.7 2.9-.6 1.9-.2 4.1.6 6.1.5 1.2.4 2-.1 2.7-.4.6-.4 1.3 0 1.8.5.6 1.4.8 2.3.5.5 1.1 1.4 1.8 2.5 1.8 1.1 0 2-.8 2.5-1.9.8.2 1.7 0 2.1-.6.4-.5.4-1.2 0-1.8-.5-.7-.6-1.5-.1-2.7.8-2 1.2-4.2.6-6.1-.5-1.5-1.8-2.5-2.7-2.9.4-1 .9-2.3.7-3.6-.1-1-.8-1.7-1.6-1.7zm-1.6 6.2c.4 0 .8.1 1.1.3.3-.5.8-.8 1.4-.8.6 0 1.1.3 1.4.8.3-.2.7-.3 1.1-.3 1.1 0 1.9.9 1.7 2.1-.1.8-.8 1.5-1.6 1.8-.3 1.1-1.2 1.8-2.2 1.8s-1.9-.8-2.2-1.8c-.8-.3-1.5-1-1.6-1.8-.2-1.2.6-2.1 1.7-2.1z"/></svg>'
+  }
+
+  var selectedOS = 'mac'
+  var latestUrls = { mac: '', win: '', linux: '' }
+  var latestMeta = {}
+
   function detectClientOS() {
     var ua = navigator.userAgent || ''
     var platform = navigator.platform || ''
@@ -371,11 +384,6 @@
     if (/Linux/i.test(ua) || /Linux/i.test(platform)) return 'linux'
     if (/Mac|iPhone|iPad|iPod/i.test(ua) || /Mac/i.test(platform)) return 'mac'
     return 'mac'
-  }
-
-  function releasesIndexUrl() {
-    var repo = CONFIG.githubRepo || 'haikallfikrii/AI-Meeting-Assistant'
-    return 'https://github.com/' + repo + '/releases'
   }
 
   function pickAssetUrl(assets, os) {
@@ -399,7 +407,7 @@
     }
     if (os === 'win') {
       var exe = list.find(function (a) {
-        return /\.exe$/i.test(name(a))
+        return /\.exe$/i.test(name(a)) || /win.*setup/i.test(name(a))
       })
       return exe ? url(exe) : ''
     }
@@ -419,25 +427,55 @@
     if (!value || typeof value !== 'string') return ''
     value = value.trim()
     if (!value) return ''
-    // Allow full URLs or site-relative paths; never invent GitHub /download/ filenames.
     if (/^https?:\/\//i.test(value) || value.charAt(0) === '/') return value
     return ''
   }
 
+  function osLabel(os) {
+    return (
+      {
+        mac: 'Download for Mac',
+        win: 'Download for Windows',
+        linux: 'Download for Linux'
+      }[os] || 'Download for Mac'
+    )
+  }
+
+  function osExt(os, ready) {
+    if (!ready) return 'soon'
+    return { mac: '.dmg', win: '.exe', linux: '.AppImage' }[os] || ''
+  }
+
+  function closeAllDownloadMenus(except) {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-download-widget]'), function (widget) {
+      if (except && widget === except) return
+      var menu = widget.querySelector('[data-download-menu]')
+      var btn = widget.querySelector('[data-download-menu-btn]')
+      if (menu) menu.hidden = true
+      if (btn) btn.setAttribute('aria-expanded', 'false')
+    })
+  }
+
+  function paintOsIcons() {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-os-icon]'), function (el) {
+      var key = el.getAttribute('data-os-icon')
+      if (OS_ICONS[key]) el.innerHTML = OS_ICONS[key]
+    })
+  }
+
   function applyDownloadLinks(urls, os, opts) {
     opts = opts || {}
-    var labels = {
-      mac: 'Download for Mac',
-      win: 'Download for Windows',
-      linux: 'Download for Linux'
-    }
+    selectedOS = os
+    latestUrls = urls
+    latestMeta = opts
+
     var blurbs = {
       mac:
-        'macOS DMG ready. If Mac says “damaged”, the file is fine — use Install help → Open Anyway (no Terminal needed).',
+        'macOS DMG ready. If Mac says “damaged”, the file is fine — use Docs → Install → Open Anyway.',
       win:
-        'Windows x64 installer (.exe). If SmartScreen appears: More info → Run anyway. See Install help for the full walkthrough.',
+        'Windows x64 installer (.exe). If SmartScreen appears: More info → Run anyway. See Docs for the walkthrough.',
       linux:
-        'Linux AppImage ready. Make it executable, then run. Full steps are in Install help.'
+        'Linux AppImage ready. Make it executable, then run. Full steps are in Docs → Install.'
     }
     var metaReady = {
       mac: 'Detected macOS · ready to download',
@@ -446,80 +484,162 @@
     }
     var metaWait = {
       mac: 'Detected macOS · Mac build is publishing…',
-      win: 'Detected Windows · Windows build is publishing…',
+      win: 'Windows build not on this release yet · pick Mac/Linux or wait',
       linux: 'Detected Linux · Linux build is publishing…'
     }
 
     var primaryUrl = urls[os] || ''
     var primaryReady = Boolean(primaryUrl)
 
-    Array.prototype.forEach.call(document.querySelectorAll('[data-download-primary]'), function (el) {
-      if (primaryReady) {
-        el.setAttribute('href', primaryUrl)
-        el.removeAttribute('aria-disabled')
-        el.classList.remove('is-disabled')
-      } else {
-        el.setAttribute('href', '#download')
-        el.setAttribute('aria-disabled', 'true')
-        el.classList.add('is-disabled')
-      }
-      if (el.tagName === 'A') {
-        el.textContent = primaryReady
-          ? labels[os] || labels.mac
-          : (labels[os] || labels.mac).replace('Download', 'Get') + ' (soon)'
-      }
-    })
+    Array.prototype.forEach.call(document.querySelectorAll('[data-download-widget]'), function (widget) {
+      var go = widget.querySelector('[data-download-primary]')
+      var icon = widget.querySelector('[data-download-icon]')
+      var label = widget.querySelector('[data-download-label]')
+      var ext = widget.querySelector('[data-download-ext]')
 
-    ;['mac', 'win', 'linux'].forEach(function (key) {
-      var ready = Boolean(urls[key])
-      Array.prototype.forEach.call(document.querySelectorAll('[data-download-os="' + key + '"]'), function (el) {
-        el.setAttribute('data-active', String(key === os))
-        el.setAttribute('data-available', String(ready))
-        if (ready) {
-          el.setAttribute('href', urls[key])
-          el.setAttribute('target', '_blank')
-          el.setAttribute('rel', 'noopener')
-          el.onclick = null
+      if (icon) icon.innerHTML = OS_ICONS[os] || OS_ICONS.mac
+      if (label) {
+        label.textContent = primaryReady
+          ? osLabel(os)
+          : osLabel(os).replace('Download', 'Get') + ' (soon)'
+      }
+      if (ext) ext.textContent = osExt(os, primaryReady)
+
+      if (go) {
+        if (primaryReady) {
+          go.setAttribute('href', primaryUrl)
+          go.removeAttribute('target')
+          go.removeAttribute('rel')
+          go.removeAttribute('aria-disabled')
+          go.classList.remove('is-disabled')
         } else {
-          el.setAttribute('href', releasesIndexUrl())
-          el.setAttribute('target', '_blank')
-          el.setAttribute('rel', 'noopener')
+          go.setAttribute('href', '#docs-install')
+          go.removeAttribute('target')
+          go.removeAttribute('rel')
+          go.removeAttribute('aria-disabled')
+          go.classList.add('is-disabled')
         }
-        var label = el.childNodes[0]
-        var span = el.querySelector('span')
-        if (span) {
-          if (key === 'mac') span.textContent = ready ? '.dmg' : 'soon'
-          if (key === 'win') span.textContent = ready ? '.exe' : 'soon'
-          if (key === 'linux') span.textContent = ready ? '.AppImage' : 'soon'
-        }
+      }
+
+      Array.prototype.forEach.call(widget.querySelectorAll('[data-download-os]'), function (el) {
+        var key = el.getAttribute('data-download-os')
+        var ready = Boolean(urls[key])
+        el.setAttribute('aria-selected', String(key === os))
+        el.setAttribute('data-available', String(ready))
+        var extEl = el.querySelector('[data-download-os-ext]')
+        if (extEl) extEl.textContent = osExt(key, ready)
       })
     })
 
     var blurb = document.querySelector('[data-download-blurb]')
     if (blurb) {
-      blurb.textContent = primaryReady
-        ? blurbs[os] || blurbs.mac
-        : 'Installers publish to GitHub Releases after CI finishes. The Mac/Windows/Linux chips light up automatically when each file is ready — no more 404 links.'
+      if (primaryReady) {
+        blurb.textContent = blurbs[os] || blurbs.mac
+      } else if (os === 'win') {
+        blurb.innerHTML =
+          'Windows installer is not on the latest release yet (CI has not published the <code>.exe</code>). Choose macOS or Linux from the menu for a direct download — we will not send you to a GitHub page for a missing file.'
+      } else {
+        blurb.textContent =
+          'Installer for this OS is still publishing. Switch OS from the menu when another build is ready.'
+      }
     }
 
-    var metaEl = document.querySelector('[data-download-meta]')
-    // Update all meta nodes (hero + footer section)
     Array.prototype.forEach.call(document.querySelectorAll('[data-download-meta]'), function (el) {
       var text = primaryReady ? metaReady[os] : metaWait[os]
-      if (opts.tag) text += ' · ' + opts.tag
+      if (opts.tag && primaryReady) text += ' · ' + opts.tag
       if (opts.status) text = opts.status
       el.textContent = text || metaWait[os]
     })
   }
 
+  function bindDownloadWidgets() {
+    paintOsIcons()
+
+    Array.prototype.forEach.call(document.querySelectorAll('[data-download-widget]'), function (widget) {
+      var btn = widget.querySelector('[data-download-menu-btn]')
+      var menu = widget.querySelector('[data-download-menu]')
+      if (!btn || !menu) return
+
+      btn.addEventListener('click', function (e) {
+        e.preventDefault()
+        e.stopPropagation()
+        var open = menu.hidden
+        closeAllDownloadMenus()
+        if (open) {
+          menu.hidden = false
+          btn.setAttribute('aria-expanded', 'true')
+        }
+      })
+
+      Array.prototype.forEach.call(widget.querySelectorAll('[data-download-os]'), function (opt) {
+        opt.addEventListener('click', function (e) {
+          e.preventDefault()
+          e.stopPropagation()
+          var key = opt.getAttribute('data-download-os')
+          if (!key) return
+          closeAllDownloadMenus()
+          applyDownloadLinks(latestUrls, key, latestMeta)
+        })
+      })
+    })
+
+    document.addEventListener('click', function () {
+      closeAllDownloadMenus()
+    })
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') closeAllDownloadMenus()
+    })
+  }
+
+  function bindDocsOsTabs() {
+    var tabs = document.querySelectorAll('[data-docs-os]')
+    if (!tabs.length) return
+
+    function showOs(key) {
+      if (!key) return
+      Array.prototype.forEach.call(tabs, function (t) {
+        var on = t.getAttribute('data-docs-os') === key
+        t.classList.toggle('is-on', on)
+        t.setAttribute('aria-selected', String(on))
+      })
+      Array.prototype.forEach.call(document.querySelectorAll('[data-docs-panel]'), function (panel) {
+        var match = panel.getAttribute('data-docs-panel') === key
+        panel.classList.toggle('is-on', match)
+        panel.hidden = !match
+      })
+    }
+
+    Array.prototype.forEach.call(tabs, function (tab) {
+      tab.addEventListener('click', function () {
+        showOs(tab.getAttribute('data-docs-os'))
+      })
+    })
+
+    function syncFromHash() {
+      var hash = (location.hash || '').replace(/^#/, '')
+      if (hash === 'install') {
+        history.replaceState(null, '', '#docs')
+        var docs = document.getElementById('docs')
+        if (docs) docs.scrollIntoView()
+        return
+      }
+      if (hash === 'install-mac') showOs('mac')
+      if (hash === 'install-win') showOs('win')
+      if (hash === 'install-linux') showOs('linux')
+    }
+
+    syncFromHash()
+    window.addEventListener('hashchange', syncFromHash)
+  }
+
   function downloads() {
-    var os = detectClientOS()
+    selectedOS = detectClientOS()
     var seeded = {
       mac: configuredUrl('mac'),
       win: configuredUrl('win'),
       linux: configuredUrl('linux')
     }
-    applyDownloadLinks(seeded, os, {
+    applyDownloadLinks(seeded, selectedOS, {
       status: 'Checking GitHub Releases for installers…'
     })
 
@@ -536,12 +656,11 @@
           win: seeded.win || pickAssetUrl(assets, 'win'),
           linux: seeded.linux || pickAssetUrl(assets, 'linux')
         }
-        applyDownloadLinks(urls, os, { tag: data.tag_name || '' })
+        applyDownloadLinks(urls, selectedOS, { tag: data.tag_name || '' })
       })
       .catch(function () {
-        applyDownloadLinks(seeded, os, {
-          status:
-            'No public release assets yet — chips stay on “soon” until Mac/Win/Linux builds finish publishing.'
+        applyDownloadLinks(seeded, selectedOS, {
+          status: 'Could not reach Releases — try again in a moment, or use Docs → Install.'
         })
       })
   }
@@ -554,6 +673,8 @@
     brandPreview()
     calculator()
     billing()
+    bindDownloadWidgets()
+    bindDocsOsTabs()
     downloads()
   }
 
