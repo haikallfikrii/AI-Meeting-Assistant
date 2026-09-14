@@ -373,23 +373,9 @@
     return 'mac'
   }
 
-  function releaseLatestUrl() {
+  function releasesIndexUrl() {
     var repo = CONFIG.githubRepo || 'haikallfikrii/AI-Meeting-Assistant'
-    return 'https://github.com/' + repo + '/releases/latest'
-  }
-
-  function assetDownloadUrl(filename) {
-    var repo = CONFIG.githubRepo || 'haikallfikrii/AI-Meeting-Assistant'
-    return 'https://github.com/' + repo + '/releases/latest/download/' + encodeURIComponent(filename)
-  }
-
-  function fallbackAssets() {
-    var files = CONFIG.downloads || {}
-    return {
-      mac: files.mac ? assetDownloadUrl(files.mac) : releaseLatestUrl(),
-      win: files.win ? assetDownloadUrl(files.win) : releaseLatestUrl(),
-      linux: files.linux ? assetDownloadUrl(files.linux) : releaseLatestUrl()
-    }
+    return 'https://github.com/' + repo + '/releases'
   }
 
   function pickAssetUrl(assets, os) {
@@ -427,47 +413,112 @@
     return deb ? url(deb) : ''
   }
 
-  function applyDownloadLinks(urls, os) {
+  function configuredUrl(os) {
+    var files = CONFIG.downloads || {}
+    var value = files[os]
+    if (!value || typeof value !== 'string') return ''
+    value = value.trim()
+    if (!value) return ''
+    // Allow full URLs or site-relative paths; never invent GitHub /download/ filenames.
+    if (/^https?:\/\//i.test(value) || value.charAt(0) === '/') return value
+    return ''
+  }
+
+  function applyDownloadLinks(urls, os, opts) {
+    opts = opts || {}
     var labels = {
       mac: 'Download for Mac',
       win: 'Download for Windows',
       linux: 'Download for Linux'
     }
     var blurbs = {
-      mac: 'macOS DMG from GitHub Releases. The build is unsigned — right-click → Open the first time.',
-      win: 'Windows x64 installer (.exe). If SmartScreen warns, choose More info → Run anyway for this unsigned build.',
-      linux: 'Linux x64 AppImage (plus .deb on the releases page). Make it executable, then run.'
+      mac: 'macOS DMG. Unsigned build — right-click the app → Open the first time.',
+      win: 'Windows x64 installer (.exe). If SmartScreen warns, choose More info → Run anyway.',
+      linux: 'Linux x64 AppImage. chmod +x then run. .deb is also on the releases page when available.'
     }
-    var meta = {
-      mac: 'Detected macOS · Apple Silicon & Intel builds on Releases',
-      win: 'Detected Windows · x64 NSIS installer',
-      linux: 'Detected Linux · AppImage / deb'
+    var metaReady = {
+      mac: 'Detected macOS · ready to download',
+      win: 'Detected Windows · ready to download',
+      linux: 'Detected Linux · ready to download'
+    }
+    var metaWait = {
+      mac: 'Detected macOS · Mac build is publishing…',
+      win: 'Detected Windows · Windows build is publishing…',
+      linux: 'Detected Linux · Linux build is publishing…'
     }
 
-    var primaryHref = urls[os] || releaseLatestUrl()
+    var primaryUrl = urls[os] || ''
+    var primaryReady = Boolean(primaryUrl)
+
     Array.prototype.forEach.call(document.querySelectorAll('[data-download-primary]'), function (el) {
-      el.setAttribute('href', primaryHref)
-      if (el.tagName === 'A') el.textContent = labels[os] || labels.mac
+      if (primaryReady) {
+        el.setAttribute('href', primaryUrl)
+        el.removeAttribute('aria-disabled')
+        el.classList.remove('is-disabled')
+      } else {
+        el.setAttribute('href', '#download')
+        el.setAttribute('aria-disabled', 'true')
+        el.classList.add('is-disabled')
+      }
+      if (el.tagName === 'A') {
+        el.textContent = primaryReady
+          ? labels[os] || labels.mac
+          : (labels[os] || labels.mac).replace('Download', 'Get') + ' (soon)'
+      }
     })
 
     ;['mac', 'win', 'linux'].forEach(function (key) {
+      var ready = Boolean(urls[key])
       Array.prototype.forEach.call(document.querySelectorAll('[data-download-os="' + key + '"]'), function (el) {
-        el.setAttribute('href', urls[key] || releaseLatestUrl())
         el.setAttribute('data-active', String(key === os))
+        el.setAttribute('data-available', String(ready))
+        if (ready) {
+          el.setAttribute('href', urls[key])
+          el.setAttribute('target', '_blank')
+          el.setAttribute('rel', 'noopener')
+          el.onclick = null
+        } else {
+          el.setAttribute('href', releasesIndexUrl())
+          el.setAttribute('target', '_blank')
+          el.setAttribute('rel', 'noopener')
+        }
+        var label = el.childNodes[0]
+        var span = el.querySelector('span')
+        if (span) {
+          if (key === 'mac') span.textContent = ready ? '.dmg' : 'soon'
+          if (key === 'win') span.textContent = ready ? '.exe' : 'soon'
+          if (key === 'linux') span.textContent = ready ? '.AppImage' : 'soon'
+        }
       })
     })
 
     var blurb = document.querySelector('[data-download-blurb]')
-    if (blurb) blurb.textContent = blurbs[os] || blurbs.mac
+    if (blurb) {
+      blurb.textContent = primaryReady
+        ? blurbs[os] || blurbs.mac
+        : 'Installers publish to GitHub Releases after CI finishes. The Mac/Windows/Linux chips light up automatically when each file is ready — no more 404 links.'
+    }
 
     var metaEl = document.querySelector('[data-download-meta]')
-    if (metaEl) metaEl.textContent = meta[os] || meta.mac
+    // Update all meta nodes (hero + footer section)
+    Array.prototype.forEach.call(document.querySelectorAll('[data-download-meta]'), function (el) {
+      var text = primaryReady ? metaReady[os] : metaWait[os]
+      if (opts.tag) text += ' · ' + opts.tag
+      if (opts.status) text = opts.status
+      el.textContent = text || metaWait[os]
+    })
   }
 
   function downloads() {
     var os = detectClientOS()
-    var fallback = fallbackAssets()
-    applyDownloadLinks(fallback, os)
+    var seeded = {
+      mac: configuredUrl('mac'),
+      win: configuredUrl('win'),
+      linux: configuredUrl('linux')
+    }
+    applyDownloadLinks(seeded, os, {
+      status: 'Checking GitHub Releases for installers…'
+    })
 
     var repo = CONFIG.githubRepo || 'haikallfikrii/AI-Meeting-Assistant'
     fetch('https://api.github.com/repos/' + repo + '/releases/latest')
@@ -478,19 +529,17 @@
       .then(function (data) {
         var assets = (data && data.assets) || []
         var urls = {
-          mac: pickAssetUrl(assets, 'mac') || fallback.mac,
-          win: pickAssetUrl(assets, 'win') || fallback.win,
-          linux: pickAssetUrl(assets, 'linux') || fallback.linux
+          mac: seeded.mac || pickAssetUrl(assets, 'mac'),
+          win: seeded.win || pickAssetUrl(assets, 'win'),
+          linux: seeded.linux || pickAssetUrl(assets, 'linux')
         }
-        applyDownloadLinks(urls, os)
-        var metaEl = document.querySelector('[data-download-meta]')
-        if (metaEl && data.tag_name) {
-          metaEl.textContent =
-            (metaEl.textContent || '') + ' · ' + data.tag_name.replace(/^v/, 'v')
-        }
+        applyDownloadLinks(urls, os, { tag: data.tag_name || '' })
       })
       .catch(function () {
-        /* keep constructed latest/download URLs */
+        applyDownloadLinks(seeded, os, {
+          status:
+            'No public release assets yet — chips stay on “soon” until Mac/Win/Linux builds finish publishing.'
+        })
       })
   }
 
