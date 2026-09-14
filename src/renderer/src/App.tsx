@@ -68,7 +68,7 @@ function App(): React.JSX.Element {
 }
 
 function hasAnyContext(session: WorkSession): boolean {
-  const skip = new Set(['answerLength', 'answerTone'])
+  const skip = new Set(['answerLength', 'answerTone', 'meetingLanguage'])
   return Object.entries(session.context).some(
     ([key, value]) => !skip.has(key) && typeof value === 'string' && value.trim().length > 0
   )

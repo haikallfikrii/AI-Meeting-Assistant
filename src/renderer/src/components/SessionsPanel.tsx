@@ -22,10 +22,10 @@ const MODE_BADGE: Record<WorkSession['mode'], string> = {
 }
 
 const TOD_BADGE: Record<WorkSession['timeOfDay'], string> = {
-  morning: 'Pagi',
-  afternoon: 'Siang',
-  evening: 'Sore',
-  night: 'Malam'
+  morning: 'Morning',
+  afternoon: 'Afternoon',
+  evening: 'Evening',
+  night: 'Night'
 }
 
 interface SessionsPanelProps {

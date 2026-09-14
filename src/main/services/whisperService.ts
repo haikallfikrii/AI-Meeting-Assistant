@@ -48,6 +48,17 @@ export class WhisperService extends EventEmitter {
     })
   }
 
+  setLanguage(language?: string): void {
+    this.config.language = language
+  }
+
+  /** ISO-639-1 for Whisper, or undefined for auto-detect. */
+  private resolveWhisperLanguage(): string | undefined {
+    const raw = (this.config.language || '').trim().toLowerCase()
+    if (!raw || raw === 'auto') return undefined
+    return raw
+  }
+
   private getSttModel(): string {
     const provider = this.config.provider || 'openai'
     return this.config.model || DEFAULT_STT_MODELS[provider]
@@ -164,9 +175,11 @@ export class WhisperService extends EventEmitter {
       // Create WAV file from raw PCM data
       const wavBuffer = this.createWavBuffer(combinedBuffer)
       const sttModel = this.getSttModel()
-      const language = this.config.language || 'en'
+      const language = this.resolveWhisperLanguage()
 
-      console.log(`===> Sending ${(durationMs / 1000).toFixed(2)}s of audio to Whisper...`)
+      console.log(
+        `===> Sending ${(durationMs / 1000).toFixed(2)}s of audio to Whisper (${language || 'auto'})...`
+      )
 
       let text = ''
 
@@ -185,12 +198,19 @@ export class WhisperService extends EventEmitter {
         fs.writeFileSync(tempFile, wavBuffer)
 
         try {
-          const transcription = await this.client.audio.transcriptions.create({
+          const payload: {
+            file: fs.ReadStream
+            model: string
+            response_format: 'json'
+            language?: string
+          } = {
             file: fs.createReadStream(tempFile),
             model: sttModel,
-            language,
             response_format: 'json'
-          })
+          }
+          if (language) payload.language = language
+
+          const transcription = await this.client.audio.transcriptions.create(payload)
           text = transcription.text?.trim() || ''
         } finally {
           fs.unlinkSync(tempFile)
