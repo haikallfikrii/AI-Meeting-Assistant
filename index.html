@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Kalfi — Stealth AI meeting & interview copilot</title>
+    <meta
+      name="description"
+      content="Kalfi listens privately during interviews and client meetings, then drafts speakable answers. Free forever with BYOK, or Pro hosted AI."
+    />
+    <meta property="og:title" content="Kalfi — AI Meeting Assistant" />
+    <meta
+      property="og:description"
+      content="Stealth desktop copilot with Bring Your Own Key. Interview, client meeting, and chat modes."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="wrap nav">
+        <a class="brand" href="#top">
+          <span class="brand-mark">K</span>
+          Kalfi
+        </a>
+        <nav class="nav-links" aria-label="Primary">
+          <a href="#how">How it works</a>
+          <a href="#byok">BYOK</a>
+          <a href="#pricing">Pricing</a>
+          <a href="#compare">Compare</a>
+          <a href="#faq">FAQ</a>
+        </nav>
+        <div class="nav-cta">
+          <a class="btn btn-ghost" href="#download">Download</a>
+          <a class="btn btn-primary" id="nav-subscribe" href="#pricing">Get Pro</a>
+        </div>
+      </div>
+    </header>
+
+    <main id="top">
+      <section class="wrap hero">
+        <div>
+          <div class="eyebrow">Desktop · Stealth · macOS</div>
+          <h1>Private answers in live calls — <span>your key or ours</span></h1>
+          <p class="hero-lead">
+            Kalfi floats over Meet and Zoom, hears the conversation, and drafts short answers you
+            can say out loud. Competitors lock live AI behind pricey plans. Kalfi stays free if you
+            bring your own OpenAI or OpenRouter key.
+          </p>
+          <div class="hero-actions">
+            <a class="btn btn-primary" id="download-mac" href="#download">Download for Mac</a>
+            <a class="btn btn-ok" href="#byok">Use free with BYOK</a>
+          </div>
+          <p class="hero-note">macOS overlay · Screen-share friendly · Interview, client & chat modes</p>
+        </div>
+        <aside class="hero-panel" aria-label="Product preview">
+          <div class="panel-top">
+            <span>Live session · Client meeting</span>
+            <span class="dot" title="Listening"></span>
+          </div>
+          <div class="answer-card">
+            <strong>Suggested reply</strong>
+            <p>
+              We can ship the checkout slice in two weeks if scope stays to card + receipt email.
+              The risk is payment webhook retries — next step is a shared test plan with your QA.
+            </p>
+          </div>
+          <div class="chips">
+            <span class="chip">System + Mic</span>
+            <span class="chip">Mic Ask</span>
+            <span class="chip">Summary</span>
+            <span class="chip">Stealth panel</span>
+          </div>
+        </aside>
+      </section>
+
+      <section class="section" id="how">
+        <div class="wrap">
+          <div class="section-head">
+            <h2>Prepare once. Perform live. Keep the thread.</h2>
+            <p>
+              One desktop app for interviews and client work — with session memory grouped like
+              ChatGPT threads, not a disposable overlay.
+            </p>
+          </div>
+          <div class="grid-3">
+            <article class="card">
+              <span class="tag">01</span>
+              <h3>Set the mode</h3>
+              <p>
+                Interview, client meeting, or random chat — each mode has its own context fields and
+                speaking style (brief / balanced / detailed, formal / casual).
+              </p>
+            </article>
+            <article class="card">
+              <span class="tag">02</span>
+              <h3>Listen privately</h3>
+              <p>
+                Capture system audio, your mic, or both. Ask / Mic Ask force an answer when auto
+                detection misses. Overlay stays above fullscreen Meet.
+              </p>
+            </article>
+            <article class="card">
+              <span class="tag">03</span>
+              <h3>Summarize & continue</h3>
+              <p>
+                Save summaries per meeting, browse history without hijacking the live session, then
+                open a new meeting in the same project thread.
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="byok">
+        <div class="wrap byok">
+          <div>
+            <h2>BYOK is the product, not a footnote</h2>
+            <p>
+              Final Round, Parakeet, Cluely, and LazyJobSeeker sell hosted AI. Kalfi lets you keep
+              spend on your own OpenRouter or OpenAI account — forever free for the app — or flip to
+              Pro when you want zero-setup hosted models for a teammate.
+            </p>
+            <ul>
+              <li>Paste your key once in desktop Settings (encrypted with OS safeStorage).</li>
+              <li>Pick OpenAI, OpenRouter, or a custom OpenAI-compatible base URL.</li>
+              <li>Pro users never see your provider key — traffic goes through our API.</li>
+            </ul>
+          </div>
+          <div class="byok-aside">
+            <div class="row"><span>Free path</span><strong>Your API key</strong></div>
+            <div class="row"><span>Pro path</span><strong>Our hosted AI</strong></div>
+            <div class="row"><span>Providers</span><strong>OpenAI · OpenRouter</strong></div>
+            <div class="row"><span>Key storage</span><strong>Device only (BYOK)</strong></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="pricing">
+        <div class="wrap">
+          <div class="section-head">
+            <h2>Two ways in. No $150/mo theater.</h2>
+            <p>
+              Start free with BYOK. Upgrade to Pro when you want us to carry model cost and
+              onboarding for non-technical users.
+            </p>
+          </div>
+          <div class="price-grid">
+            <article class="price">
+              <h3>Free · BYOK</h3>
+              <div class="amount">$0 <span>/ forever</span></div>
+              <p class="desc">Full desktop app. You pay your own model usage upstream.</p>
+              <ul>
+                <li>Interview, client, and chat modes</li>
+                <li>Stealth overlay + Mic Ask + Summary</li>
+                <li>OpenAI / OpenRouter / custom base URL</li>
+                <li>Local session history on your machine</li>
+              </ul>
+              <a class="btn btn-ghost" href="#download">Download app</a>
+            </article>
+            <article class="price featured">
+              <h3>Pro · Hosted</h3>
+              <div class="amount">$12 <span>/ mo</span></div>
+              <p class="desc">No key setup. We proxy chat + STT with fair monthly quota.</p>
+              <ul>
+                <li>Everything in Free</li>
+                <li>Login + Stripe subscription</li>
+                <li>Hosted OpenRouter models on our bill</li>
+                <li>Manage plan on the web (Customer Portal)</li>
+              </ul>
+              <button class="btn btn-primary" id="subscribe-btn" type="button">
+                Subscribe with Stripe
+              </button>
+            </article>
+          </div>
+          <p class="hero-note" style="margin-top: 1rem">
+            Pro checkout calls <code>api.kalfi.app</code> when the backend is live. Until then the
+            button shows setup status.
+          </p>
+        </div>
+      </section>
+
+      <section class="section" id="compare">
+        <div class="wrap">
+          <div class="section-head">
+            <h2>Where Kalfi sits</h2>
+            <p>Public marketing comparison — not a lab benchmark.</p>
+          </div>
+          <div class="compare">
+            <table>
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>Final Round</th>
+                  <th>Parakeet</th>
+                  <th>Cluely</th>
+                  <th>Kalfi</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Live answers</td>
+                  <td>Pro</td>
+                  <td>Paid</td>
+                  <td>Assist</td>
+                  <td class="yes">BYOK or Pro</td>
+                </tr>
+                <tr>
+                  <td>BYOK free forever</td>
+                  <td class="no">Not marketed</td>
+                  <td class="no">Not marketed</td>
+                  <td class="no">Not marketed</td>
+                  <td class="yes">Yes</td>
+                </tr>
+                <tr>
+                  <td>Client meetings</td>
+                  <td class="no">Interview-first</td>
+                  <td class="yes">Yes</td>
+                  <td class="yes">Meeting-first</td>
+                  <td class="yes">First-class mode</td>
+                </tr>
+                <tr>
+                  <td>Typical paid entry</td>
+                  <td>~$25+/mo</td>
+                  <td>~$150/mo</td>
+                  <td>Paid plans</td>
+                  <td class="yes">$0 or ~$12/mo</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="faq">
+        <div class="wrap faq">
+          <div class="section-head">
+            <h2>FAQ</h2>
+          </div>
+          <details open>
+            <summary>Does the app run on my computer?</summary>
+            <p>
+              Yes. Kalfi is a desktop Electron app. Shared hosting only serves this landing page.
+              AI for Pro users goes through our VPS API; BYOK talks to your provider from the app.
+            </p>
+          </details>
+          <details>
+            <summary>Is my BYOK key uploaded to your servers?</summary>
+            <p>
+              No. Bring-your-own-key stays on device (encrypted). Only Pro hosted mode uses our
+              server-side provider key.
+            </p>
+          </details>
+          <details>
+            <summary>Where do I manage subscription?</summary>
+            <p>
+              Subscribe from this site. Cancel or update payment in Stripe Customer Portal (linked
+              after login). The desktop app only checks whether Pro is active.
+            </p>
+          </details>
+          <details>
+            <summary>Can it stay hidden on screen share?</summary>
+            <p>
+              Kalfi uses a panel-style overlay with content protection where the OS allows it — same
+              category expectation as other stealth copilots.
+            </p>
+          </details>
+        </div>
+      </section>
+
+      <section class="section" id="download">
+        <div class="wrap cta-band">
+          <div>
+            <h2>Install Kalfi. Bring a key or go Pro.</h2>
+            <p>DMG for Apple Silicon first. Windows build can follow the same funnel.</p>
+          </div>
+          <div class="hero-actions">
+            <a
+              class="btn btn-primary"
+              href="https://github.com/haikallfikrii/AI-Meeting-Assistant/releases"
+              rel="noopener"
+              target="_blank"
+              >GitHub Releases</a
+            >
+            <a class="btn btn-ghost" href="mailto:hello@kalfi.app">Contact</a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap footer-row">
+        <span>© <span id="year"></span> Kalfi. Desktop AI for interviews & meetings.</span>
+        <span>Landing: Hostinger · API: VPS · App: your Mac</span>
+      </div>
+    </footer>
+
+    <script>
+      window.KALFI_CONFIG = {
+        apiBaseUrl: "https://api.kalfi.app",
+        // Set after Stripe + API are live, e.g. price_xxx
+        stripePriceId: ""
+      };
+    </script>
+    <script src="js/main.js"></script>
+  </body>
+</html>

@@ -1,0 +1,15 @@
+# Optional Apache tweaks for Hostinger
+Options -Indexes
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  # Force HTTPS if certificate is active (uncomment when ready)
+  # RewriteCond %{HTTPS} off
+  # RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+</IfModule>
+
+# Cache static assets
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType text/css "access plus 7 days"
+  ExpiresByType application/javascript "access plus 7 days"
+</IfModule>
