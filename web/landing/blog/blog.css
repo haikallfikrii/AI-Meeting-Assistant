@@ -1,0 +1,502 @@
+/* Kalfi blog — article typography on top of css/styles.css */
+
+:root {
+  --prose: 68ch;
+}
+
+.blogbar {
+  background: rgba(8, 10, 15, 0.86);
+}
+
+.crumb {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 30px 0 0;
+}
+
+.crumb a:hover {
+  color: var(--fg-dim);
+}
+
+.crumb span {
+  color: var(--fg-dim);
+}
+
+/* ---------- article shell ---------- */
+
+.post {
+  padding-bottom: 20px;
+}
+
+.post__body {
+  max-width: var(--prose);
+  margin-inline: auto;
+  padding: 26px 0 56px;
+}
+
+.post__head {
+  padding-bottom: 26px;
+  margin-bottom: 30px;
+  border-bottom: 1px solid var(--line);
+}
+
+.post__head h1 {
+  font-size: clamp(2rem, 4.2vw, 3.05rem);
+  margin-bottom: 18px;
+}
+
+.post__lead {
+  color: var(--fg-dim);
+  font-size: 1.1rem;
+  line-height: 1.65;
+  margin-bottom: 20px;
+}
+
+.post__meta {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* ---------- prose ---------- */
+
+.post__body h2 {
+  font-size: clamp(1.42rem, 2.6vw, 1.86rem);
+  margin: 52px 0 16px;
+  scroll-margin-top: 90px;
+}
+
+.post__body h3 {
+  font-size: 1.1rem;
+  margin: 30px 0 10px;
+}
+
+.post__body p {
+  color: var(--fg-dim);
+  font-size: 1.01rem;
+  line-height: 1.75;
+  margin-bottom: 18px;
+}
+
+.post__body p strong,
+.post__body li strong {
+  color: var(--fg);
+  font-weight: 500;
+}
+
+.post__body a:not(.btn) {
+  color: var(--fg);
+  border-bottom: 1px solid var(--line-strong);
+  padding-bottom: 1px;
+  transition: border-color 0.18s ease, color 0.18s ease;
+}
+
+.post__body a:not(.btn):hover {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.post__body ul,
+.post__body ol {
+  display: grid;
+  gap: 10px;
+  margin: 0 0 22px;
+  color: var(--fg-dim);
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+.post__body ul li {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
+  gap: 10px;
+}
+
+.post__body ul li::before {
+  content: "\2014";
+  color: var(--accent);
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  line-height: 1.9;
+}
+
+.post__body ol {
+  counter-reset: steps;
+  padding: 0;
+}
+
+.post__body ol li {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr);
+  gap: 10px;
+  counter-increment: steps;
+}
+
+.post__body ol li::before {
+  content: counter(steps, decimal-leading-zero);
+  font-family: var(--mono);
+  font-size: 0.74rem;
+  color: var(--accent);
+  line-height: 1.95;
+}
+
+.post__body hr {
+  height: 1px;
+  border: 0;
+  background: var(--line);
+  margin: 46px 0;
+}
+
+.post__body blockquote {
+  margin: 0 0 22px;
+  padding: 2px 0 2px 20px;
+  border-left: 2px solid var(--accent);
+  color: var(--fg);
+  font-size: 1.04rem;
+  line-height: 1.7;
+}
+
+/* ---------- callouts ---------- */
+
+.keybox {
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--ink-100);
+  padding: 22px 24px;
+  margin-bottom: 34px;
+}
+
+.keybox h2 {
+  font-size: 1.02rem !important;
+  margin: 0 0 14px !important;
+  font-family: var(--mono);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+}
+
+.keybox ul {
+  margin-bottom: 0;
+  font-size: 0.96rem;
+}
+
+.callout {
+  border: 1px solid var(--line-strong);
+  border-left: 2px solid var(--alert);
+  border-radius: var(--r-md);
+  background: var(--ink-100);
+  padding: 18px 20px;
+  margin: 0 0 26px;
+}
+
+.callout p {
+  margin-bottom: 0;
+  font-size: 0.95rem;
+}
+
+.callout strong {
+  color: var(--fg);
+}
+
+.pricecard {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0 0 28px;
+}
+
+.pricecard > div {
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--ink-100);
+  padding: 18px 20px;
+}
+
+.pricecard > div.is-us {
+  border-color: rgba(91, 140, 255, 0.4);
+  background: linear-gradient(180deg, rgba(91, 140, 255, 0.07), var(--ink-100) 60%);
+}
+
+.pricecard dt {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+  margin-bottom: 8px;
+}
+
+.pricecard dd {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 1.7rem;
+  letter-spacing: -0.03em;
+}
+
+.pricecard p {
+  margin: 6px 0 0 !important;
+  font-size: 0.84rem !important;
+  color: var(--fg-faint) !important;
+}
+
+/* ---------- full-bleed blocks inside prose ---------- */
+
+.wide {
+  width: min(calc(100vw - 48px), 1040px);
+  margin-left: 50%;
+  transform: translateX(-50%);
+}
+
+.wide table {
+  min-width: 640px;
+}
+
+.post__body .faq {
+  max-width: none;
+  margin-bottom: 22px;
+}
+
+.post__body details p {
+  margin-bottom: 0;
+}
+
+/* ---------- CTA + related ---------- */
+
+.post__cta {
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--ink-100);
+  padding: 32px 30px;
+  margin-top: 48px;
+}
+
+.post__cta h2 {
+  margin: 0 0 10px !important;
+  font-size: 1.5rem !important;
+}
+
+.post__cta p {
+  margin-bottom: 20px;
+}
+
+.post__cta .hero__cta {
+  margin-bottom: 0;
+}
+
+.related {
+  border-top: 1px solid var(--line);
+  padding: 34px 0 60px;
+  max-width: var(--prose);
+  margin-inline: auto;
+}
+
+.related h2 {
+  font-family: var(--mono);
+  font-size: 0.74rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+  margin-bottom: 16px;
+}
+
+.related ul {
+  display: grid;
+  gap: 10px;
+}
+
+.related a {
+  display: block;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--ink-100);
+  padding: 14px 16px;
+  font-size: 0.96rem;
+  transition: border-color 0.18s ease, background 0.18s ease;
+}
+
+.related a:hover {
+  border-color: var(--line-strong);
+  background: var(--ink-150);
+}
+
+.related a span {
+  display: block;
+  color: var(--fg-faint);
+  font-size: 0.85rem;
+  margin-top: 4px;
+}
+
+/* ---------- blog index ---------- */
+
+.hub {
+  padding: 54px 0 20px;
+}
+
+.hub h1 {
+  font-size: clamp(2.1rem, 4.4vw, 3.1rem);
+  margin-bottom: 18px;
+  max-width: 20ch;
+}
+
+.hub p {
+  color: var(--fg-dim);
+  font-size: 1.06rem;
+  max-width: 56ch;
+}
+
+.postlist {
+  display: grid;
+  gap: 0;
+  border-top: 1px solid var(--line);
+  margin: 40px 0 70px;
+}
+
+.postlist article {
+  border-bottom: 1px solid var(--line);
+}
+
+.postlist a.card {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  gap: 26px;
+  padding: 28px 16px 30px 4px;
+  transition: background 0.18s ease;
+}
+
+.postlist a.card:hover {
+  background: rgba(255, 255, 255, 0.015);
+}
+
+.postlist .card__meta {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+  display: grid;
+  gap: 6px;
+  align-content: start;
+  padding-top: 4px;
+}
+
+.postlist h2 {
+  font-size: 1.34rem;
+  margin-bottom: 10px;
+}
+
+.postlist a.card:hover h2 {
+  color: var(--accent);
+}
+
+.postlist p {
+  color: var(--fg-dim);
+  font-size: 0.97rem;
+  line-height: 1.7;
+  max-width: 62ch;
+}
+
+@media (max-width: 780px) {
+  .pricecard {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .postlist a.card {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .post__cta {
+    padding: 24px 20px;
+  }
+
+  .wide {
+    width: calc(100vw - 48px);
+  }
+}
+
+/* ---------- index cards + CTA used by generated posts ---------- */
+
+.blog-index {
+  display: grid;
+  gap: 14px;
+}
+
+.blog-card {
+  display: block;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--ink-100);
+  padding: 22px 24px;
+  transition: border-color 0.18s ease, background 0.18s ease;
+}
+
+.blog-card:hover {
+  border-color: var(--line-strong);
+  background: rgba(91, 140, 255, 0.05);
+}
+
+.blog-card h2 {
+  font-size: 1.2rem;
+  margin: 0 0 8px;
+}
+
+.blog-card p {
+  margin: 0;
+  color: var(--fg-dim);
+  font-size: 0.95rem;
+}
+
+.cta-box {
+  margin-top: 48px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--ink-100);
+  padding: 28px 26px;
+}
+
+.cta-box h2 {
+  margin: 0 0 10px !important;
+  font-size: 1.4rem !important;
+}
+
+.cta-box p {
+  color: var(--fg-dim);
+  margin-bottom: 18px;
+}
+
+.post__body table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0 0 28px;
+  font-size: 0.92rem;
+}
+
+.post__body th,
+.post__body td {
+  text-align: left;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  vertical-align: top;
+}
+
+.post__body th {
+  background: var(--ink-100);
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+}

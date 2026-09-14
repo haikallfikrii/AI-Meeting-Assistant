@@ -80,8 +80,8 @@
       card.setAttribute('data-shown', String(!on))
       if (label) label.textContent = on ? 'on' : 'off'
       if (tag) {
-        tag.textContent = on ? 'clean' : 'overlay visible to everyone'
-        tag.style.color = on ? '' : 'var(--alert)'
+        tag.textContent = on ? 'Shared screen · clean' : 'Shared screen · overlay leaking'
+        tag.style.color = on ? '' : '#f6a94a'
       }
     }
 
@@ -160,7 +160,12 @@
     sttPerMinute: 0.006
   }
 
-  var RIVALS = { pro: 12, finalRound: 25, parakeet: 149.9 }
+  var RIVALS = {
+    byokPlan: 14,
+    hosted: 19,
+    finalRound: 150,
+    parakeet: 149.9
+  }
 
   function money(n) {
     return '$' + n.toFixed(2)
@@ -208,7 +213,7 @@
         (questions * ASSUME.inputTokens * picked.inp) / 1e6 +
         (questions * ASSUME.outputTokens * picked.out) / 1e6
       var sttCost = stt && stt.checked ? totalMinutes * ASSUME.sttPerMinute : 0
-      var byok = tokenCost + sttCost
+      var byok = RIVALS.byokPlan + tokenCost + sttCost
 
       if (out.sessions) out.sessions.textContent = String(calls)
       if (out.minutes) out.minutes.textContent = String(mins)
@@ -218,40 +223,40 @@
       if (out.amount) out.amount.textContent = money(byok)
       if (out.detail) {
         out.detail.textContent =
+          '$14 plan + ' +
+          money(tokenCost + sttCost) +
+          ' provider (' +
           Math.round(questions) +
-          ' answers over ' +
+          ' answers / ' +
           totalMinutes +
-          ' min · ' +
-          money(tokenCost) +
-          ' models' +
-          (sttCost ? ' + ' + money(sttCost) + ' transcription' : '')
+          ' min)'
       }
 
-      var scale = Math.max(byok, RIVALS.parakeet)
+      var scale = Math.max(byok, RIVALS.finalRound, RIVALS.parakeet)
       var setBar = function (el, value) {
         if (el) el.style.width = Math.max(1.2, (value / scale) * 100) + '%'
       }
       setBar(out.bars.byok, byok)
-      setBar(out.bars.pro, RIVALS.pro)
+      setBar(out.bars.pro, RIVALS.hosted)
       setBar(out.bars.frai, RIVALS.finalRound)
       setBar(out.bars.parakeet, RIVALS.parakeet)
 
       if (out.verdict) {
-        var savedYear = (RIVALS.parakeet - byok) * 12
-        if (byok < RIVALS.pro) {
+        var vsFinal = (RIVALS.finalRound - byok) * 12
+        if (byok <= RIVALS.hosted) {
           out.verdict.innerHTML =
-            'At this usage your own key costs <strong>' +
+            'At this usage BYOK lands at <strong>' +
             money(byok) +
-            '</strong> a month — cheaper than our own Pro plan, and <strong>' +
-            money(savedYear) +
-            '</strong> a year below ParakeetAI. Stay on Free.'
+            '</strong>/mo ($14 + provider). That is about <strong>' +
+            money(vsFinal) +
+            '</strong>/year under Final Round at $150. Stay on BYOK unless you want zero key setup.'
         } else {
           out.verdict.innerHTML =
-            'At this usage your key costs <strong>' +
+            'At this usage BYOK is <strong>' +
             money(byok) +
-            '</strong> a month, so <strong>Pro at $12 flat</strong> is the better deal — and still ' +
-            money(RIVALS.parakeet - RIVALS.pro) +
-            ' a month under ParakeetAI.'
+            '</strong>/mo, so <strong>Hosted at $19 flat</strong> is cheaper — and still ' +
+            money(RIVALS.finalRound - RIVALS.hosted) +
+            '/mo under Final Round.'
         }
       }
     }
@@ -274,17 +279,17 @@
     if (note) {
       note.textContent = ready
         ? 'Secure checkout by Stripe. Cancel any time in the customer portal.'
-        : 'Checkout opens once the billing API is switched on. Until then, run the app free with your own key.'
+        : 'Checkout opens once Stripe price IDs are set. Until then, download the app and use BYOK when billing is live.'
     }
 
     Array.prototype.forEach.call(buttons, function (btn) {
       btn.addEventListener('click', function () {
         if (!ready) {
-          var target = document.getElementById('cost')
+          var target = document.getElementById('pricing')
           if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' })
           if (note) {
             note.textContent =
-              'Billing is not live yet on this domain. The free BYOK path is available right now — see the numbers above.'
+              'Billing is not live yet on this domain. Plans are $14 BYOK, $19 Hosted, $49 Team — see above.'
           }
           return
         }

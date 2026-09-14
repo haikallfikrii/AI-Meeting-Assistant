@@ -77,18 +77,18 @@
     pricing: {
       core: {
         formal:
-          'The application is free when you supply your own API key; the hosted plan is twelve dollars a month.',
-        neutral: 'App is free if you bring your own key. Hosted plan is twelve a month.',
-        casual: 'Free with your own key, twelve bucks a month if you want us to handle it.'
+          'The BYOK plan is fourteen dollars a month with your own API key; hosted AI is nineteen dollars a month.',
+        neutral: 'BYOK is fourteen a month with your key. Hosted AI is nineteen flat.',
+        casual: 'Fourteen with your own key, nineteen if we host the models.'
       },
       points: [
-        'On the free path you pay your provider directly, usually a few dollars a month.',
-        'Hosted is for people who do not want to touch an API dashboard at all.',
-        'No trial timer — the free path stays free.'
+        'On BYOK you still pay your provider for tokens — usually a few dollars on top.',
+        'Hosted is for people who do not want to touch an API dashboard.',
+        'Team is forty-nine for three Hosted seats on one invoice.'
       ],
       extra: [
-        'Cancel the hosted plan any time in the Stripe portal; the app falls back to your key.',
-        'Same app either way, only the model routing changes.'
+        'Cancel any plan in the Stripe portal; the desktop app stays on your machine.',
+        'Final Round lists around one hundred fifty a month for the same category of help.'
       ]
     },
     byok: {

@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Cluely Alternative: Stealth Meeting Copilot Without the Fingerprint</title>
+    <meta
+      name="description"
+      content="Hiding a Dock icon is not stealth. Kalfi is a Cluely alternative for macOS that lets you set the app's display name and logo, keeps the overlay out of screen shares, and costs $14 BYOK or $19 hosted."
+    />
+    <link rel="canonical" href="https://ai.chatlm.tech/blog/cluely-alternative.html" />
+    <meta name="theme-color" content="#080a0f" />
+    <meta name="robots" content="index, follow" />
+
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="Kalfi" />
+    <meta property="og:title" content="Cluely Alternative: Stealth Meeting Copilot Without the Fingerprint" />
+    <meta
+      property="og:description"
+      content="What a hidden Dock icon does and does not hide on macOS, and how Kalfi's custom app naming closes the gap."
+    />
+    <meta property="og:url" content="https://ai.chatlm.tech/blog/cluely-alternative.html" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Cluely Alternative: Stealth Meeting Copilot Without the Fingerprint" />
+    <meta
+      name="twitter:description"
+      content="Kalfi is a macOS meeting copilot you can rename and rebrand. $14 BYOK, $19 hosted."
+    />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../css/styles.css" />
+    <link rel="stylesheet" href="blog.css" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "BlogPosting",
+        "headline": "Cluely Alternative: Stealth Meeting Copilot Without the Fingerprint",
+        "description": "Hiding a Dock icon is not stealth. Kalfi is a macOS meeting copilot you can rename and rebrand, at $14 BYOK or $19 hosted.",
+        "datePublished": "2026-09-14",
+        "dateModified": "2026-09-14",
+        "inLanguage": "en",
+        "author": { "@type": "Organization", "name": "Kalfi", "url": "https://ai.chatlm.tech/" },
+        "publisher": { "@type": "Organization", "name": "Kalfi", "url": "https://ai.chatlm.tech/" },
+        "mainEntityOfPage": {
+          "@type": "WebPage",
+          "@id": "https://ai.chatlm.tech/blog/cluely-alternative.html"
+        },
+        "about": ["Cluely alternative", "stealth meeting assistant", "macOS overlay"]
+      }
+    </script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Is Kalfi undetectable?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "No, and we will not claim it is. Kalfi hides the Dock icon, marks the overlay window as content-protected so it stays out of screen captures, and lets you rename the app so the process list shows a name you chose. It is not a rootkit, it does not tamper with the operating system, and screen-capture protection depends on your macOS version and the conferencing app."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What shows up in macOS Activity Monitor?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Whatever display name you set. Competing copilots hide the Dock icon but still surface a recognizable product name in the process list. Kalfi follows your chosen name wherever macOS exposes the process title. Binary packaging still ships as Kalfi so updates work."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How much does Kalfi cost compared with Cluely?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Kalfi is $14/month if you bring your own OpenAI or OpenRouter key, or $19/month on the hosted plan where we pay the model cost. Cluely sells paid subscription plans and does not offer a bring-your-own-key option."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Does Kalfi add a bot to the meeting?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "No. Kalfi captures audio locally on your Mac and draws an overlay on your own display. No extra participant joins the Google Meet or Zoom roster."
+            }
+          }
+        ]
+      }
+    </script>
+  </head>
+
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+
+    <header class="topbar blogbar" data-scrolled="true">
+      <div class="shell topbar__inner">
+        <a class="wordmark" href="../index.html">
+          <span class="wordmark__mark">K</span>
+          Kalfi
+        </a>
+        <nav class="topnav" aria-label="Primary">
+          <a href="index.html">Blog</a>
+          <a href="../index.html#stealth">Stealth</a>
+          <a href="../index.html#compare">Compare</a>
+          <a href="../index.html#pricing">Pricing</a>
+        </nav>
+        <div class="topbar__actions">
+          <a class="btn btn--line btn--sm" href="../index.html#download">Download</a>
+          <a class="btn btn--accent btn--sm" href="../index.html#pricing">See pricing</a>
+        </div>
+      </div>
+    </header>
+
+    <main id="main" class="shell post">
+      <nav class="crumb" aria-label="Breadcrumb">
+        <a href="../index.html">Home</a>
+        <span aria-hidden="true">/</span>
+        <a href="index.html">Blog</a>
+        <span aria-hidden="true">/</span>
+        <span>Cluely alternative</span>
+      </nav>
+
+      <article class="post__body">
+        <header class="post__head">
+          <span class="tagline">Stealth</span>
+          <h1>Cluely Alternative: Stealth Meeting Copilot Without the Fingerprint</h1>
+          <p class="post__lead">
+            Most meeting copilots define stealth as a hidden Dock icon. That covers the first place
+            someone looks and none of the others. This is a practical comparison of what Cluely hides,
+            what it does not, and how Kalfi handles the part nobody else touches: the name the app wears
+            on your machine.
+          </p>
+          <p class="post__meta">
+            <time datetime="2026-09-14">14 September 2026</time>
+            <span aria-hidden="true">·</span>
+            <span>6 min read</span>
+            <span aria-hidden="true">·</span>
+            <span>Kalfi team</span>
+          </p>
+        </header>
+
+        <div class="keybox">
+          <h2>The short version</h2>
+          <ul>
+            <li>A hidden Dock icon does not change what the process is called in Activity Monitor.</li>
+            <li>Kalfi lets you set a <strong>custom display name and logo</strong>, so the overlay and the process title read as whatever utility you choose.</li>
+            <li>Kalfi runs as a content-protected panel window with no Dock or Cmd+Tab entry, above fullscreen Meet and Zoom.</li>
+            <li><strong>$14/month</strong> on your own API key, <strong>$19/month</strong> hosted. No enterprise pricing to negotiate.</li>
+            <li>None of this is a rootkit, and we say so on the pricing page too.</li>
+          </ul>
+        </div>
+
+        <h2 id="stealth-theatre">Three layers of exposure, not one</h2>
+        <p>
+          When people say a copilot is "hidden", they usually mean one of three separate things. It helps
+          to pull them apart, because a tool can pass one and fail the other two.
+        </p>
+        <ul>
+          <li>
+            <strong>The shared screen.</strong> Does the overlay appear when you present a window, a tab or
+            the whole display? This is what screen-capture protection addresses.
+          </li>
+          <li>
+            <strong>The glance.</strong> If someone looks at your Dock, your app switcher or your menu bar,
+            is there an obvious AI product sitting there?
+          </li>
+          <li>
+            <strong>The process list.</strong> If anyone opens Activity Monitor, or a managed-device agent
+            reports running processes, what string do they see?
+          </li>
+        </ul>
+        <p>
+          Cluely and similar tools generally handle the first two. The third is where a recognizable
+          product name keeps showing up, and it is the layer that is hardest to explain away if it is
+          spotted, because it is written in plain text.
+        </p>
+
+        <h2 id="the-name-problem">The name is the fingerprint</h2>
+        <p>
+          A window you cannot see in a screen share is still a running process. On macOS, the process title
+          is what the app declares about itself, and most copilots declare their brand. Someone scrolling
+          Activity Monitor during a call does not need to understand the architecture. They just need to
+          read a familiar product name once.
+        </p>
+        <p>
+          Kalfi's approach is to hand that string to you. In Settings under Stealth branding, you set a
+          display name and optionally upload a logo. The overlay header changes, the chip in the corner
+          changes, and wherever macOS exposes the process title, it follows the name you picked. Call it
+          after a notes app, a calendar helper, an internal tool your company actually uses, and it reads
+          like ordinary desktop clutter.
+        </p>
+
+        <div class="callout">
+          <p>
+            <strong>Being precise about the limit.</strong> The binary still ships packaged as Kalfi so that
+            updates and code signing work. What changes is what a person sees on screen and in the process
+            list. A determined forensic inspection of the app bundle will find Kalfi. That is a deliberate
+            trade, not an oversight.
+          </p>
+        </div>
+
+        <h2 id="what-else-kalfi-does">What Kalfi does beyond the branding</h2>
+        <h3>Panel window with content protection</h3>
+        <p>
+          The overlay is a panel-level window flagged to stay out of screen capture, and it floats above
+          fullscreen Google Meet and Zoom rather than behind them. The
+          <a href="../index.html#stealth">interactive demo on the landing page</a> shows the difference:
+          toggle stealth off and the suggested reply appears in the "what the room sees" panel.
+        </p>
+
+        <h3>No meeting bot</h3>
+        <p>
+          Nothing joins your call. Audio is captured on your Mac, from system output, your microphone, or
+          both mixed together. There is no extra participant in the roster and no recording notice
+          triggered by a bot account.
+        </p>
+
+        <h3>Answers you can actually say out loud</h3>
+        <p>
+          Stealth is wasted if the output is a wall of bullet points you have to read silently for fifteen
+          seconds. Kalfi writes one speakable line first, with supporting points underneath, and you set
+          length (brief, balanced, detailed) and tone (formal, neutral, casual) per session.
+        </p>
+
+        <h3>Threads instead of transcripts</h3>
+        <p>
+          Sessions group into a project. The second call with the same client or the second round with the
+          same company starts with the context from the first, including what you already committed to.
+        </p>
+
+        <h2 id="side-by-side">Side by side</h2>
+        <div class="tablewrap wide">
+          <table>
+            <caption class="dim" style="text-align: left; padding: 14px 18px; font-size: 0.8rem">
+              Based on public marketing material, September 2026.
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col">&nbsp;</th>
+                <th scope="col">Cluely</th>
+                <th scope="col" class="is-us">Kalfi</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="row-label">Overlay hidden from screen share</td>
+                <td>Yes</td>
+                <td class="is-us">Yes, content-protected panel</td>
+              </tr>
+              <tr>
+                <td class="row-label">Dock / Cmd+Tab icon</td>
+                <td>Hidden</td>
+                <td class="is-us">Hidden</td>
+              </tr>
+              <tr>
+                <td class="row-label">Custom app name and logo</td>
+                <td class="dim">No</td>
+                <td class="is-us">Settings &rarr; Stealth branding</td>
+              </tr>
+              <tr>
+                <td class="row-label">Activity Monitor entry</td>
+                <td>Recognizable product name</td>
+                <td class="is-us">Your chosen display name</td>
+              </tr>
+              <tr>
+                <td class="row-label">Bring your own API key</td>
+                <td class="dim">Not offered</td>
+                <td class="is-us">$14 / month plan</td>
+              </tr>
+              <tr>
+                <td class="row-label">Hosted plan</td>
+                <td>Paid subscription</td>
+                <td class="is-us">$19 / month</td>
+              </tr>
+              <tr>
+                <td class="row-label">Answer style control</td>
+                <td class="dim">Preset</td>
+                <td class="is-us">Length + tone per session</td>
+              </tr>
+              <tr>
+                <td class="row-label">Multi-meeting memory</td>
+                <td class="dim">Per session</td>
+                <td class="is-us">Project threads</td>
+              </tr>
+              <tr>
+                <td class="row-label">Platform</td>
+                <td>macOS + Windows</td>
+                <td class="is-us">macOS, Apple Silicon tested</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2 id="honesty">What we are not claiming</h2>
+        <p>
+          This section exists because the category is full of promises that do not survive contact with a
+          real IT department.
+        </p>
+        <ul>
+          <li>
+            <strong>Kalfi is not undetectable.</strong> It is a normal application running under your user
+            account. Managed devices with endpoint monitoring can see applications you install.
+          </li>
+          <li>
+            <strong>Screen-capture protection is OS-dependent.</strong> Behaviour varies across macOS
+            versions and conferencing clients. Run a test call and confirm before a real one.
+          </li>
+          <li>
+            <strong>Proctored exams are out of scope.</strong> Dedicated proctoring software is designed to
+            find exactly this class of tool, and we do not try to defeat it.
+          </li>
+          <li>
+            <strong>Room rules still apply.</strong> Kalfi is built for calls where assistance is permitted:
+            client work, internal meetings, sales, practice, language support. If someone says no, that is
+            the answer.
+          </li>
+        </ul>
+
+        <h2 id="price">The pricing difference</h2>
+        <dl class="pricecard">
+          <div class="is-us">
+            <dt>Kalfi BYOK</dt>
+            <dd>$14 / mo</dd>
+            <p>Your own OpenAI or OpenRouter key, encrypted on device</p>
+          </div>
+          <div class="is-us">
+            <dt>Kalfi Hosted</dt>
+            <dd>$19 / mo</dd>
+            <p>No provider account, we carry the model cost</p>
+          </div>
+        </dl>
+        <p>
+          A Team pack is in progress for shared billing and seat management. If you need it now, email
+          <a href="mailto:hello@chatlm.tech">hello@chatlm.tech</a>. For how these numbers stack against the
+          rest of the market, see the
+          <a href="best-ai-interview-assistant.html">2026 honest comparison</a> or the
+          <a href="parakeet-ai-alternative.html">ParakeetAI breakdown</a>.
+        </p>
+
+        <h2 id="faq">Common questions</h2>
+        <div class="faq">
+          <details open>
+            <summary>Is Kalfi undetectable?</summary>
+            <p>
+              No. It hides the Dock icon, keeps the overlay out of screen captures where the OS allows, and
+              lets you rename the app so the process list shows a name you chose. It does not modify the
+              operating system and it will not defeat proctoring software.
+            </p>
+          </details>
+          <details>
+            <summary>What exactly shows in Activity Monitor?</summary>
+            <p>
+              Your display name, wherever macOS exposes the process title. That is the main practical
+              difference from tools that hide the icon but keep the brand. The app bundle itself is still
+              packaged as Kalfi so updates work.
+            </p>
+          </details>
+          <details>
+            <summary>Does the overlay show if I share a single window instead of the screen?</summary>
+            <p>
+              Sharing a single window shares that window, so Kalfi is not in the capture. Full-display
+              sharing is the case that relies on content protection, which is where you should run a test
+              on your own macOS version first.
+            </p>
+          </details>
+          <details>
+            <summary>Can I use my own model?</summary>
+            <p>
+              Yes. Anything OpenAI-compatible works: OpenAI directly, OpenRouter for model choice, or a
+              custom base URL pointed at your own gateway. That is the $14 BYOK plan.
+            </p>
+          </details>
+          <details>
+            <summary>Windows support?</summary>
+            <p>
+              Build targets exist, but macOS on Apple Silicon is what ships tested. The stealth behaviour in
+              particular is tuned for macOS first.
+            </p>
+          </details>
+        </div>
+
+        <div class="post__cta">
+          <h2>Name it whatever you want</h2>
+          <p>
+            Download the Mac app, set your display name and logo in Settings, and check the overlay
+            against a test call before it matters.
+          </p>
+          <div class="hero__cta">
+            <a class="btn btn--solid" href="https://ai.chatlm.tech/#download">Download for Mac</a>
+            <a class="btn btn--line" href="https://ai.chatlm.tech/#pricing">See pricing</a>
+          </div>
+        </div>
+      </article>
+
+      <aside class="related">
+        <h2>Keep reading</h2>
+        <ul>
+          <li>
+            <a href="final-round-ai-alternative.html">
+              Final Round AI Alternative (2026): Why Teams Switch to Kalfi
+              <span>~$150 a month against $14 BYOK, and what you give up.</span>
+            </a>
+          </li>
+          <li>
+            <a href="parakeet-ai-alternative.html">
+              ParakeetAI Alternative: Same Live Answers, Fraction of the Price
+              <span>The $149.90 list price, examined line by line.</span>
+            </a>
+          </li>
+          <li>
+            <a href="best-ai-interview-assistant.html">
+              Best AI Interview Assistant in 2026 (Honest Comparison)
+              <span>Five tools, including where Kalfi loses.</span>
+            </a>
+          </li>
+        </ul>
+      </aside>
+    </main>
+
+    <footer class="foot">
+      <div class="shell foot__row">
+        <span>&copy; 2026 Kalfi — desktop AI for interviews and meetings.</span>
+        <span>
+          <a href="../index.html">Home</a> ·
+          <a href="index.html">Blog</a> ·
+          <a href="https://github.com/haikallfikrii/AI-Meeting-Assistant" target="_blank" rel="noopener">Source</a>
+          · <a href="mailto:hello@chatlm.tech">Contact</a>
+        </span>
+      </div>
+    </footer>
+  </body>
+</html>
