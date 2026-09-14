@@ -382,7 +382,7 @@ a.btn.is-disabled {
 .hero-pin {
   --p: 0;
   position: relative;
-  height: 240vh;
+  height: 260vh;
 }
 
 .hero-sticky {
@@ -392,7 +392,7 @@ a.btn.is-disabled {
   height: calc(100vh - var(--hero-top));
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: visible;
   padding: 18px var(--gut) 0;
   isolation: isolate;
 }
@@ -411,12 +411,13 @@ a.btn.is-disabled {
   opacity: calc(1 - var(--p) * 0.96);
   transform: translate3d(0, calc(var(--p) * -56px), 0) scale(calc(1 - var(--p) * 0.05));
   max-height: calc((1 - var(--p) * 0.92) * 560px);
-  overflow: hidden;
+  overflow: visible;
   pointer-events: auto;
 }
 
 .hero-copy[data-faded="true"] {
   pointer-events: none;
+  overflow: hidden;
 }
 
 .hero-copy .tagline {
@@ -468,7 +469,26 @@ a.btn.is-disabled {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-  margin-bottom: 22px;
+  margin-bottom: 10px;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn--hero-side {
+  min-height: 52px;
+  height: 52px;
+  padding: 0 18px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  white-space: nowrap;
+}
+
+.download-meta--hero {
+  text-align: center;
+  margin: 0 0 18px;
 }
 
 .facts {
@@ -498,7 +518,7 @@ a.btn.is-disabled {
   letter-spacing: -0.02em;
 }
 
-/* Demo peeks from bottom of sticky frame, expands to full window on scroll */
+/* Demo peeks from bottom of sticky frame, expands almost full viewport on scroll */
 .hero-demo-slot {
   position: relative;
   z-index: 2;
@@ -513,13 +533,18 @@ a.btn.is-disabled {
 .hero-demo-wrap {
   position: absolute;
   left: 50%;
-  bottom: 0;
-  width: min(980px, 100%);
-  height: min(580px, calc(100% + (1 - var(--p)) * 40%));
-  will-change: transform, height;
-  transform: translate3d(-50%, calc((1 - var(--p)) * 50%), 0)
-    scale(calc(0.94 + var(--p) * 0.06));
+  bottom: calc(var(--p) * 10px);
+  width: calc(
+    (1 - var(--p)) * min(920px, 100%) + var(--p) * min(100%, calc(100vw - 20px))
+  );
+  height: calc(
+    (1 - var(--p)) * min(520px, 62%) + var(--p) * 100%
+  );
+  will-change: transform, width, height;
+  transform: translate3d(-50%, calc((1 - var(--p)) * 46%), 0);
   transform-origin: center bottom;
+  border-radius: calc((1 - var(--p)) * 18px + var(--p) * 10px);
+  overflow: hidden;
 }
 
 .hero-demo-glow {
@@ -554,6 +579,8 @@ a.btn.is-disabled {
   box-shadow:
     0 0 0 1px rgba(255, 255, 255, 0.05),
     0 28px 90px rgba(0, 0, 0, 0.58);
+  border-radius: inherit;
+  overflow: hidden;
 }
 
 .hero-demo .tabs {
@@ -571,7 +598,15 @@ a.btn.is-disabled {
 .hero-demo .answer {
   height: 100%;
   min-height: 0;
-  overflow: auto;
+  overflow: hidden;
+  scrollbar-width: none;
+}
+
+.hero-demo .transcript::-webkit-scrollbar,
+.hero-demo .answer::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
 }
 
 /* ---------- app window / demo ---------- */
@@ -1923,6 +1958,74 @@ td.row-label {
   color: var(--fg-faint);
 }
 
+.docs-teaser {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: linear-gradient(135deg, rgba(91, 140, 255, 0.08), transparent 55%), var(--ink-100);
+  padding: 32px 30px;
+}
+
+.docs-teaser h2 {
+  font-size: clamp(1.45rem, 2.8vw, 2rem);
+  margin-bottom: 8px;
+  max-width: 18ch;
+}
+
+.docs-teaser p {
+  color: var(--fg-dim);
+  max-width: 48ch;
+}
+
+.docs-page {
+  padding: 28px 0 72px;
+}
+
+.docs-crumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 22px;
+  font-size: 0.86rem;
+  color: var(--fg-faint);
+}
+
+.docs-crumb a:hover {
+  color: var(--fg-dim);
+}
+
+.docs-hero {
+  margin-bottom: 28px;
+  max-width: 46rem;
+}
+
+.docs-hero h1 {
+  font-size: clamp(1.9rem, 4vw, 2.8rem);
+  margin-bottom: 12px;
+}
+
+.docs-hero > p {
+  color: var(--fg-dim);
+  font-size: 1.02rem;
+  max-width: 58ch;
+  margin-bottom: 18px;
+}
+
+.docs-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.docs-page .docs {
+  margin-top: 8px;
+  padding-bottom: 24px;
+}
+
 /* ---------- install / docs ---------- */
 
 .docs {
@@ -2295,11 +2398,6 @@ details p {
   color: var(--fg-faint);
 }
 
-.download-meta--hero {
-  text-align: left;
-  margin-top: 2px;
-}
-
 /* Single OS-aware download control */
 .dl {
   display: flex;
@@ -2307,10 +2405,12 @@ details p {
   gap: 8px;
   width: min(100%, 320px);
   position: relative;
+  z-index: 5;
 }
 
 .dl--hero {
   width: min(100%, 300px);
+  flex: 0 0 auto;
 }
 
 .dl__shell {
@@ -2318,6 +2418,7 @@ details p {
   display: grid;
   grid-template-columns: 1fr auto;
   align-items: stretch;
+  height: 52px;
   border-radius: 12px;
   overflow: visible;
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06), 0 10px 28px rgba(0, 0, 0, 0.28);
@@ -2328,11 +2429,13 @@ details p {
   align-items: center;
   gap: 12px;
   min-height: 52px;
-  padding: 10px 16px;
+  height: 52px;
+  padding: 0 16px;
   background: var(--fg);
   color: var(--ink-000);
   border-radius: 12px 0 0 12px;
   transition: background 0.18s ease, opacity 0.18s ease;
+  min-width: 0;
 }
 
 .dl__go:hover {
@@ -2368,8 +2471,11 @@ details p {
 
 .dl__label {
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   letter-spacing: -0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .dl__ext {

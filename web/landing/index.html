@@ -53,7 +53,7 @@
         <nav class="topnav" aria-label="Primary">
           <a href="#demo">Demo</a>
           <a href="#flow">How it works</a>
-          <a href="#docs">Docs</a>
+          <a href="docs/">Docs</a>
           <a href="#stealth">Stealth</a>
           <a href="#brand">Brand</a>
           <a href="#cost">Cost</a>
@@ -73,7 +73,7 @@
       <div class="shell drawer" id="drawer" data-open="false">
         <a href="#demo">Demo</a>
         <a href="#flow">How it works</a>
-        <a href="#docs">Docs</a>
+        <a href="docs/">Docs</a>
         <a href="#stealth">Stealth</a>
         <a href="#brand">Brand</a>
         <a href="#cost">Cost</a>
@@ -155,12 +155,14 @@
                       </button>
                     </div>
                   </div>
-                  <p class="download-meta download-meta--hero" data-download-meta>Detecting your system…</p>
                 </div>
-                <button class="btn btn--line" type="button" data-demo-focus>
+                <button class="btn btn--line btn--hero-side" type="button" data-demo-focus>
                   Run the demo <span class="kbd">⌘↵</span>
                 </button>
               </div>
+              <p class="download-meta download-meta--hero hero-in" style="--d: 3" data-download-meta>
+                Detecting your system…
+              </p>
               <dl class="facts hero-in" style="--d: 4">
                 <div>
                   <dt>Modes</dt>
@@ -885,220 +887,19 @@
         </div>
       </section>
 
-      <!-- DOCUMENTATION -->
+      <!-- DOCS TEASER -->
       <section class="band band--tight" id="docs">
-        <div class="shell band__head" data-reveal>
-          <span class="tagline">Documentation</span>
-          <h2>From first install to everyday calls.</h2>
-          <p>
-            Beginner-friendly walkthrough: install on your computer, finish first-time setup, then use
-            Kalfi in real meetings. On Mac, Apple may show a “damaged” warning — that is normal for our
-            unsigned build; the fix is in the install steps.
-          </p>
-        </div>
-
-        <div class="shell docs" data-reveal>
-          <nav class="docs-nav" aria-label="Documentation sections">
-            <a href="#docs-install">1. Install</a>
-            <a href="#docs-setup">2. First-time setup</a>
-            <a href="#docs-daily">3. Daily use</a>
-          </nav>
-
-          <div class="docs-body">
-            <article class="docs-block" id="docs-install">
-              <header class="docs-block__head">
-                <span class="docs-block__num">01</span>
-                <div>
-                  <h3>Install</h3>
-                  <p>Download the build for your OS, then follow the matching steps below.</p>
-                </div>
-              </header>
-
-              <div class="docs-os-tabs" role="tablist" aria-label="Install by operating system">
-                <button type="button" class="docs-os-tab is-on" role="tab" aria-selected="true" data-docs-os="mac">
-                  macOS
-                </button>
-                <button type="button" class="docs-os-tab" role="tab" aria-selected="false" data-docs-os="win">
-                  Windows
-                </button>
-                <button type="button" class="docs-os-tab" role="tab" aria-selected="false" data-docs-os="linux">
-                  Linux
-                </button>
-              </div>
-
-              <div class="docs-os-panel is-on" id="install-mac" data-docs-panel="mac" role="tabpanel">
-                <p class="install-card__lead">
-                  Prefer the file named like <code>kalfi-…-mac.dmg</code> (not older names without
-                  <code>-mac</code>).
-                </p>
-
-                <h4>1. Download &amp; open the installer</h4>
-                <ol class="install-steps">
-                  <li>Click the download button on this page (it detects macOS automatically).</li>
-                  <li>Wait until the download finishes. Check your browser’s downloads bar or the Downloads folder.</li>
-                  <li>Double-click the <code>.dmg</code> file. A small window opens with the Kalfi icon.</li>
-                  <li>Drag <strong>Kalfi</strong> onto the <strong>Applications</strong> folder icon.</li>
-                  <li>Open <strong>Finder → Applications</strong> and launch Kalfi.</li>
-                </ol>
-
-                <h4>2. If Mac says “Kalfi is damaged and can’t be opened”</h4>
-                <p>
-                  This does <strong>not</strong> mean the file is broken. macOS is blocking apps that are
-                  not Apple-notarized yet. Try <strong>Method A</strong> first (no Terminal).
-                </p>
-
-                <div class="install-callout">
-                  <p class="install-callout__title">Method A — Privacy &amp; Security (easiest)</p>
-                  <ol class="install-steps">
-                    <li>Open <strong>System Settings</strong> (Apple menu  → System Settings).</li>
-                    <li>Click <strong>Privacy &amp; Security</strong> in the left sidebar.</li>
-                    <li>Scroll to the <strong>Security</strong> section.</li>
-                    <li>If Kalfi is listed as blocked, click <strong>Open Anyway</strong>.</li>
-                    <li>Confirm, enter your password if asked, then open Kalfi again from Applications.</li>
-                  </ol>
-                  <p class="install-note">
-                    Tip: “Open Anyway” often appears only <em>after</em> you tried to open Kalfi once.
-                  </p>
-                </div>
-
-                <div class="install-callout">
-                  <p class="install-callout__title">Method B — Control-click → Open</p>
-                  <ol class="install-steps">
-                    <li>Open <strong>Finder → Applications</strong> and find <strong>Kalfi</strong>.</li>
-                    <li>Hold <strong>Control</strong> and click Kalfi (or right-click / two-finger click).</li>
-                    <li>Choose <strong>Open</strong>, then confirm <strong>Open</strong> again.</li>
-                  </ol>
-                </div>
-
-                <div class="install-callout install-callout--alt">
-                  <p class="install-callout__title">Method C — only if A and B still fail</p>
-                  <ol class="install-steps">
-                    <li>
-                      Open Terminal (<kbd>⌘</kbd> + <kbd>Space</kbd>, type <strong>Terminal</strong>, Enter).
-                    </li>
-                    <li>Paste this line and press Enter:</li>
-                  </ol>
-                  <pre class="install-code" tabindex="0"><code>xattr -cr /Applications/Kalfi.app</code></pre>
-                  <ol class="install-steps" start="3">
-                    <li>No output is normal. Open Kalfi again from Applications.</li>
-                  </ol>
-                </div>
-              </div>
-
-              <div class="docs-os-panel" id="install-win" data-docs-panel="win" role="tabpanel" hidden>
-                <ol class="install-steps">
-                  <li>
-                    Download the Windows installer (<code>.exe</code>, name like
-                    <code>kalfi-…-win-setup.exe</code>). If the button says “soon”, the Windows build is
-                    still publishing — use macOS/Linux for now or check back shortly.
-                  </li>
-                  <li>Double-click the file in your Downloads folder.</li>
-                  <li>
-                    If Windows shows <strong>Windows protected your PC</strong> (SmartScreen): click
-                    <strong>More info</strong>, then <strong>Run anyway</strong>.
-                  </li>
-                  <li>Follow the installer (Next → Install).</li>
-                  <li>Open Kalfi from the Start menu or desktop shortcut.</li>
-                </ol>
-              </div>
-
-              <div class="docs-os-panel" id="install-linux" data-docs-panel="linux" role="tabpanel" hidden>
-                <ol class="install-steps">
-                  <li>Download the <code>.AppImage</code> from the download button (Linux is auto-detected).</li>
-                  <li>
-                    Make it executable: right-click → Properties → allow “executable” / run as program
-                    (wording varies by desktop).
-                  </li>
-                  <li>
-                    Or from a terminal:
-                    <code>chmod +x kalfi-*.AppImage && ./kalfi-*.AppImage</code>
-                  </li>
-                  <li>Launch the app, then continue with first-time setup below.</li>
-                </ol>
-              </div>
-            </article>
-
-            <article class="docs-block" id="docs-setup">
-              <header class="docs-block__head">
-                <span class="docs-block__num">02</span>
-                <div>
-                  <h3>First-time setup</h3>
-                  <p>Do this once after install so the overlay can hear the call and answer.</p>
-                </div>
-              </header>
-
-              <ol class="install-steps docs-steps">
-                <li>
-                  <strong>Allow permissions.</strong> When macOS (or your OS) asks for microphone /
-                  system audio access, allow it — Kalfi needs that to hear the meeting.
-                </li>
-                <li>
-                  <strong>Add your AI key (BYOK).</strong> Open Settings in the app and paste an OpenAI
-                  or OpenRouter API key (or a compatible base URL). The key stays on your device for
-                  BYOK.
-                </li>
-                <li>
-                  <strong>Pick models.</strong> Choose chat + transcription models you already use. You
-                  can change them later per install.
-                </li>
-                <li>
-                  <strong>Optional stealth.</strong> Set a custom display name and logo, and hide from
-                  Dock if you want the process list to look like a boring utility — not an AI brand.
-                </li>
-                <li>
-                  <strong>Create your first session.</strong> Open Sessions, create one, pick mode
-                  (Interview / Client / Chat), answer length, tone, and meeting language, then save.
-                </li>
-              </ol>
-            </article>
-
-            <article class="docs-block" id="docs-daily">
-              <header class="docs-block__head">
-                <span class="docs-block__num">03</span>
-                <div>
-                  <h3>Daily use</h3>
-                  <p>The loop you run before and during every call.</p>
-                </div>
-              </header>
-
-              <div class="docs-daily-grid">
-                <div class="docs-daily-card">
-                  <h4>Before the call</h4>
-                  <ol class="install-steps">
-                    <li>Open Kalfi and select (or create) the right session for this meeting.</li>
-                    <li>Confirm mode, length, tone, and language match the room.</li>
-                    <li>Join Google Meet / Zoom / your conferencing app as usual.</li>
-                    <li>Start listening in Kalfi so the overlay floats above the call.</li>
-                  </ol>
-                </div>
-                <div class="docs-daily-card">
-                  <h4>During the call</h4>
-                  <ol class="install-steps">
-                    <li>Watch the live transcript for the question that matters.</li>
-                    <li>Read the suggested reply — say it out loud in your own voice.</li>
-                    <li>Adjust length/tone if answers feel too long or too stiff.</li>
-                    <li>Use Mic Ask when you want to ask Kalfi something without typing.</li>
-                  </ol>
-                </div>
-                <div class="docs-daily-card">
-                  <h4>After the call</h4>
-                  <ol class="install-steps">
-                    <li>Stop listening / end the session when you leave the meeting.</li>
-                    <li>Skim session history if you need notes from what was said.</li>
-                    <li>Reuse the same session next time, or clone one for a different client.</li>
-                  </ol>
-                </div>
-              </div>
-
-              <div class="install-callout" style="margin-top: 18px">
-                <p class="install-callout__title">Good habits</p>
-                <ul class="docs-habits">
-                  <li>Test screen-share protection on your exact OS + Meet/Zoom combo before a high-stakes call.</li>
-                  <li>Keep answers short enough to say naturally — balanced + neutral is a strong default.</li>
-                  <li>If the room forbids assistance, turn Kalfi off. Respect the rules of the meeting.</li>
-                </ul>
-              </div>
-            </article>
+        <div class="shell">
+          <div class="docs-teaser" data-reveal>
+            <div>
+              <span class="tagline">Documentation</span>
+              <h2>Install, set up, and use it every day.</h2>
+              <p>
+                Full beginner guide lives on its own page — macOS Gatekeeper fixes, Windows SmartScreen,
+                Linux AppImage, first-time setup, and the daily call loop.
+              </p>
+            </div>
+            <a class="btn btn--solid" href="docs/">Open docs</a>
           </div>
         </div>
       </section>
@@ -1116,7 +917,7 @@
               <p>
                 No. That message is Apple’s Gatekeeper blocking an app that is not Apple-notarized yet.
                 The file is fine. Follow
-                <a href="#install-mac">Docs → Install → macOS</a>: try
+                <a href="docs/#install-mac">Docs → Install → macOS</a>: try
                 <strong>System Settings → Privacy &amp; Security → Open Anyway</strong>, or Control-click
                 → Open. Only if those fail, use the one-line Terminal fix
                 (<code>xattr -cr /Applications/Kalfi.app</code>).
@@ -1126,7 +927,7 @@
               <summary>How do I install and use Kalfi for the first time?</summary>
               <p>
                 See the full guide in
-                <a href="#docs">Documentation</a>
+                <a href="docs/">Documentation</a>
                 — install, first-time setup, and daily use. On Mac prefer
                 <code>kalfi-…-mac.dmg</code>.
               </p>
@@ -1164,13 +965,11 @@
               </p>
             </details>
             <details>
-              <summary>Why does Windows say “soon” instead of downloading?</summary>
+              <summary>Windows and Linux builds?</summary>
               <p>
-                macOS and Linux installers are published on the latest release. The Windows
-                <code>.exe</code> is built by CI on a Windows runner and is not on that release yet —
-                when it appears, the download button switches to a direct file link automatically (no
-                GitHub page detour). Until then, pick macOS or Linux from the OS menu, or check
-                <a href="#docs-install">Docs → Install</a>.
+                Yes. macOS, Windows, and Linux installers ship from the latest GitHub Release. The
+                homepage download button detects your OS and downloads the matching file directly. See
+                <a href="docs/#docs-install">Docs → Install</a> for SmartScreen and AppImage notes.
               </p>
             </details>
           </div>
@@ -1186,7 +985,7 @@
               <p data-download-blurb>
                 One button detects your OS. Use the chevron to switch Mac, Windows, or Linux. On Mac,
                 if you see “damaged”, follow
-                <a href="#install-mac">Docs → Install</a> (Open Anyway).
+                <a href="docs/#install-mac">Docs → Install</a> (Open Anyway).
               </p>
             </div>
             <div class="download-panel">
@@ -1250,7 +1049,7 @@
                 <p class="download-meta" data-download-meta>Detecting your system…</p>
               </div>
               <div class="download-alt">
-                <a class="btn btn--line btn--sm" href="#docs">Docs</a>
+                <a class="btn btn--line btn--sm" href="docs/">Docs</a>
                 <button class="btn btn--line btn--sm" type="button" data-subscribe>Get Pro instead</button>
                 <a
                   class="download-all"
