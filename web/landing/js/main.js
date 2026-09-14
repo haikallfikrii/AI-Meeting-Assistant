@@ -57,11 +57,11 @@
       var rect = pin.getBoundingClientRect()
       var travel = Math.max(pin.offsetHeight - window.innerHeight, 1)
       var raw = (-rect.top) / travel
-      // Finish expand ~58% through the pin so the full window holds sticky longer
-      var p = Math.min(1, Math.max(0, raw / 0.58))
-      var eased = 1 - Math.pow(1 - p, 1.15)
+      // Finish expand earlier so the nearly-fullscreen demo holds sticky longer
+      var p = Math.min(1, Math.max(0, raw / 0.48))
+      var eased = 1 - Math.pow(1 - p, 1.08)
       pin.style.setProperty('--p', String(eased))
-      copy.setAttribute('data-faded', String(eased > 0.52))
+      copy.setAttribute('data-faded', String(eased > 0.45))
     }
 
     var onScroll = function () {
@@ -473,7 +473,7 @@
       mac:
         'macOS DMG ready. If Mac says “damaged”, the file is fine — use Docs → Install → Open Anyway.',
       win:
-        'Windows x64 installer (.exe). If SmartScreen appears: More info → Run anyway. See Docs for the walkthrough.',
+        'Windows x64 installer (.exe). If SmartScreen appears: More info → Run anyway. Full walkthrough in Docs.',
       linux:
         'Linux AppImage ready. Make it executable, then run. Full steps are in Docs → Install.'
     }
@@ -484,7 +484,7 @@
     }
     var metaWait = {
       mac: 'Detected macOS · Mac build is publishing…',
-      win: 'Windows build not on this release yet · pick Mac/Linux or wait',
+      win: 'Detected Windows · Windows build is publishing…',
       linux: 'Detected Linux · Linux build is publishing…'
     }
 
@@ -513,7 +513,7 @@
           go.removeAttribute('aria-disabled')
           go.classList.remove('is-disabled')
         } else {
-          go.setAttribute('href', '#docs-install')
+          go.setAttribute('href', 'docs/#docs-install')
           go.removeAttribute('target')
           go.removeAttribute('rel')
           go.removeAttribute('aria-disabled')
@@ -535,12 +535,9 @@
     if (blurb) {
       if (primaryReady) {
         blurb.textContent = blurbs[os] || blurbs.mac
-      } else if (os === 'win') {
-        blurb.innerHTML =
-          'Windows installer is not on the latest release yet (CI has not published the <code>.exe</code>). Choose macOS or Linux from the menu for a direct download — we will not send you to a GitHub page for a missing file.'
       } else {
-        blurb.textContent =
-          'Installer for this OS is still publishing. Switch OS from the menu when another build is ready.'
+        blurb.innerHTML =
+          'Installer for this OS is still publishing. Switch OS from the menu when another build is ready, or open <a href="docs/">Docs</a>.'
       }
     }
 
@@ -618,9 +615,8 @@
     function syncFromHash() {
       var hash = (location.hash || '').replace(/^#/, '')
       if (hash === 'install') {
-        history.replaceState(null, '', '#docs')
-        var docs = document.getElementById('docs')
-        if (docs) docs.scrollIntoView()
+        // Legacy landing bookmark → dedicated docs page
+        location.replace('docs/')
         return
       }
       if (hash === 'install-mac') showOs('mac')
