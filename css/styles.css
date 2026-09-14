@@ -1970,7 +1970,7 @@ details p {
   max-width: 68ch;
 }
 
-/* ---------- closing cta ---------- */
+/* ---------- closing cta / downloads ---------- */
 
 .closer {
   border: 1px solid var(--line);
@@ -1984,6 +1984,10 @@ details p {
   justify-content: space-between;
 }
 
+.closer--download {
+  align-items: flex-start;
+}
+
 .closer h2 {
   font-size: clamp(1.6rem, 3vw, 2.2rem);
   margin-bottom: 10px;
@@ -1992,6 +1996,86 @@ details p {
 .closer p {
   color: var(--fg-dim);
   max-width: 46ch;
+}
+
+.download-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: min(100%, 320px);
+  align-items: stretch;
+}
+
+.download-meta {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  color: var(--fg-faint);
+}
+
+.download-os {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.download-os__btn {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: flex-start;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--ink-050);
+  color: var(--fg-dim);
+  font-size: 0.86rem;
+  font-weight: 500;
+  transition: border-color 0.18s ease, color 0.18s ease, background 0.18s ease;
+}
+
+.download-os__btn span {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  color: var(--fg-faint);
+  font-weight: 400;
+}
+
+.download-os__btn:hover {
+  color: var(--fg);
+  border-color: var(--line-strong);
+}
+
+.download-os__btn[data-active="true"] {
+  border-color: rgba(91, 140, 255, 0.55);
+  background: rgba(91, 140, 255, 0.08);
+  color: var(--fg);
+}
+
+.download-alt {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.download-all {
+  font-size: 0.86rem;
+  color: var(--fg-faint);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.download-all:hover {
+  color: var(--fg-dim);
+}
+
+@media (max-width: 780px) {
+  .download-os {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 /* ---------- footer ---------- */
