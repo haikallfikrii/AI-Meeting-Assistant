@@ -1923,6 +1923,140 @@ td.row-label {
   color: var(--fg-faint);
 }
 
+/* ---------- install guide ---------- */
+
+.install-grid {
+  display: grid;
+  gap: 18px;
+}
+
+.install-card {
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--ink-100);
+  padding: 28px 26px;
+}
+
+.install-card h3 {
+  font-family: var(--display);
+  font-size: 1.35rem;
+  letter-spacing: -0.03em;
+  margin: 0 0 8px;
+}
+
+.install-card h4 {
+  font-family: var(--display);
+  font-size: 1.02rem;
+  letter-spacing: -0.02em;
+  margin: 22px 0 10px;
+  color: var(--fg);
+}
+
+.install-card__lead {
+  color: var(--fg-dim);
+  margin: 0 0 8px;
+  max-width: 62ch;
+}
+
+.install-card > p {
+  color: var(--fg-dim);
+  margin: 0 0 12px;
+  max-width: 68ch;
+}
+
+.install-steps {
+  margin: 0 0 12px;
+  padding-left: 1.25rem;
+  color: var(--fg-dim);
+  display: grid;
+  gap: 8px;
+}
+
+.install-steps li {
+  padding-left: 4px;
+  line-height: 1.55;
+}
+
+.install-steps strong {
+  color: var(--fg);
+  font-weight: 600;
+}
+
+.install-callout {
+  margin: 14px 0;
+  padding: 16px 16px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--ink-050);
+}
+
+.install-callout--alt {
+  border-color: rgba(246, 169, 74, 0.35);
+  background: rgba(246, 169, 74, 0.06);
+}
+
+.install-callout__title {
+  margin: 0 0 10px;
+  font-family: var(--display);
+  font-size: 0.98rem;
+  color: var(--fg);
+  letter-spacing: -0.02em;
+}
+
+.install-note {
+  margin: 8px 0 0;
+  font-size: 0.88rem;
+  color: var(--fg-faint);
+}
+
+.install-code {
+  margin: 10px 0 14px;
+  padding: 12px 14px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--line-strong);
+  background: #05060a;
+  overflow-x: auto;
+}
+
+.install-code code {
+  font-family: var(--mono);
+  font-size: 0.86rem;
+  color: var(--signal);
+  white-space: nowrap;
+}
+
+.install-card code,
+.faq code {
+  font-family: var(--mono);
+  font-size: 0.84em;
+  color: var(--accent);
+  background: rgba(91, 140, 255, 0.08);
+  border: 1px solid rgba(91, 140, 255, 0.18);
+  border-radius: 4px;
+  padding: 0.05em 0.35em;
+}
+
+.install-card kbd {
+  font-family: var(--mono);
+  font-size: 0.78em;
+  border: 1px solid var(--line-strong);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  padding: 0.1em 0.4em;
+  background: var(--ink-200);
+  color: var(--fg);
+}
+
+@media (min-width: 900px) {
+  .install-grid {
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  }
+
+  .install-card:first-child {
+    grid-row: 1 / span 2;
+  }
+}
+
 /* ---------- faq ---------- */
 
 .faq {

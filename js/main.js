@@ -432,9 +432,12 @@
       linux: 'Download for Linux'
     }
     var blurbs = {
-      mac: 'macOS DMG. Unsigned build — right-click the app → Open the first time.',
-      win: 'Windows x64 installer (.exe). If SmartScreen warns, choose More info → Run anyway.',
-      linux: 'Linux x64 AppImage. chmod +x then run. .deb is also on the releases page when available.'
+      mac:
+        'macOS DMG ready. If Mac says “damaged”, the file is fine — use Install help → Open Anyway (no Terminal needed).',
+      win:
+        'Windows x64 installer (.exe). If SmartScreen appears: More info → Run anyway. See Install help for the full walkthrough.',
+      linux:
+        'Linux AppImage ready. Make it executable, then run. Full steps are in Install help.'
     }
     var metaReady = {
       mac: 'Detected macOS · ready to download',
