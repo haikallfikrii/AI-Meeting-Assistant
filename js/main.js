@@ -354,6 +354,146 @@
     })
   }
 
+  /* ---------- multi-OS downloads ---------- */
+
+  function detectClientOS() {
+    var ua = navigator.userAgent || ''
+    var platform = navigator.platform || ''
+    var uaData = navigator.userAgentData
+    if (uaData && uaData.platform) {
+      var p = String(uaData.platform).toLowerCase()
+      if (p.indexOf('win') !== -1) return 'win'
+      if (p.indexOf('linux') !== -1) return 'linux'
+      if (p.indexOf('mac') !== -1) return 'mac'
+    }
+    if (/Windows|Win32|Win64/i.test(ua) || /Win/i.test(platform)) return 'win'
+    if (/Android/i.test(ua)) return 'mac'
+    if (/Linux/i.test(ua) || /Linux/i.test(platform)) return 'linux'
+    if (/Mac|iPhone|iPad|iPod/i.test(ua) || /Mac/i.test(platform)) return 'mac'
+    return 'mac'
+  }
+
+  function releaseLatestUrl() {
+    var repo = CONFIG.githubRepo || 'haikallfikrii/AI-Meeting-Assistant'
+    return 'https://github.com/' + repo + '/releases/latest'
+  }
+
+  function assetDownloadUrl(filename) {
+    var repo = CONFIG.githubRepo || 'haikallfikrii/AI-Meeting-Assistant'
+    return 'https://github.com/' + repo + '/releases/latest/download/' + encodeURIComponent(filename)
+  }
+
+  function fallbackAssets() {
+    var files = CONFIG.downloads || {}
+    return {
+      mac: files.mac ? assetDownloadUrl(files.mac) : releaseLatestUrl(),
+      win: files.win ? assetDownloadUrl(files.win) : releaseLatestUrl(),
+      linux: files.linux ? assetDownloadUrl(files.linux) : releaseLatestUrl()
+    }
+  }
+
+  function pickAssetUrl(assets, os) {
+    var list = assets || []
+    var name = function (a) {
+      return (a && a.name) || ''
+    }
+    var url = function (a) {
+      return (a && a.browser_download_url) || ''
+    }
+
+    if (os === 'mac') {
+      var dmg =
+        list.find(function (a) {
+          return /-mac\.dmg$/i.test(name(a)) || /\.dmg$/i.test(name(a))
+        }) ||
+        list.find(function (a) {
+          return /mac.*\.zip$/i.test(name(a))
+        })
+      return dmg ? url(dmg) : ''
+    }
+    if (os === 'win') {
+      var exe = list.find(function (a) {
+        return /\.exe$/i.test(name(a))
+      })
+      return exe ? url(exe) : ''
+    }
+    var appImage = list.find(function (a) {
+      return /\.AppImage$/i.test(name(a))
+    })
+    if (appImage) return url(appImage)
+    var deb = list.find(function (a) {
+      return /\.deb$/i.test(name(a))
+    })
+    return deb ? url(deb) : ''
+  }
+
+  function applyDownloadLinks(urls, os) {
+    var labels = {
+      mac: 'Download for Mac',
+      win: 'Download for Windows',
+      linux: 'Download for Linux'
+    }
+    var blurbs = {
+      mac: 'macOS DMG from GitHub Releases. The build is unsigned — right-click → Open the first time.',
+      win: 'Windows x64 installer (.exe). If SmartScreen warns, choose More info → Run anyway for this unsigned build.',
+      linux: 'Linux x64 AppImage (plus .deb on the releases page). Make it executable, then run.'
+    }
+    var meta = {
+      mac: 'Detected macOS · Apple Silicon & Intel builds on Releases',
+      win: 'Detected Windows · x64 NSIS installer',
+      linux: 'Detected Linux · AppImage / deb'
+    }
+
+    var primaryHref = urls[os] || releaseLatestUrl()
+    Array.prototype.forEach.call(document.querySelectorAll('[data-download-primary]'), function (el) {
+      el.setAttribute('href', primaryHref)
+      if (el.tagName === 'A') el.textContent = labels[os] || labels.mac
+    })
+
+    ;['mac', 'win', 'linux'].forEach(function (key) {
+      Array.prototype.forEach.call(document.querySelectorAll('[data-download-os="' + key + '"]'), function (el) {
+        el.setAttribute('href', urls[key] || releaseLatestUrl())
+        el.setAttribute('data-active', String(key === os))
+      })
+    })
+
+    var blurb = document.querySelector('[data-download-blurb]')
+    if (blurb) blurb.textContent = blurbs[os] || blurbs.mac
+
+    var metaEl = document.querySelector('[data-download-meta]')
+    if (metaEl) metaEl.textContent = meta[os] || meta.mac
+  }
+
+  function downloads() {
+    var os = detectClientOS()
+    var fallback = fallbackAssets()
+    applyDownloadLinks(fallback, os)
+
+    var repo = CONFIG.githubRepo || 'haikallfikrii/AI-Meeting-Assistant'
+    fetch('https://api.github.com/repos/' + repo + '/releases/latest')
+      .then(function (res) {
+        if (!res.ok) throw new Error('no release')
+        return res.json()
+      })
+      .then(function (data) {
+        var assets = (data && data.assets) || []
+        var urls = {
+          mac: pickAssetUrl(assets, 'mac') || fallback.mac,
+          win: pickAssetUrl(assets, 'win') || fallback.win,
+          linux: pickAssetUrl(assets, 'linux') || fallback.linux
+        }
+        applyDownloadLinks(urls, os)
+        var metaEl = document.querySelector('[data-download-meta]')
+        if (metaEl && data.tag_name) {
+          metaEl.textContent =
+            (metaEl.textContent || '') + ' · ' + data.tag_name.replace(/^v/, 'v')
+        }
+      })
+      .catch(function () {
+        /* keep constructed latest/download URLs */
+      })
+  }
+
   function init() {
     chrome()
     heroMotion()
@@ -362,6 +502,7 @@
     brandPreview()
     calculator()
     billing()
+    downloads()
   }
 
   if (document.readyState === 'loading') {
