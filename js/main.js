@@ -89,6 +89,60 @@
     apply()
   }
 
+  /* ---------- brand personalization preview ---------- */
+
+  function brandPreview() {
+    var input = document.getElementById('brand-name-input')
+    var file = document.getElementById('brand-logo-input')
+    var clearBtn = document.getElementById('brand-logo-clear')
+    var title = document.getElementById('brand-window-title')
+    var chipName = document.getElementById('brand-chip-name')
+    var chipLogo = document.getElementById('brand-chip-logo')
+    var amName = document.getElementById('brand-am-name')
+    if (!input || !chipName) return
+
+    var objectUrl = ''
+
+    var paint = function () {
+      var name = (input.value || '').trim() || 'Notes Helper'
+      chipName.textContent = name
+      if (title) title.textContent = name + ' — live session'
+      if (amName) amName.textContent = name
+      if (chipLogo && !chipLogo.querySelector('img')) {
+        chipLogo.textContent = name.charAt(0).toUpperCase()
+      }
+    }
+
+    input.addEventListener('input', paint)
+    paint()
+
+    if (file && chipLogo) {
+      file.addEventListener('change', function () {
+        var chosen = file.files && file.files[0]
+        if (!chosen) return
+        if (objectUrl) URL.revokeObjectURL(objectUrl)
+        objectUrl = URL.createObjectURL(chosen)
+        chipLogo.textContent = ''
+        chipLogo.style.backgroundImage = ''
+        var img = document.createElement('img')
+        img.src = objectUrl
+        img.alt = ''
+        chipLogo.appendChild(img)
+      })
+    }
+
+    if (clearBtn && chipLogo) {
+      clearBtn.addEventListener('click', function () {
+        if (objectUrl) URL.revokeObjectURL(objectUrl)
+        objectUrl = ''
+        if (file) file.value = ''
+        chipLogo.innerHTML = ''
+        chipLogo.style.backgroundImage = ''
+        paint()
+      })
+    }
+  }
+
   /* ---------- BYOK cost model ---------- */
 
   var MODELS = [
@@ -267,6 +321,7 @@
     chrome()
     reveal()
     stealth()
+    brandPreview()
     calculator()
     billing()
   }
