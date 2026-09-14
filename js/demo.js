@@ -459,8 +459,11 @@
       if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
         e.preventDefault()
         askNow()
-        var panel = document.getElementById('demo')
-        if (panel) panel.scrollIntoView({ block: 'center' })
+        var pin = document.getElementById('hero-stage')
+        if (!pin) return
+        var top = pin.getBoundingClientRect().top + window.pageYOffset
+        var travel = Math.max(pin.offsetHeight - window.innerHeight, 0)
+        window.scrollTo({ top: top + travel * 0.55, behavior: 'smooth' })
       }
     })
 
@@ -468,6 +471,11 @@
       btn.addEventListener('click', function () {
         restart()
         askNow()
+        var pin = document.getElementById('hero-stage')
+        if (!pin) return
+        var top = pin.getBoundingClientRect().top + window.pageYOffset
+        var travel = Math.max(pin.offsetHeight - window.innerHeight, 0)
+        window.scrollTo({ top: top + travel * 0.55, behavior: 'smooth' })
       })
     })
 
@@ -484,9 +492,9 @@
             }
           })
         },
-        { threshold: 0.25 }
+        { threshold: 0.08, rootMargin: '0px 0px 10% 0px' }
       )
-      io.observe(els.transcript)
+      io.observe(document.getElementById('hero-demo') || els.transcript)
     } else {
       loop()
     }
