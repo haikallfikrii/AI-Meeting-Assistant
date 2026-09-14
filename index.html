@@ -53,6 +53,7 @@
           <a href="#demo">Demo</a>
           <a href="#flow">How it works</a>
           <a href="#stealth">Stealth</a>
+          <a href="#brand">Brand</a>
           <a href="#cost">Cost</a>
           <a href="#pricing">Pricing</a>
           <a href="#compare">Compare</a>
@@ -69,6 +70,7 @@
         <a href="#demo">Demo</a>
         <a href="#flow">How it works</a>
         <a href="#stealth">Stealth</a>
+        <a href="#brand">Brand</a>
         <a href="#cost">Cost</a>
         <a href="#pricing">Pricing</a>
         <a href="#compare">Compare</a>
@@ -294,6 +296,98 @@
         </div>
       </section>
 
+      <!-- CUSTOM BRAND / UNDETECTABLE -->
+      <section class="band" id="brand">
+        <div class="shell band__head" data-reveal>
+          <span class="tagline">Personal stealth</span>
+          <h2>Make it look like Notes — not like an AI copilot.</h2>
+          <p>
+            Competitors hide the dock icon and still light up Activity Monitor as Cluely, Final Round,
+            or Parakeet. Kalfi lets you set your own display name and logo, so the overlay and process
+            title look like any boring Mac utility you choose.
+          </p>
+        </div>
+
+        <div class="shell">
+          <div class="brand-grid" data-reveal>
+            <div class="brand-controls">
+              <div class="field">
+                <div class="field__top">
+                  <label for="brand-name-input">Your display name</label>
+                </div>
+                <input
+                  id="brand-name-input"
+                  type="text"
+                  maxlength="32"
+                  value="Notes Helper"
+                  placeholder="e.g. Calendar, Work Pad, Notes"
+                />
+              </div>
+              <div class="field" style="margin-bottom: 0">
+                <div class="field__top">
+                  <label for="brand-logo-input">Logo (optional)</label>
+                </div>
+                <div class="brand-logo-row">
+                  <label class="btn btn--line btn--sm" for="brand-logo-input">Upload preview</label>
+                  <input id="brand-logo-input" type="file" accept="image/*" hidden />
+                  <button class="btn btn--line btn--sm" type="button" id="brand-logo-clear">Clear</button>
+                </div>
+              </div>
+              <ul class="brand-points">
+                <li>Custom name in the overlay header</li>
+                <li>Your logo instead of the default mark</li>
+                <li>No Dock / Cmd+Tab icon on macOS</li>
+                <li>Panel window + content protection for share</li>
+              </ul>
+            </div>
+
+            <div class="brand-stage">
+              <div class="appwin brand-overlay">
+                <div class="appwin__bar">
+                  <span class="appwin__lights"><i></i><i></i><i></i></span>
+                  <span class="appwin__title" id="brand-window-title">Notes Helper — live session</span>
+                  <span class="appwin__badge"><span class="pulse"></span>listening</span>
+                </div>
+                <div class="brand-overlay__body">
+                  <div class="brand-chip">
+                    <span class="brand-chip__logo" id="brand-chip-logo">N</span>
+                    <strong id="brand-chip-name">Notes Helper</strong>
+                  </div>
+                  <p class="brand-overlay__line">
+                    Suggested reply looks like a sticky note — not a neon “AI Interview” badge.
+                  </p>
+                </div>
+              </div>
+
+              <div class="am-panel">
+                <div class="am-panel__head">Activity Monitor · CPU</div>
+                <div class="am-row am-row--rival">
+                  <span>Cluely</span>
+                  <span class="am-tag am-tag--bad">detectable</span>
+                </div>
+                <div class="am-row am-row--rival">
+                  <span>Final Round AI</span>
+                  <span class="am-tag am-tag--bad">detectable</span>
+                </div>
+                <div class="am-row am-row--rival">
+                  <span>ParakeetAI</span>
+                  <span class="am-tag am-tag--bad">detectable</span>
+                </div>
+                <div class="am-row am-row--you">
+                  <span id="brand-am-name">Notes Helper</span>
+                  <span class="am-tag am-tag--ok">your name</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="note" style="margin-top: 16px">
+            Set this in desktop Settings → Stealth branding after install. Where macOS exposes the
+            process title, Kalfi follows your name. Binary packaging still ships as Kalfi for updates —
+            the point is what a glancing human sees on screen and in the process list.
+          </p>
+        </div>
+      </section>
+
       <!-- COST CALCULATOR -->
       <section class="band" id="cost">
         <div class="shell band__head" data-reveal>
@@ -419,6 +513,7 @@
               <ul class="plan__feats">
                 <li>Interview, client meeting and chat modes</li>
                 <li>System + mic capture, Ask and Mic Ask</li>
+                <li>Custom display name + logo (stealth branding)</li>
                 <li>Meeting summaries and project threads</li>
                 <li>OpenAI, OpenRouter or any compatible base URL</li>
                 <li>Key encrypted on device, never sent to us</li>
@@ -471,6 +566,22 @@
                 </tr>
               </thead>
               <tbody>
+                <tr>
+                  <td class="row-label">Custom app name + logo</td>
+                  <td class="dim">no</td>
+                  <td class="dim">no</td>
+                  <td class="dim">no</td>
+                  <td class="dim">no</td>
+                  <td class="is-us">Settings → your brand</td>
+                </tr>
+                <tr>
+                  <td class="row-label">Activity Monitor fingerprint</td>
+                  <td>Recognizable name</td>
+                  <td>Recognizable name</td>
+                  <td>Recognizable name</td>
+                  <td>Recognizable name</td>
+                  <td class="is-us">Shows your display name</td>
+                </tr>
                 <tr>
                   <td class="row-label">Live in-call answers</td>
                   <td>Pro plan only</td>
