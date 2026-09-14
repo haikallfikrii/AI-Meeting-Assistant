@@ -78,6 +78,11 @@ export interface AppSettings {
   brandName: string
   brandLogoPath: string
   brandLogoDataUrl?: string
+  hideFromDock: boolean
+  accountName: string
+  accountEmail: string
+  membershipPlan: 'free' | 'byok' | 'hosted' | 'team'
+  membershipStatus: 'inactive' | 'active' | 'trial'
 }
 
 export interface AudioSource {
@@ -98,7 +103,11 @@ const api = {
   getSettings: (): Promise<AppSettings> => ipcRenderer.invoke('get-settings'),
   updateSettings: (updates: Partial<AppSettings>): Promise<AppSettings> =>
     ipcRenderer.invoke('update-settings', updates),
-  pickBrandLogo: (): Promise<AppSettings> => ipcRenderer.invoke('pick-brand-logo'),
+  pickBrandLogo: (): Promise<{
+    ok: boolean
+    error?: string
+    settings?: AppSettings
+  }> => ipcRenderer.invoke('pick-brand-logo'),
   clearBrandLogo: (): Promise<AppSettings> => ipcRenderer.invoke('clear-brand-logo'),
   hasApiKeys: (): Promise<boolean> => ipcRenderer.invoke('has-api-keys'),
   fetchOpenAIModels: (

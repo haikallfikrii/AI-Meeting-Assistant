@@ -99,7 +99,7 @@
                 if we host the models. Final Round lists around $150.
               </p>
               <div class="hero__cta hero-in" style="--d: 3">
-                <a class="btn btn--solid" href="#download">Download for Mac</a>
+                <a class="btn btn--solid" href="#download" data-download-primary>Download for Mac</a>
                 <button class="btn btn--line" type="button" data-demo-focus>
                   Run the demo <span class="kbd">⌘↵</span>
                 </button>
@@ -871,34 +871,80 @@
           <details>
             <summary>Windows and Linux?</summary>
             <p>
-              The build targets exist, but macOS Apple Silicon is what ships tested today. The
-              overlay and stealth behaviour are tuned for macOS first.
+              Yes. macOS, Windows, and Linux builds ship from
+              <a href="https://github.com/haikallfikrii/AI-Meeting-Assistant/releases" target="_blank" rel="noopener"
+                >GitHub Releases</a
+              >
+              (DMG, NSIS installer, AppImage/deb). Stealth overlay behaviour is still most polished on
+              macOS; Win/Linux install cleanly and run the same BYOK session loop.
             </p>
           </details>
         </div>
         </div>
       </section>
 
-      <!-- CLOSER -->
+      <!-- CLOSER / DOWNLOAD -->
       <section class="band band--tight" id="download">
         <div class="shell">
-          <div class="closer" data-reveal>
+          <div class="closer closer--download" data-reveal>
             <div>
               <h2>Install it, paste a key, join your next call.</h2>
-              <p>
-                Apple Silicon DMG from GitHub Releases. The app is unsigned for now, so open it from
-                the right-click menu the first time.
+              <p data-download-blurb>
+                We detect your OS and point you at the matching installer. Builds are unsigned for
+                now — on Mac use right-click → Open the first time; on Windows allow the SmartScreen
+                prompt if it appears.
               </p>
             </div>
-            <div class="hero__cta" style="margin: 0">
+            <div class="download-panel">
               <a
                 class="btn btn--solid"
-                href="https://github.com/haikallfikrii/AI-Meeting-Assistant/releases"
+                id="download-primary"
+                data-download-primary
+                href="https://github.com/haikallfikrii/AI-Meeting-Assistant/releases/latest"
                 target="_blank"
                 rel="noopener"
-                >Download DMG</a
+                >Download for Mac</a
               >
-              <button class="btn btn--line" type="button" data-subscribe>Get Pro instead</button>
+              <p class="download-meta" data-download-meta>Detecting your system…</p>
+              <div class="download-os" role="list" aria-label="Downloads for every OS">
+                <a
+                  class="download-os__btn"
+                  data-download-os="mac"
+                  role="listitem"
+                  href="https://github.com/haikallfikrii/AI-Meeting-Assistant/releases/latest"
+                  target="_blank"
+                  rel="noopener"
+                  >macOS <span>.dmg</span></a
+                >
+                <a
+                  class="download-os__btn"
+                  data-download-os="win"
+                  role="listitem"
+                  href="https://github.com/haikallfikrii/AI-Meeting-Assistant/releases/latest"
+                  target="_blank"
+                  rel="noopener"
+                  >Windows <span>.exe</span></a
+                >
+                <a
+                  class="download-os__btn"
+                  data-download-os="linux"
+                  role="listitem"
+                  href="https://github.com/haikallfikrii/AI-Meeting-Assistant/releases/latest"
+                  target="_blank"
+                  rel="noopener"
+                  >Linux <span>.AppImage</span></a
+                >
+              </div>
+              <div class="download-alt">
+                <button class="btn btn--line btn--sm" type="button" data-subscribe>Get Pro instead</button>
+                <a
+                  class="download-all"
+                  href="https://github.com/haikallfikrii/AI-Meeting-Assistant/releases"
+                  target="_blank"
+                  rel="noopener"
+                  >All releases</a
+                >
+              </div>
             </div>
           </div>
         </div>
@@ -926,7 +972,14 @@
         byokPrice: 14,
         hostedPrice: 19,
         teamPrice: 49,
-        proPrice: 19
+        proPrice: 19,
+        version: '1.0.0',
+        githubRepo: 'haikallfikrii/AI-Meeting-Assistant',
+        downloads: {
+          mac: 'kalfi-1.0.0-mac.dmg',
+          win: 'kalfi-1.0.0-win-setup.exe',
+          linux: 'kalfi-1.0.0-linux.AppImage'
+        }
       }
     </script>
     <script src="js/demo.js" defer></script>

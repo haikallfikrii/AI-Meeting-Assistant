@@ -28,6 +28,11 @@ export interface AppSettings {
   brandName: string
   brandLogoPath: string
   brandLogoDataUrl?: string
+  hideFromDock: boolean
+  accountName: string
+  accountEmail: string
+  membershipPlan: 'free' | 'byok' | 'hosted' | 'team'
+  membershipStatus: 'inactive' | 'active' | 'trial'
 }
 
 interface InterviewState {
@@ -109,7 +114,12 @@ const DEFAULT_SETTINGS: AppSettings = {
   autoStart: false,
   brandName: '',
   brandLogoPath: '',
-  brandLogoDataUrl: ''
+  brandLogoDataUrl: '',
+  hideFromDock: true,
+  accountName: '',
+  accountEmail: '',
+  membershipPlan: 'free',
+  membershipStatus: 'inactive'
 }
 
 export type { SessionMode, WorkSession }

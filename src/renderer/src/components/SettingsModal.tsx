@@ -1,4 +1,16 @@
-import { AlertCircle, CheckCircle, Coffee, Eye, EyeOff, ImagePlus, Loader2, Mic, Save, X } from 'lucide-react'
+import {
+  AlertCircle,
+  CheckCircle,
+  CreditCard,
+  Eye,
+  EyeOff,
+  ImagePlus,
+  Loader2,
+  Mic,
+  Save,
+  User,
+  X
+} from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { AppSettings, useInterviewStore } from '../store/interviewStore'
 
@@ -61,6 +73,7 @@ export function SettingsModal(): React.ReactNode | null {
   const [localSettings, setLocalSettings] = useState<AppSettings>(settings)
   const [showApiKey, setShowApiKey] = useState(false)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+  const [logoError, setLogoError] = useState<string | null>(null)
   const [models, setModels] = useState<ModelOption[]>([])
   const [modelsLoading, setModelsLoading] = useState(false)
   const [modelsError, setModelsError] = useState<string | null>(null)
@@ -174,7 +187,12 @@ export function SettingsModal(): React.ReactNode | null {
         apiBaseUrl: localSettings.apiBaseUrl?.trim() || '',
         openaiModel: localSettings.openaiModel || defaultModelId(localSettings.llmProvider || 'openai'),
         brandName: localSettings.brandName?.trim() || '',
-        brandLogoPath: localSettings.brandLogoPath || ''
+        brandLogoPath: localSettings.brandLogoPath || '',
+        hideFromDock: localSettings.hideFromDock !== false,
+        accountName: localSettings.accountName?.trim() || '',
+        accountEmail: localSettings.accountEmail?.trim() || '',
+        membershipPlan: localSettings.membershipPlan || 'free',
+        membershipStatus: localSettings.membershipStatus || 'inactive'
       }
       const updatedSettings = await window.api.updateSettings(updatedLocalSettings)
       setSettings(updatedSettings as AppSettings)
@@ -192,24 +210,30 @@ export function SettingsModal(): React.ReactNode | null {
 
   const handlePickLogo = async (): Promise<void> => {
     try {
-      const next = await window.api.pickBrandLogo()
-      if (!next) return
-      setLocalSettings(next as AppSettings)
-      setSettings(next as AppSettings)
+      setLogoError(null)
+      const result = await window.api.pickBrandLogo()
+      if (!result?.ok) {
+        setLogoError(result?.error || 'Failed to import logo')
+        return
+      }
+      if (!result.settings) return
+      setLocalSettings(result.settings as AppSettings)
+      setSettings(result.settings as AppSettings)
     } catch (err) {
       console.error('Failed to pick logo:', err)
-      setSaveStatus('error')
-      setTimeout(() => setSaveStatus('idle'), 3000)
+      setLogoError(err instanceof Error ? err.message : 'Failed to import logo')
     }
   }
 
   const handleClearLogo = async (): Promise<void> => {
     try {
+      setLogoError(null)
       const next = await window.api.clearBrandLogo()
       setLocalSettings(next as AppSettings)
       setSettings(next as AppSettings)
     } catch (err) {
       console.error('Failed to clear logo:', err)
+      setLogoError('Failed to remove logo')
     }
   }
 
@@ -260,13 +284,96 @@ export function SettingsModal(): React.ReactNode | null {
             <span className="text-dark-300">Session</span> (New Session from the header).
           </p>
 
+          {/* Account & membership (scaffold for billing) */}
+          <div className="space-y-3 rounded-lg border border-dark-700 bg-dark-800/50 p-3">
+            <div className="flex items-start gap-2">
+              <User size={16} className="mt-0.5 text-dark-400 shrink-0" />
+              <div>
+                <label className="block text-sm font-medium text-dark-200">Account</label>
+                <p className="text-xs text-dark-500 mt-1">
+                  Profile for future sign-in, receipts, and plan upgrades. Saved on this Mac for now —
+                  cloud sync ships with Pro billing.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <label className="block text-xs font-medium text-dark-300">Display name</label>
+                <input
+                  type="text"
+                  value={localSettings.accountName || ''}
+                  onChange={(e) =>
+                    setLocalSettings({ ...localSettings, accountName: e.target.value })
+                  }
+                  placeholder="Your name"
+                  maxLength={80}
+                  className="w-full px-3 py-2 bg-dark-800 border border-dark-600 rounded-lg text-sm text-dark-100 placeholder-dark-500 focus:outline-none focus:border-blue-500 transition-colors"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="block text-xs font-medium text-dark-300">Email</label>
+                <input
+                  type="email"
+                  value={localSettings.accountEmail || ''}
+                  onChange={(e) =>
+                    setLocalSettings({ ...localSettings, accountEmail: e.target.value })
+                  }
+                  placeholder="you@company.com"
+                  maxLength={120}
+                  className="w-full px-3 py-2 bg-dark-800 border border-dark-600 rounded-lg text-sm text-dark-100 placeholder-dark-500 focus:outline-none focus:border-blue-500 transition-colors"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2 rounded-md border border-dark-600 bg-dark-900/80 px-3 py-2.5">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 text-sm text-dark-200">
+                  <CreditCard size={14} className="text-dark-400" />
+                  Membership
+                </div>
+                <span className="rounded-full border border-dark-600 px-2 py-0.5 text-[10px] uppercase tracking-wider text-dark-400">
+                  {(localSettings.membershipStatus || 'inactive').replace('-', ' ')}
+                </span>
+              </div>
+              <select
+                value={localSettings.membershipPlan || 'free'}
+                onChange={(e) =>
+                  setLocalSettings({
+                    ...localSettings,
+                    membershipPlan: e.target.value as AppSettings['membershipPlan']
+                  })
+                }
+                className="w-full px-3 py-2 bg-dark-800 border border-dark-600 rounded-lg text-sm text-dark-100 focus:outline-none focus:border-blue-500 transition-colors"
+              >
+                <option value="free">Free / local only</option>
+                <option value="byok">BYOK — $14/mo (your key)</option>
+                <option value="hosted">Hosted — $19/mo</option>
+                <option value="team">Team — $49/mo</option>
+              </select>
+              <p className="text-[11px] text-dark-500 leading-relaxed">
+                Checkout and license sync are next. Choosing a plan here only marks your preferred
+                tier until Stripe is connected.
+              </p>
+              <button
+                type="button"
+                disabled
+                className="w-full px-3 py-2 text-sm rounded-lg border border-dark-600 text-dark-500 cursor-not-allowed"
+                title="Coming soon"
+              >
+                Manage billing — coming soon
+              </button>
+            </div>
+          </div>
+
           {/* Branding */}
           <div className="space-y-3 rounded-lg border border-dark-700 bg-dark-800/50 p-3">
             <div>
               <label className="block text-sm font-medium text-dark-200">Stealth branding</label>
               <p className="text-xs text-dark-500 mt-1">
-                Rename the overlay and swap the logo so it does not look like a known AI copilot on
-                your screen. Dock stays hidden; process title follows your name where the OS allows.
+                Changes the in-app name, window title, and logo. macOS Dock label still uses the
+                packaged app name (Kalfi / Electron in dev) — that cannot be renamed at runtime. With
+                Dock shown, your logo can replace the Dock icon.
               </p>
             </div>
 
@@ -319,6 +426,32 @@ export function SettingsModal(): React.ReactNode | null {
                 </button>
               ) : null}
             </div>
+            {logoError ? (
+              <p className="text-xs text-red-400 flex items-start gap-1.5">
+                <AlertCircle size={12} className="mt-0.5 shrink-0" />
+                <span>{logoError}</span>
+              </p>
+            ) : (
+              <p className="text-[11px] text-dark-500">PNG, JPG, WEBP, or GIF — preferably square.</p>
+            )}
+
+            <label className="flex items-start gap-2.5 cursor-pointer select-none pt-1">
+              <input
+                type="checkbox"
+                checked={localSettings.hideFromDock !== false}
+                onChange={(e) =>
+                  setLocalSettings({ ...localSettings, hideFromDock: e.target.checked })
+                }
+                className="mt-0.5 accent-blue-500"
+              />
+              <span>
+                <span className="block text-sm text-dark-200">Hide from Dock</span>
+                <span className="block text-xs text-dark-500 mt-0.5">
+                  Recommended for stealth. Uncheck to show in Dock / Cmd+Tab (logo applies to Dock
+                  icon when visible). Save to apply.
+                </span>
+              </span>
+            </label>
           </div>
 
           {/* Provider */}
@@ -503,16 +636,7 @@ export function SettingsModal(): React.ReactNode | null {
 
         {/* Footer */}
         <div className="flex items-center justify-between px-5 py-4 border-t border-dark-700">
-          <div className="flex items-center gap-3">
-            <a
-              href="https://buymeacoffee.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white text-sm font-medium rounded-lg transition-colors"
-            >
-              <Coffee size={16} />
-              <span>Buy me a coffee</span>
-            </a>
+          <div className="flex items-center gap-3 min-h-[36px]">
             {saveStatus === 'error' && (
               <div className="flex items-center gap-2 text-sm text-red-400">
                 <AlertCircle size={16} />

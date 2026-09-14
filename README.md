@@ -85,7 +85,7 @@ _Generates an executable installer (`.exe`) in the `dist` directory._
 npm run build:mac
 ```
 
-_Generates macOS bundle (`.dmg` / `.app`) in the `dist` directory._
+_Generates `kalfi-<version>-mac.dmg` (and zip) in the `dist` directory._
 
 ### 🐧 Linux
 
@@ -93,7 +93,9 @@ _Generates macOS bundle (`.dmg` / `.app`) in the `dist` directory._
 npm run build:linux
 ```
 
-_Generates Linux packages (`.AppImage`, `.deb`, `.snap`) in the `dist` directory._
+_Generates `kalfi-<version>-linux.AppImage` and `.deb` in the `dist` directory._
+
+Multi-OS installers are also built by GitHub Actions on version tags (`v*`) or the **Release desktop builds** workflow, then attached to [GitHub Releases](https://github.com/haikallfikrii/AI-Meeting-Assistant/releases). The marketing site detects the visitor OS and links the matching asset.
 
 ### ⚙️ General Build & Typecheck
 
