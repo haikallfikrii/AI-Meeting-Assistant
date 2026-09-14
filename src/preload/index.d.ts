@@ -74,6 +74,9 @@ export interface AppSettings {
   windowOpacity: number
   pauseThreshold: number
   autoStart: boolean
+  brandName: string
+  brandLogoPath: string
+  brandLogoDataUrl?: string
 }
 
 export interface AudioSource {
@@ -93,6 +96,8 @@ export interface AnswerEntry {
 export interface Api {
   getSettings: () => Promise<AppSettings>
   updateSettings: (updates: Partial<AppSettings>) => Promise<AppSettings>
+  pickBrandLogo: () => Promise<AppSettings>
+  clearBrandLogo: () => Promise<AppSettings>
   hasApiKeys: () => Promise<boolean>
   fetchOpenAIModels: (
     apiKey: string,

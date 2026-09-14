@@ -75,6 +75,9 @@ export interface AppSettings {
   windowOpacity: number
   pauseThreshold: number
   autoStart: boolean
+  brandName: string
+  brandLogoPath: string
+  brandLogoDataUrl?: string
 }
 
 export interface AudioSource {
@@ -95,6 +98,8 @@ const api = {
   getSettings: (): Promise<AppSettings> => ipcRenderer.invoke('get-settings'),
   updateSettings: (updates: Partial<AppSettings>): Promise<AppSettings> =>
     ipcRenderer.invoke('update-settings', updates),
+  pickBrandLogo: (): Promise<AppSettings> => ipcRenderer.invoke('pick-brand-logo'),
+  clearBrandLogo: (): Promise<AppSettings> => ipcRenderer.invoke('clear-brand-logo'),
   hasApiKeys: (): Promise<boolean> => ipcRenderer.invoke('has-api-keys'),
   fetchOpenAIModels: (
     apiKey: string,

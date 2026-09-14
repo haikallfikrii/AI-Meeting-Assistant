@@ -3,6 +3,7 @@ import { app, safeStorage } from 'electron'
 import * as fs from 'fs'
 import * as path from 'path'
 import { DEFAULT_CHAT_MODELS, LlmProvider } from './providerConfig'
+import { readBrandLogoDataUrl } from './branding'
 
 config()
 
@@ -18,9 +19,15 @@ export interface AppSettings {
   windowOpacity: number
   pauseThreshold: number
   autoStart: boolean
+  /** Empty = default "Kalfi". Shown in header, window title, process title. */
+  brandName: string
+  /** Absolute path under userData/branding — empty = default mic icon. */
+  brandLogoPath: string
+  /** Computed for the renderer; never written to disk. */
+  brandLogoDataUrl?: string
 }
 
-type PersistedSettings = Omit<AppSettings, 'openaiApiKey'> & {
+type PersistedSettings = Omit<AppSettings, 'openaiApiKey' | 'brandLogoDataUrl'> & {
   openaiApiKey?: string
   openaiApiKeyEncrypted?: string
   // legacy fields (migrated into sessions)
@@ -56,7 +63,9 @@ const DEFAULT_SETTINGS: AppSettings = {
   alwaysOnTop: true,
   windowOpacity: 1.0,
   pauseThreshold: 1500,
-  autoStart: false
+  autoStart: false,
+  brandName: '',
+  brandLogoPath: ''
 }
 
 export class SettingsManager {
@@ -158,7 +167,15 @@ export class SettingsManager {
           autoStart:
             typeof savedSettings.autoStart === 'boolean'
               ? savedSettings.autoStart
-              : DEFAULT_SETTINGS.autoStart
+              : DEFAULT_SETTINGS.autoStart,
+          brandName:
+            typeof savedSettings.brandName === 'string'
+              ? savedSettings.brandName
+              : DEFAULT_SETTINGS.brandName,
+          brandLogoPath:
+            typeof savedSettings.brandLogoPath === 'string'
+              ? savedSettings.brandLogoPath
+              : DEFAULT_SETTINGS.brandLogoPath
         }
 
         if (
@@ -182,7 +199,7 @@ export class SettingsManager {
 
   private saveSettings(): void {
     try {
-      const { openaiApiKey, ...rest } = this.settings
+      const { openaiApiKey, brandLogoDataUrl: _logo, ...rest } = this.settings
       const settingsToSave: PersistedSettings = { ...rest }
       delete settingsToSave.openaiApiKey
 
@@ -205,7 +222,10 @@ export class SettingsManager {
   }
 
   getSettings(): AppSettings {
-    return { ...this.settings }
+    return {
+      ...this.settings,
+      brandLogoDataUrl: readBrandLogoDataUrl(this.settings.brandLogoPath)
+    }
   }
 
   getSetting<K extends keyof AppSettings>(key: K): AppSettings[K] {
@@ -213,10 +233,12 @@ export class SettingsManager {
   }
 
   updateSettings(updates: Partial<AppSettings>): void {
+    const { brandLogoDataUrl: _drop, ...safeUpdates } = updates
     this.settings = {
       ...this.settings,
-      ...updates,
-      llmProvider: normalizeProvider(updates.llmProvider ?? this.settings.llmProvider)
+      ...safeUpdates,
+      llmProvider: normalizeProvider(safeUpdates.llmProvider ?? this.settings.llmProvider),
+      brandLogoDataUrl: undefined
     }
     this.saveSettings()
   }

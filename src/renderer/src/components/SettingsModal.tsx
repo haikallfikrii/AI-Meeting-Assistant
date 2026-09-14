@@ -1,4 +1,4 @@
-import { AlertCircle, CheckCircle, Coffee, Eye, EyeOff, Loader2, Mic, Save, X } from 'lucide-react'
+import { AlertCircle, CheckCircle, Coffee, Eye, EyeOff, ImagePlus, Loader2, Mic, Save, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { AppSettings, useInterviewStore } from '../store/interviewStore'
 
@@ -172,7 +172,9 @@ export function SettingsModal(): React.ReactNode | null {
         ...localSettings,
         llmProvider: localSettings.llmProvider || 'openai',
         apiBaseUrl: localSettings.apiBaseUrl?.trim() || '',
-        openaiModel: localSettings.openaiModel || defaultModelId(localSettings.llmProvider || 'openai')
+        openaiModel: localSettings.openaiModel || defaultModelId(localSettings.llmProvider || 'openai'),
+        brandName: localSettings.brandName?.trim() || '',
+        brandLogoPath: localSettings.brandLogoPath || ''
       }
       const updatedSettings = await window.api.updateSettings(updatedLocalSettings)
       setSettings(updatedSettings as AppSettings)
@@ -188,6 +190,29 @@ export function SettingsModal(): React.ReactNode | null {
     }
   }
 
+  const handlePickLogo = async (): Promise<void> => {
+    try {
+      const next = await window.api.pickBrandLogo()
+      if (!next) return
+      setLocalSettings(next as AppSettings)
+      setSettings(next as AppSettings)
+    } catch (err) {
+      console.error('Failed to pick logo:', err)
+      setSaveStatus('error')
+      setTimeout(() => setSaveStatus('idle'), 3000)
+    }
+  }
+
+  const handleClearLogo = async (): Promise<void> => {
+    try {
+      const next = await window.api.clearBrandLogo()
+      setLocalSettings(next as AppSettings)
+      setSettings(next as AppSettings)
+    } catch (err) {
+      console.error('Failed to clear logo:', err)
+    }
+  }
+
   const handleOpacityChange = async (value: number): Promise<void> => {
     setLocalSettings({ ...localSettings, windowOpacity: value })
     await window.api.setWindowOpacity(value)
@@ -198,15 +223,26 @@ export function SettingsModal(): React.ReactNode | null {
     setShowSettings(false)
   }
 
+  const previewName = localSettings.brandName?.trim() || 'Kalfi'
+  const previewLogo = localSettings.brandLogoDataUrl?.trim() || ''
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
       <div className="w-full max-w-lg mx-4 bg-dark-900 rounded-xl border border-dark-700 shadow-2xl animate-fade-in">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-dark-700">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-              <Mic className="h-5 w-5 text-primary-foreground" />
-            </div>
+            {previewLogo ? (
+              <img
+                src={previewLogo}
+                alt=""
+                className="h-8 w-8 rounded-lg object-cover border border-dark-600"
+              />
+            ) : (
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
+                <Mic className="h-5 w-5 text-primary-foreground" />
+              </div>
+            )}
             <h2 className="text-lg font-semibold text-dark-100">Settings</h2>
           </div>
           <button
@@ -223,6 +259,67 @@ export function SettingsModal(): React.ReactNode | null {
             API & window preferences only. Company/client context lives in each{' '}
             <span className="text-dark-300">Session</span> (New Session from the header).
           </p>
+
+          {/* Branding */}
+          <div className="space-y-3 rounded-lg border border-dark-700 bg-dark-800/50 p-3">
+            <div>
+              <label className="block text-sm font-medium text-dark-200">Stealth branding</label>
+              <p className="text-xs text-dark-500 mt-1">
+                Rename the overlay and swap the logo so it does not look like a known AI copilot on
+                your screen. Dock stays hidden; process title follows your name where the OS allows.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3 rounded-md border border-dark-600 bg-dark-900 px-3 py-2">
+              {previewLogo ? (
+                <img
+                  src={previewLogo}
+                  alt=""
+                  className="h-8 w-8 rounded-lg object-cover border border-dark-600"
+                />
+              ) : (
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
+                  <Mic className="h-4 w-4 text-primary-foreground" />
+                </div>
+              )}
+              <div className="min-w-0">
+                <p className="text-[10px] uppercase tracking-wider text-dark-500">Preview</p>
+                <p className="text-sm font-semibold text-dark-100 truncate">{previewName}</p>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-xs font-medium text-dark-300">App display name</label>
+              <input
+                type="text"
+                value={localSettings.brandName || ''}
+                onChange={(e) => setLocalSettings({ ...localSettings, brandName: e.target.value })}
+                placeholder="e.g. Notes Helper, Calendar, Work Pad"
+                maxLength={40}
+                className="w-full px-3 py-2 bg-dark-800 border border-dark-600 rounded-lg text-sm text-dark-100 placeholder-dark-500 focus:outline-none focus:border-blue-500 transition-colors"
+              />
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={handlePickLogo}
+                className="flex items-center gap-2 px-3 py-2 text-sm rounded-lg border border-dark-600 bg-dark-800 text-dark-200 hover:border-blue-500 hover:text-dark-100 transition-colors"
+              >
+                <ImagePlus size={14} />
+                {previewLogo ? 'Change logo' : 'Upload logo'}
+              </button>
+              {previewLogo ? (
+                <button
+                  type="button"
+                  onClick={handleClearLogo}
+                  className="px-3 py-2 text-sm rounded-lg border border-dark-600 text-dark-400 hover:text-dark-200 transition-colors"
+                >
+                  Remove logo
+                </button>
+              ) : null}
+            </div>
+          </div>
 
           {/* Provider */}
           <div className="space-y-2">
