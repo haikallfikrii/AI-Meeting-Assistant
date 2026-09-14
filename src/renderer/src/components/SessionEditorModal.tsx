@@ -6,6 +6,9 @@ import {
   useInterviewStore
 } from '../store/interviewStore'
 
+type AnswerLength = WorkSession['context']['answerLength']
+type AnswerTone = WorkSession['context']['answerTone']
+
 const emptyContext = (): WorkSession['context'] => ({
   companyName: '',
   targetRole: '',
@@ -17,7 +20,9 @@ const emptyContext = (): WorkSession['context'] => ({
   projectScope: '',
   meetingGoals: '',
   chatTopic: '',
-  chatNotes: ''
+  chatNotes: '',
+  answerLength: 'balanced',
+  answerTone: 'neutral'
 })
 
 const MODE_LABELS: Record<SessionMode, string> = {
@@ -26,15 +31,31 @@ const MODE_LABELS: Record<SessionMode, string> = {
   'random-chat': 'Random Chat'
 }
 
+const LENGTH_OPTIONS: { id: AnswerLength; label: string; hint: string }[] = [
+  { id: 'brief', label: 'Singkat', hint: '1–2 kalimat, langsung ke poin' },
+  { id: 'balanced', label: 'Sedang', hint: 'Jawaban inti + 2–3 bullet' },
+  { id: 'detailed', label: 'Detail', hint: 'Lebih lengkap, tetap bisa diucapkan' }
+]
+
+const TONE_OPTIONS: { id: AnswerTone; label: string; hint: string }[] = [
+  { id: 'formal', label: 'Formal', hint: 'Polished, profesional' },
+  { id: 'neutral', label: 'Netral', hint: 'Jelas, percaya diri' },
+  { id: 'casual', label: 'Santai', hint: 'Natural, ringan' }
+]
+
 export function SessionEditorModal(): React.ReactNode | null {
   const {
     showSessionEditor,
     sessionEditorMode,
     activeSession,
+    editorTargetSession,
     setShowSessionEditor,
     setActiveSession,
     clearAll
   } = useInterviewStore()
+
+  const targetSession =
+    sessionEditorMode === 'edit' ? editorTargetSession || activeSession : null
 
   const [mode, setMode] = useState<SessionMode>('interview')
   const [title, setTitle] = useState('')
@@ -43,16 +64,16 @@ export function SessionEditorModal(): React.ReactNode | null {
 
   useEffect(() => {
     if (!showSessionEditor) return
-    if (sessionEditorMode === 'edit' && activeSession) {
-      setMode(activeSession.mode)
-      setTitle(activeSession.threadTitle || activeSession.title)
-      setContext({ ...emptyContext(), ...activeSession.context })
+    if (sessionEditorMode === 'edit' && targetSession) {
+      setMode(targetSession.mode)
+      setTitle(targetSession.threadTitle || targetSession.title)
+      setContext({ ...emptyContext(), ...targetSession.context })
     } else {
       setMode('interview')
       setTitle('')
       setContext(emptyContext())
     }
-  }, [showSessionEditor, sessionEditorMode, activeSession])
+  }, [showSessionEditor, sessionEditorMode, targetSession])
 
   if (!showSessionEditor) return null
 
@@ -63,14 +84,16 @@ export function SessionEditorModal(): React.ReactNode | null {
   const handleSave = async (): Promise<void> => {
     try {
       setSaving(true)
-      if (sessionEditorMode === 'edit' && activeSession) {
-        const updated = await window.api.updateSession(activeSession.id, {
+      if (sessionEditorMode === 'edit' && targetSession) {
+        const updated = await window.api.updateSession(targetSession.id, {
           title: title.trim() || undefined,
           mode,
           context,
           threadTitle: title.trim() || undefined
         })
-        if (updated) setActiveSession(updated)
+        if (updated && activeSession?.id === updated.id) {
+          setActiveSession(updated)
+        }
       } else {
         const created = await window.api.createSession({
           mode,
@@ -119,7 +142,9 @@ export function SessionEditorModal(): React.ReactNode | null {
               ))}
             </select>
             {sessionEditorMode === 'edit' ? (
-              <p className="text-xs text-dark-500">Mode is fixed after creation. Start a new session to switch modes.</p>
+              <p className="text-xs text-dark-500">
+                Mode is fixed after creation. Start a new session to switch modes.
+              </p>
             ) : (
               <p className="text-xs text-dark-500">
                 Each mode has its own fields — like separate ChatGPT chats.
@@ -137,6 +162,50 @@ export function SessionEditorModal(): React.ReactNode | null {
               placeholder="Auto-named from company/client if empty"
               className="w-full px-3 py-2 bg-dark-800 border border-dark-600 rounded-lg text-sm text-dark-100 placeholder-dark-500 focus:outline-none focus:border-blue-500"
             />
+          </div>
+
+          <div className="space-y-3 rounded-lg border border-dark-700 p-3">
+            <p className="text-sm font-medium text-dark-200">Gaya bahasa</p>
+            <div className="space-y-1.5">
+              <p className="text-xs text-dark-400">Panjang jawaban</p>
+              <div className="grid grid-cols-3 gap-1.5">
+                {LENGTH_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => patch({ answerLength: opt.id })}
+                    className={`rounded-lg border px-2 py-2 text-left transition-colors ${
+                      context.answerLength === opt.id
+                        ? 'border-blue-500/60 bg-blue-500/10 text-dark-100'
+                        : 'border-dark-700 bg-dark-850 text-dark-300 hover:border-dark-600'
+                    }`}
+                  >
+                    <p className="text-xs font-medium">{opt.label}</p>
+                    <p className="text-[10px] text-dark-500 mt-0.5 leading-snug">{opt.hint}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <p className="text-xs text-dark-400">Nada / tone</p>
+              <div className="grid grid-cols-3 gap-1.5">
+                {TONE_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => patch({ answerTone: opt.id })}
+                    className={`rounded-lg border px-2 py-2 text-left transition-colors ${
+                      context.answerTone === opt.id
+                        ? 'border-blue-500/60 bg-blue-500/10 text-dark-100'
+                        : 'border-dark-700 bg-dark-850 text-dark-300 hover:border-dark-600'
+                    }`}
+                  >
+                    <p className="text-xs font-medium">{opt.label}</p>
+                    <p className="text-[10px] text-dark-500 mt-0.5 leading-snug">{opt.hint}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
 
           {mode === 'interview' && (

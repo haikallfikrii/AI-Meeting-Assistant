@@ -19,12 +19,13 @@ nsis:
   uninstallDisplayName: ${productName}
   createDesktopShortcut: always
 mac:
+  entitlements: build/entitlements.mac.plist
   entitlementsInherit: build/entitlements.mac.plist
   extendInfo:
-    - NSCameraUsageDescription: Application requests access to the device's camera.
-    - NSMicrophoneUsageDescription: Application requests access to the device's microphone.
-    - NSDocumentsFolderUsageDescription: Application requests access to the user's Documents folder.
-    - NSDownloadsFolderUsageDescription: Application requests access to the user's Downloads folder.
+    NSCameraUsageDescription: Kalfi needs camera access for optional screenshot features.
+    NSMicrophoneUsageDescription: Kalfi needs microphone access to hear your voice for live answers and Mic Ask.
+    NSDocumentsFolderUsageDescription: Application requests access to the user's Documents folder.
+    NSDownloadsFolderUsageDescription: Application requests access to the user's Downloads folder.
   notarize: false
 dmg:
   artifactName: ${name}-${version}.${ext}
@@ -41,5 +42,3 @@ npmRebuild: false
 publish:
   provider: generic
   url: https://kalfi.app/auto-updates
-electronDownload:
-  mirror: https://npmmirror.com/mirrors/electron/

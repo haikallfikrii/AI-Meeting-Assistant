@@ -5,3 +5,5 @@ out
 .eslintcache
 *.log*
 .env
+apps/api/data
+apps/api/dist

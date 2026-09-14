@@ -1,8 +1,14 @@
-import { SessionContext, WorkSession, emptySessionContext } from './sessionTypes'
+import {
+  AnswerLength,
+  AnswerTone,
+  SessionContext,
+  WorkSession,
+  emptySessionContext
+} from './sessionTypes'
 
 export type SessionMode = 'interview' | 'client-meeting' | 'random-chat'
 
-export type { SessionContext, WorkSession }
+export type { SessionContext, WorkSession, AnswerLength, AnswerTone }
 
 export function normalizeSessionMode(value: unknown): SessionMode {
   if (value === 'client-meeting' || value === 'random-chat' || value === 'interview') {
@@ -16,14 +22,40 @@ export interface PromptContext {
   context: SessionContext
 }
 
-const SHARED_SPEAKING_RULES = `
+function lengthRules(length: AnswerLength): string {
+  switch (length) {
+    case 'brief':
+      return `LENGTH: BRIEF — 1–2 short sentences max. Line 1 = the full answer. Skip bullets unless essential. Speakable in ~10–20 seconds.`
+    case 'detailed':
+      return `LENGTH: DETAILED — Give a full answer with structure (short intro + 3–5 bullets or short paragraphs). Still speakable; avoid essays. ~45–90 seconds when read aloud.`
+    case 'balanced':
+    default:
+      return `LENGTH: BALANCED — Line 1 = core answer. Then 2–3 short bullets if needed. Speakable in ~20–45 seconds.`
+  }
+}
+
+function toneRules(tone: AnswerTone): string {
+  switch (tone) {
+    case 'formal':
+      return `TONE: FORMAL — Polished, professional wording. Complete sentences. No slang, no filler, no jokes unless asked.`
+    case 'casual':
+      return `TONE: CASUAL / SANTAI — Natural spoken Indonesian/English mix as fits the conversation. Friendly, relaxed, short. Light slang OK if the other person uses it.`
+    case 'neutral':
+    default:
+      return `TONE: NEUTRAL — Clear, confident, conversational. Not stiff, not too slangy.`
+  }
+}
+
+function speakingRules(ctx: SessionContext): string {
+  return `
 SPEAKING & FORMAT RULES:
-1. SIMPLE WORDS & SHORT SENTENCES — everyday conversational language, 10–15 words per sentence when possible.
-2. LINE 1 = core answer the user can say out loud immediately. Then 2–3 short bullets if needed.
-3. **Bold** key terms for quick scanning.
-4. NO AI filler ("Certainly!", "Great question", "I'd be happy to..."). Jump straight to the answer.
-5. Keep answers speakable in ~20–45 seconds unless the topic clearly needs more depth.
+1. SIMPLE WORDS & SHORT SENTENCES — everyday language, prefer 10–15 words per sentence when possible.
+2. **Bold** key terms for quick scanning.
+3. NO AI filler ("Certainly!", "Great question", "I'd be happy to..."). Jump straight to the answer.
+4. ${lengthRules(ctx.answerLength || 'balanced')}
+5. ${toneRules(ctx.answerTone || 'neutral')}
 `
+}
 
 function interviewContextBlock(ctx: SessionContext): string {
   const sections: string[] = []
@@ -70,21 +102,20 @@ ${interviewContextBlock(ctx)}
 CORE GOAL: Answers that sound human, confident, and tailored to this company/role.
 Use prior turns in this session as continuity — do not contradict earlier answers.
 Prefer aligning skills with the job description. Pull from the answer bank when a question matches.
-${SHARED_SPEAKING_RULES}
-5. For conceptual "What is X?" questions: 2–3 sentences, no multi-line code unless asked.
+${speakingRules(ctx)}
+6. For conceptual "What is X?" questions: stay proportional to the length setting; no multi-line code unless asked.
 `
 }
 
 function clientMeetingPrompt(ctx: SessionContext): string {
   return `
-You are helping someone in a live CLIENT / PROJECT MEETING. Draft short, professional replies they can say out loud.
+You are helping someone in a live CLIENT / PROJECT MEETING. Draft replies they can say out loud.
 ${clientMeetingContextBlock(ctx)}
 CORE GOAL: Clear, calm, client-friendly answers — status, trade-offs, next steps, estimates, risks.
 IMPORTANT: This session may span multiple meetings with the same client/project.
 Use earlier conversation turns in THIS session as memory of what was already discussed (decisions, blockers, commitments).
-Tone: collaborative consultant. Be concrete about this project/feature.
-${SHARED_SPEAKING_RULES}
-5. Prefer action-oriented language ("We can...", "Next step is...", "The risk is...").
+Prefer action-oriented language ("We can...", "Next step is...", "The risk is...").
+${speakingRules(ctx)}
 `
 }
 
@@ -93,11 +124,11 @@ function randomChatPrompt(ctx: SessionContext): string {
 You are a discreet live assistant during a casual conversation or random chat/call.
 Draft natural replies the user can say out loud.
 ${randomChatContextBlock(ctx)}
-CORE GOAL: Helpful, brief, natural — match the energy of a normal conversation.
+CORE GOAL: Helpful, natural — match the energy of a normal conversation.
 Remember prior turns in this chat session for continuity.
 Do NOT sound like a job interview unless the other person is clearly interviewing.
-${SHARED_SPEAKING_RULES}
-5. Keep it light and proportional. Short questions get short answers.
+${speakingRules(ctx)}
+6. Keep replies proportional to the other person's energy.
 `
 }
 
@@ -127,6 +158,8 @@ export interface ContextSettings {
   meetingGoals?: string
   chatTopic?: string
   chatNotes?: string
+  answerLength?: AnswerLength
+  answerTone?: AnswerTone
 }
 
 export function buildSystemPrompt(ctx: ContextSettings): string {
@@ -153,7 +186,9 @@ export function buildSystemPrompt(ctx: ContextSettings): string {
       projectScope: ctx.projectScope || '',
       meetingGoals: ctx.meetingGoals || '',
       chatTopic: ctx.chatTopic || '',
-      chatNotes: ctx.chatNotes || ''
+      chatNotes: ctx.chatNotes || '',
+      answerLength: ctx.answerLength || 'balanced',
+      answerTone: ctx.answerTone || 'neutral'
     },
     messages: [],
     answers: []

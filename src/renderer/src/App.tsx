@@ -67,7 +67,10 @@ function App(): React.JSX.Element {
 }
 
 function hasAnyContext(session: WorkSession): boolean {
-  return Object.values(session.context).some((v) => v.trim().length > 0)
+  const skip = new Set(['answerLength', 'answerTone'])
+  return Object.entries(session.context).some(
+    ([key, value]) => !skip.has(key) && typeof value === 'string' && value.trim().length > 0
+  )
 }
 
 export default App

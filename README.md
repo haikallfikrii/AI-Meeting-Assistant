@@ -2,6 +2,12 @@
 
 An AI-powered cross-platform desktop application (Windows, macOS, Linux) that acts as a real-time interview assistant. The app listens to live interview audio, transcribes speech using Whisper, detects questions using smart linguistic heuristics, and generates concise, speakable answers via OpenAI or OpenRouter.
 
+**Monorepo layout**
+- `src/` — desktop Electron app (BYOK keys stay on device)
+- `web/landing/` — Hostinger shared-hosting landing (HTML/CSS/JS)
+- `apps/api/` — VPS Docker API (Stripe Pro + hosted AI proxy)
+- See [DEPLOY.md](./DEPLOY.md) for Hostinger shared + VPS steps
+
 ---
 
 ## 🌟 Features
