@@ -5,7 +5,28 @@
 }
 
 .blogbar {
-  background: rgba(8, 10, 15, 0.86);
+  padding: 14px var(--gut) 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  pointer-events: none;
+}
+
+.blogbar > * {
+  pointer-events: auto;
+}
+
+.blogbar .shell.topbar__inner {
+  width: min(var(--shell), 100%);
+  margin-inline: auto;
+  min-height: 52px;
+  padding: 0 14px 0 16px;
+  border-radius: 999px;
+  background: rgba(13, 16, 22, 0.88);
+  backdrop-filter: blur(22px) saturate(180%);
+  -webkit-backdrop-filter: blur(22px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
 }
 
 .crumb {
