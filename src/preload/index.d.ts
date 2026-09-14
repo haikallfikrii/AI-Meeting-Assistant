@@ -77,6 +77,11 @@ export interface AppSettings {
   brandName: string
   brandLogoPath: string
   brandLogoDataUrl?: string
+  hideFromDock: boolean
+  accountName: string
+  accountEmail: string
+  membershipPlan: 'free' | 'byok' | 'hosted' | 'team'
+  membershipStatus: 'inactive' | 'active' | 'trial'
 }
 
 export interface AudioSource {
@@ -96,7 +101,7 @@ export interface AnswerEntry {
 export interface Api {
   getSettings: () => Promise<AppSettings>
   updateSettings: (updates: Partial<AppSettings>) => Promise<AppSettings>
-  pickBrandLogo: () => Promise<AppSettings>
+  pickBrandLogo: () => Promise<{ ok: boolean; error?: string; settings?: AppSettings }>
   clearBrandLogo: () => Promise<AppSettings>
   hasApiKeys: () => Promise<boolean>
   fetchOpenAIModels: (

@@ -213,7 +213,8 @@ app.whenReady().then(() => {
   // Set app user model id for windows
   electronApp.setAppUserModelId('com.kalfi.app')
 
-  // Hide from macOS Dock / Cmd+Tab — Force Quit via Activity Monitor still works
+  // Dock visibility is applied from settings inside initializeIpcHandlers / branding.
+  // Keep a safe default hide until settings load if createWindow is delayed.
   if (process.platform === 'darwin' && app.dock) {
     app.dock.hide()
   }

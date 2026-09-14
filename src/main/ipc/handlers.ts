@@ -104,7 +104,12 @@ export function initializeIpcHandlers(window: BrowserWindow): void {
   }
 
   const bootSettings = settingsManager.getSettings()
-  applyRuntimeBranding(mainWindow, bootSettings.brandName, bootSettings.brandLogoPath)
+  applyRuntimeBranding(
+    mainWindow,
+    bootSettings.brandName,
+    bootSettings.brandLogoPath,
+    bootSettings.hideFromDock
+  )
 
   // Settings handlers
   ipcMain.handle('get-settings', () => {
@@ -123,7 +128,9 @@ export function initializeIpcHandlers(window: BrowserWindow): void {
     }
 
     const next = settingsManager?.getSettings()
-    if (next) applyRuntimeBranding(mainWindow, next.brandName, next.brandLogoPath)
+    if (next) {
+      applyRuntimeBranding(mainWindow, next.brandName, next.brandLogoPath, next.hideFromDock)
+    }
 
     return next
   })
@@ -131,14 +138,21 @@ export function initializeIpcHandlers(window: BrowserWindow): void {
   ipcMain.handle('pick-brand-logo', async () => {
     try {
       const stored = await pickAndStoreBrandLogo(mainWindow)
-      if (!stored) return settingsManager?.getSettings()
+      if (!stored) return { ok: true as const, settings: settingsManager?.getSettings() }
       settingsManager?.updateSettings({ brandLogoPath: stored.path })
       const next = settingsManager?.getSettings()
-      if (next) applyRuntimeBranding(mainWindow, next.brandName, next.brandLogoPath)
-      return next
+      if (next) {
+        applyRuntimeBranding(mainWindow, next.brandName, next.brandLogoPath, next.hideFromDock)
+      }
+      return { ok: true as const, settings: next }
     } catch (error) {
       console.error('pick-brand-logo failed:', error)
-      throw error
+      const message = error instanceof Error ? error.message : 'Failed to import logo'
+      return {
+        ok: false as const,
+        error: message,
+        settings: settingsManager?.getSettings()
+      }
     }
   })
 
@@ -147,7 +161,9 @@ export function initializeIpcHandlers(window: BrowserWindow): void {
     clearStoredBrandLogo(current?.brandLogoPath)
     settingsManager?.updateSettings({ brandLogoPath: '' })
     const next = settingsManager?.getSettings()
-    if (next) applyRuntimeBranding(mainWindow, next.brandName, next.brandLogoPath)
+    if (next) {
+      applyRuntimeBranding(mainWindow, next.brandName, next.brandLogoPath, next.hideFromDock)
+    }
     return next
   })
 

@@ -25,6 +25,13 @@ export interface AppSettings {
   brandLogoPath: string
   /** Computed for the renderer; never written to disk. */
   brandLogoDataUrl?: string
+  /** macOS: hide app from Dock / Cmd+Tab. Default true for stealth. */
+  hideFromDock: boolean
+  /** Local profile scaffold — auth/billing wired later. */
+  accountName: string
+  accountEmail: string
+  membershipPlan: 'free' | 'byok' | 'hosted' | 'team'
+  membershipStatus: 'inactive' | 'active' | 'trial'
 }
 
 type PersistedSettings = Omit<AppSettings, 'openaiApiKey' | 'brandLogoDataUrl'> & {
@@ -65,7 +72,12 @@ const DEFAULT_SETTINGS: AppSettings = {
   pauseThreshold: 1500,
   autoStart: false,
   brandName: '',
-  brandLogoPath: ''
+  brandLogoPath: '',
+  hideFromDock: true,
+  accountName: '',
+  accountEmail: '',
+  membershipPlan: 'free',
+  membershipStatus: 'inactive'
 }
 
 export class SettingsManager {
@@ -175,7 +187,32 @@ export class SettingsManager {
           brandLogoPath:
             typeof savedSettings.brandLogoPath === 'string'
               ? savedSettings.brandLogoPath
-              : DEFAULT_SETTINGS.brandLogoPath
+              : DEFAULT_SETTINGS.brandLogoPath,
+          hideFromDock:
+            typeof savedSettings.hideFromDock === 'boolean'
+              ? savedSettings.hideFromDock
+              : DEFAULT_SETTINGS.hideFromDock,
+          accountName:
+            typeof savedSettings.accountName === 'string'
+              ? savedSettings.accountName
+              : DEFAULT_SETTINGS.accountName,
+          accountEmail:
+            typeof savedSettings.accountEmail === 'string'
+              ? savedSettings.accountEmail
+              : DEFAULT_SETTINGS.accountEmail,
+          membershipPlan:
+            savedSettings.membershipPlan === 'byok' ||
+            savedSettings.membershipPlan === 'hosted' ||
+            savedSettings.membershipPlan === 'team' ||
+            savedSettings.membershipPlan === 'free'
+              ? savedSettings.membershipPlan
+              : DEFAULT_SETTINGS.membershipPlan,
+          membershipStatus:
+            savedSettings.membershipStatus === 'active' ||
+            savedSettings.membershipStatus === 'trial' ||
+            savedSettings.membershipStatus === 'inactive'
+              ? savedSettings.membershipStatus
+              : DEFAULT_SETTINGS.membershipStatus
         }
 
         if (
