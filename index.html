@@ -3,233 +3,513 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Kalfi — Stealth AI meeting & interview copilot</title>
+    <title>Kalfi — live answers in interviews and client calls, on your own API key</title>
     <meta
       name="description"
-      content="Kalfi listens privately during interviews and client meetings, then drafts speakable answers. Free forever with BYOK, or Pro hosted AI."
+      content="Kalfi is a macOS overlay that listens to your call, catches the question, and writes a line you can say out loud. Free with your own OpenAI or OpenRouter key, or $12/mo hosted."
     />
-    <meta property="og:title" content="Kalfi — AI Meeting Assistant" />
+    <link rel="canonical" href="https://ai.chatlm.tech/" />
+    <meta name="theme-color" content="#080a0f" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Kalfi — live answers in interviews and client calls" />
     <meta
       property="og:description"
-      content="Stealth desktop copilot with Bring Your Own Key. Interview, client meeting, and chat modes."
+      content="Bring your own OpenAI or OpenRouter key and the app stays free. Interview, client meeting and chat modes with session memory."
     />
+    <meta property="og:url" content="https://ai.chatlm.tech/" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="css/styles.css" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "Kalfi",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "macOS",
+        "description": "Real-time AI copilot for interviews and client meetings with bring-your-own-key support.",
+        "offers": [
+          { "@type": "Offer", "name": "Free (BYOK)", "price": "0", "priceCurrency": "USD" },
+          { "@type": "Offer", "name": "Pro (hosted)", "price": "12", "priceCurrency": "USD" }
+        ]
+      }
+    </script>
   </head>
+
   <body>
-    <header class="site-header">
-      <div class="wrap nav">
-        <a class="brand" href="#top">
-          <span class="brand-mark">K</span>
+    <a class="skip" href="#main">Skip to content</a>
+
+    <header class="topbar" id="topbar">
+      <div class="shell topbar__inner">
+        <a class="wordmark" href="#top">
+          <span class="wordmark__mark">K</span>
           Kalfi
         </a>
-        <nav class="nav-links" aria-label="Primary">
-          <a href="#how">How it works</a>
-          <a href="#byok">BYOK</a>
+        <nav class="topnav" aria-label="Primary">
+          <a href="#demo">Demo</a>
+          <a href="#flow">How it works</a>
+          <a href="#stealth">Stealth</a>
+          <a href="#cost">Cost</a>
           <a href="#pricing">Pricing</a>
           <a href="#compare">Compare</a>
-          <a href="#faq">FAQ</a>
         </nav>
-        <div class="nav-cta">
-          <a class="btn btn-ghost" href="#download">Download</a>
-          <a class="btn btn-primary" id="nav-subscribe" href="#pricing">Get Pro</a>
+        <div class="topbar__actions">
+          <a class="btn btn--line btn--sm" href="#download">Download</a>
+          <button class="btn btn--accent btn--sm" type="button" data-subscribe>Get Pro</button>
+          <button class="burger" type="button" id="burger" aria-label="Menu" aria-expanded="false">
+            <span></span><span></span>
+          </button>
         </div>
       </div>
+      <div class="shell drawer" id="drawer" data-open="false">
+        <a href="#demo">Demo</a>
+        <a href="#flow">How it works</a>
+        <a href="#stealth">Stealth</a>
+        <a href="#cost">Cost</a>
+        <a href="#pricing">Pricing</a>
+        <a href="#compare">Compare</a>
+        <a href="#download">Download</a>
+      </div>
+      <div class="topbar__progress" id="progress"></div>
     </header>
 
-    <main id="top">
-      <section class="wrap hero">
+    <main id="main">
+      <div id="top"></div>
+
+      <!-- HERO + LIVE DEMO -->
+      <section class="shell hero" id="demo">
         <div>
-          <div class="eyebrow">Desktop · Stealth · macOS</div>
-          <h1>Private answers in live calls — <span>your key or ours</span></h1>
-          <p class="hero-lead">
-            Kalfi floats over Meet and Zoom, hears the conversation, and drafts short answers you
-            can say out loud. Competitors lock live AI behind pricey plans. Kalfi stays free if you
-            bring your own OpenAI or OpenRouter key.
+          <span class="tagline">macOS overlay · BYOK</span>
+          <h1>The answer is on screen before the pause gets awkward.</h1>
+          <p class="hero__lead">
+            Kalfi listens to your call from your own Mac, catches the question, and writes one line
+            you can actually say out loud. Point it at your own OpenAI or OpenRouter key and the app
+            costs nothing to run.
           </p>
-          <div class="hero-actions">
-            <a class="btn btn-primary" id="download-mac" href="#download">Download for Mac</a>
-            <a class="btn btn-ok" href="#byok">Use free with BYOK</a>
+          <div class="hero__cta">
+            <a class="btn btn--solid" href="#download">Download for Mac</a>
+            <button class="btn btn--line" type="button" data-demo-focus>
+              Run the demo <span class="kbd">⌘↵</span>
+            </button>
           </div>
-          <p class="hero-note">macOS overlay · Screen-share friendly · Interview, client & chat modes</p>
+          <dl class="facts">
+            <div>
+              <dt>Modes</dt>
+              <dd>Interview · Client · Chat</dd>
+            </div>
+            <div>
+              <dt>Audio in</dt>
+              <dd>System, mic, or both</dd>
+            </div>
+            <div>
+              <dt>Your key</dt>
+              <dd>Stays on device</dd>
+            </div>
+          </dl>
         </div>
-        <aside class="hero-panel" aria-label="Product preview">
-          <div class="panel-top">
-            <span>Live session · Client meeting</span>
-            <span class="dot" title="Listening"></span>
-          </div>
-          <div class="answer-card">
-            <strong>Suggested reply</strong>
-            <p>
-              We can ship the checkout slice in two weeks if scope stays to card + receipt email.
-              The risk is payment webhook retries — next step is a shared test plan with your QA.
-            </p>
-          </div>
-          <div class="chips">
-            <span class="chip">System + Mic</span>
-            <span class="chip">Mic Ask</span>
-            <span class="chip">Summary</span>
-            <span class="chip">Stealth panel</span>
-          </div>
-        </aside>
-      </section>
 
-      <section class="section" id="how">
-        <div class="wrap">
-          <div class="section-head">
-            <h2>Prepare once. Perform live. Keep the thread.</h2>
-            <p>
-              One desktop app for interviews and client work — with session memory grouped like
-              ChatGPT threads, not a disposable overlay.
-            </p>
+        <div class="appwin" data-reveal>
+          <div class="appwin__bar">
+            <span class="appwin__lights"><i></i><i></i><i></i></span>
+            <span class="appwin__title">Kalfi — live session</span>
+            <span class="appwin__badge"><span class="pulse"></span><span id="demo-status">listening</span></span>
           </div>
-          <div class="grid-3">
-            <article class="card">
-              <span class="tag">01</span>
-              <h3>Set the mode</h3>
-              <p>
-                Interview, client meeting, or random chat — each mode has its own context fields and
-                speaking style (brief / balanced / detailed, formal / casual).
-              </p>
-            </article>
-            <article class="card">
-              <span class="tag">02</span>
-              <h3>Listen privately</h3>
-              <p>
-                Capture system audio, your mic, or both. Ask / Mic Ask force an answer when auto
-                detection misses. Overlay stays above fullscreen Meet.
-              </p>
-            </article>
-            <article class="card">
-              <span class="tag">03</span>
-              <h3>Summarize & continue</h3>
-              <p>
-                Save summaries per meeting, browse history without hijacking the live session, then
-                open a new meeting in the same project thread.
-              </p>
-            </article>
-          </div>
-        </div>
-      </section>
 
-      <section class="section" id="byok">
-        <div class="wrap byok">
-          <div>
-            <h2>BYOK is the product, not a footnote</h2>
-            <p>
-              Final Round, Parakeet, Cluely, and LazyJobSeeker sell hosted AI. Kalfi lets you keep
-              spend on your own OpenRouter or OpenAI account — forever free for the app — or flip to
-              Pro when you want zero-setup hosted models for a teammate.
-            </p>
-            <ul>
-              <li>Paste your key once in desktop Settings (encrypted with OS safeStorage).</li>
-              <li>Pick OpenAI, OpenRouter, or a custom OpenAI-compatible base URL.</li>
-              <li>Pro users never see your provider key — traffic goes through our API.</li>
-            </ul>
+          <div class="tabs" role="tablist" aria-label="Session mode">
+            <button role="tab" type="button" data-mode="interview" aria-selected="true">Interview</button>
+            <button role="tab" type="button" data-mode="client" aria-selected="false">Client meeting</button>
+            <button role="tab" type="button" data-mode="chat" aria-selected="false">Random chat</button>
           </div>
-          <div class="byok-aside">
-            <div class="row"><span>Free path</span><strong>Your API key</strong></div>
-            <div class="row"><span>Pro path</span><strong>Our hosted AI</strong></div>
-            <div class="row"><span>Providers</span><strong>OpenAI · OpenRouter</strong></div>
-            <div class="row"><span>Key storage</span><strong>Device only (BYOK)</strong></div>
+
+          <div class="demo__body">
+            <div>
+              <div class="pane-label">
+                <span>Live transcript</span>
+                <span id="demo-source">system + mic</span>
+              </div>
+              <div class="transcript" id="transcript" aria-live="polite"></div>
+            </div>
+
+            <div>
+              <div class="pane-label">
+                <span>Suggested reply</span>
+                <span id="demo-model">gpt-4o-mini</span>
+              </div>
+              <div class="answer" id="answer" data-done="false">
+                <p class="answer__empty">Press Play, or hit Ask to force an answer on the last line.</p>
+              </div>
+            </div>
+
+            <div class="controls">
+              <div class="ctrl">
+                <span>Length</span>
+                <div class="seg" id="seg-length">
+                  <button type="button" data-val="brief" aria-pressed="false">Brief</button>
+                  <button type="button" data-val="balanced" aria-pressed="true">Balanced</button>
+                  <button type="button" data-val="detailed" aria-pressed="false">Detailed</button>
+                </div>
+              </div>
+              <div class="ctrl">
+                <span>Tone</span>
+                <div class="seg" id="seg-tone">
+                  <button type="button" data-val="formal" aria-pressed="false">Formal</button>
+                  <button type="button" data-val="neutral" aria-pressed="true">Neutral</button>
+                  <button type="button" data-val="casual" aria-pressed="false">Casual</button>
+                </div>
+              </div>
+              <div class="demo__run">
+                <button class="btn btn--line btn--sm" type="button" id="demo-toggle">Pause</button>
+                <button class="btn btn--accent btn--sm" type="button" id="demo-ask">Ask</button>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      <section class="section" id="pricing">
-        <div class="wrap">
-          <div class="section-head">
-            <h2>Two ways in. No $150/mo theater.</h2>
-            <p>
-              Start free with BYOK. Upgrade to Pro when you want us to carry model cost and
-              onboarding for non-technical users.
-            </p>
-          </div>
-          <div class="price-grid">
-            <article class="price">
-              <h3>Free · BYOK</h3>
-              <div class="amount">$0 <span>/ forever</span></div>
-              <p class="desc">Full desktop app. You pay your own model usage upstream.</p>
-              <ul>
-                <li>Interview, client, and chat modes</li>
-                <li>Stealth overlay + Mic Ask + Summary</li>
-                <li>OpenAI / OpenRouter / custom base URL</li>
-                <li>Local session history on your machine</li>
+      <!-- HOW IT WORKS -->
+      <section class="band band--tight" id="flow">
+        <div class="shell band__head" data-reveal>
+          <span class="tagline">The loop</span>
+          <h2>Context in, one speakable line out, summary at the end.</h2>
+          <p>
+            Not a transcript dump. Kalfi keeps the job or project in a thread, so the second meeting
+            already knows what you promised in the first.
+          </p>
+        </div>
+        <div class="shell">
+          <div class="steps" data-reveal>
+            <article class="step">
+              <span class="step__num">01</span>
+              <h3>Load the context once</h3>
+              <p>
+                Pick a mode and fill only the fields that mode needs — JD and resume for interviews,
+                scope and open decisions for client work.
+              </p>
+              <ul class="step__list">
+                <li>3 modes, separate forms</li>
+                <li>Length + tone per session</li>
+                <li>Key encrypted via safeStorage</li>
               </ul>
-              <a class="btn btn-ghost" href="#download">Download app</a>
             </article>
-            <article class="price featured">
-              <h3>Pro · Hosted</h3>
-              <div class="amount">$12 <span>/ mo</span></div>
-              <p class="desc">No key setup. We proxy chat + STT with fair monthly quota.</p>
-              <ul>
+            <article class="step">
+              <span class="step__num">02</span>
+              <h3>Listen the way the call runs</h3>
+              <p>
+                Mix meeting audio and your own mic, so a question you repeat out loud still gets an
+                answer. Ask and Mic Ask override detection when it misses.
+              </p>
+              <ul class="step__list">
+                <li>System + mic mixing</li>
+                <li>Force-answer any line</li>
+                <li>Floats over fullscreen Meet</li>
+              </ul>
+            </article>
+            <article class="step">
+              <span class="step__num">03</span>
+              <h3>Close the meeting properly</h3>
+              <p>
+                Generate a summary, browse past meetings without hijacking the live one, then start
+                the next meeting inside the same project thread.
+              </p>
+              <ul class="step__list">
+                <li>Per-meeting summaries</li>
+                <li>Browse-only history</li>
+                <li>Pagi / Siang / Sore / Malam labels</li>
+              </ul>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- STEALTH -->
+      <section class="band" id="stealth">
+        <div class="shell band__head" data-reveal>
+          <span class="tagline">Stealth</span>
+          <h2>Flip the switch and watch it leave the shared screen.</h2>
+          <p>
+            Kalfi uses a panel window with content protection and no meeting bot. Toggle stealth off
+            below to see exactly what you would be leaking without it.
+          </p>
+        </div>
+
+        <div class="shell">
+          <div style="margin-bottom: 20px">
+            <label class="switch">
+              <input type="checkbox" id="stealth-toggle" checked />
+              <span class="switch__track" aria-hidden="true"></span>
+              <span class="switch__text">Stealth mode <strong id="stealth-state">on</strong></span>
+            </label>
+          </div>
+
+          <div class="stealth" data-reveal>
+            <div class="screenmock">
+              <div class="screenmock__tag">
+                <span>What the room sees — shared screen</span>
+                <span id="leak-tag" class="dim">clean</span>
+              </div>
+              <div class="tiles">
+                <div class="tile tile--active">
+                  <span class="tile__av">HK</span>
+                  <span>You (presenting)</span>
+                </div>
+                <div class="tile"><span class="tile__av">RN</span><span>Rina</span></div>
+                <div class="tile"><span class="tile__av">DV</span><span>David</span></div>
+                <div class="tile"><span class="tile__av">AM</span><span>Amir</span></div>
+              </div>
+              <div class="overlay-card" id="leak-card" data-shown="false">
+                <strong>Kalfi · suggested reply</strong>
+                We can ship checkout by the 30th if scope stays card plus receipt email.
+              </div>
+            </div>
+
+            <div class="screenmock">
+              <div class="screenmock__tag">
+                <span>What you see — your display</span>
+                <span class="dim">overlay on top</span>
+              </div>
+              <div class="tiles">
+                <div class="tile tile--active">
+                  <span class="tile__av">HK</span>
+                  <span>You (presenting)</span>
+                </div>
+                <div class="tile"><span class="tile__av">RN</span><span>Rina</span></div>
+                <div class="tile"><span class="tile__av">DV</span><span>David</span></div>
+                <div class="tile"><span class="tile__av">AM</span><span>Amir</span></div>
+              </div>
+              <div class="overlay-card" data-shown="true">
+                <strong>Kalfi · suggested reply</strong>
+                We can ship checkout by the 30th if scope stays card plus receipt email.
+              </div>
+            </div>
+          </div>
+
+          <p class="note" style="margin-top: 16px">
+            Honest caveat: screen-capture protection depends on the OS and the conferencing app.
+            Test your exact setup before you rely on it, and follow the rules of the room you are in.
+          </p>
+        </div>
+      </section>
+
+      <!-- COST CALCULATOR -->
+      <section class="band" id="cost">
+        <div class="shell band__head" data-reveal>
+          <span class="tagline">Bring your own key</span>
+          <h2>Do the maths before you sign a $150 subscription.</h2>
+          <p>
+            With BYOK you pay the model, not a middleman. Move the sliders to see what your month
+            actually costs against the plans everyone else sells.
+          </p>
+        </div>
+
+        <div class="shell">
+          <div class="calc" data-reveal>
+            <div>
+              <div class="field">
+                <div class="field__top">
+                  <label for="calc-sessions">Calls per month</label>
+                  <span class="field__val" id="out-sessions">12</span>
+                </div>
+                <input id="calc-sessions" type="range" min="1" max="60" value="12" step="1" />
+              </div>
+
+              <div class="field">
+                <div class="field__top">
+                  <label for="calc-minutes">Minutes per call</label>
+                  <span class="field__val" id="out-minutes">40</span>
+                </div>
+                <input id="calc-minutes" type="range" min="10" max="120" value="40" step="5" />
+              </div>
+
+              <div class="field">
+                <div class="field__top">
+                  <label for="calc-model">Model on your key</label>
+                </div>
+                <select id="calc-model"></select>
+              </div>
+
+              <div class="field" style="margin-bottom: 0">
+                <div class="field__top">
+                  <label for="calc-stt">Include Whisper transcription</label>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" id="calc-stt" checked />
+                  <span class="switch__track" aria-hidden="true"></span>
+                  <span class="switch__text" id="out-stt">on · $0.006 / min</span>
+                </label>
+              </div>
+            </div>
+
+            <div>
+              <div class="bars">
+                <div class="bar bar--you">
+                  <div class="bar__top">
+                    <span>Kalfi Free · your key</span>
+                    <span class="bar__amount" id="bar-byok-amt">$0.00</span>
+                  </div>
+                  <div class="bar__track"><div class="bar__fill" id="bar-byok"></div></div>
+                  <p class="bar__note" id="byok-detail">estimated provider spend</p>
+                </div>
+
+                <div class="bar bar--pro">
+                  <div class="bar__top">
+                    <span>Kalfi Pro · hosted</span>
+                    <span class="bar__amount">$12.00</span>
+                  </div>
+                  <div class="bar__track"><div class="bar__fill" id="bar-pro"></div></div>
+                  <p class="bar__note">flat, no key setup, quota included</p>
+                </div>
+
+                <div class="bar">
+                  <div class="bar__top">
+                    <span>Final Round AI · Pro</span>
+                    <span class="bar__amount">$25.00</span>
+                  </div>
+                  <div class="bar__track"><div class="bar__fill" id="bar-frai"></div></div>
+                  <p class="bar__note">list entry price for live sessions</p>
+                </div>
+
+                <div class="bar">
+                  <div class="bar__top">
+                    <span>ParakeetAI · monthly</span>
+                    <span class="bar__amount">$149.90</span>
+                  </div>
+                  <div class="bar__track"><div class="bar__fill" id="bar-parakeet"></div></div>
+                  <p class="bar__note">list monthly subscription</p>
+                </div>
+              </div>
+
+              <p class="verdict" id="verdict"></p>
+
+              <p class="assumptions">
+                Assumes ~0.8 answered questions per minute, ~900 input and ~220 output tokens per
+                answer. Token prices are public list rates and change often — treat this as an
+                estimate, then check your provider dashboard.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PRICING -->
+      <section class="band" id="pricing">
+        <div class="shell band__head" data-reveal>
+          <span class="tagline">Pricing</span>
+          <h2>Two doors. Neither one is a trial that expires on you.</h2>
+          <p>
+            Technical users bring a key and stay free. Everyone else pays a flat fee and never sees a
+            provider dashboard.
+          </p>
+        </div>
+
+        <div class="shell">
+          <div class="plans" data-reveal>
+            <article class="plan">
+              <div class="plan__top">
+                <h3>Free</h3>
+                <span class="chip chip--signal">BYOK</span>
+              </div>
+              <div class="plan__price">$0<span> / forever</span></div>
+              <p class="plan__desc">
+                The full desktop app. You pay your provider directly for what you use.
+              </p>
+              <ul class="plan__feats">
+                <li>Interview, client meeting and chat modes</li>
+                <li>System + mic capture, Ask and Mic Ask</li>
+                <li>Meeting summaries and project threads</li>
+                <li>OpenAI, OpenRouter or any compatible base URL</li>
+                <li>Key encrypted on device, never sent to us</li>
+              </ul>
+              <a class="btn btn--line" href="#download">Download the app</a>
+            </article>
+
+            <article class="plan plan--hi">
+              <div class="plan__top">
+                <h3>Pro</h3>
+                <span class="chip">Hosted</span>
+              </div>
+              <div class="plan__price">$12<span> / month</span></div>
+              <p class="plan__desc">
+                No key, no provider account. We carry the model bill and the setup.
+              </p>
+              <ul class="plan__feats">
                 <li>Everything in Free</li>
-                <li>Login + Stripe subscription</li>
-                <li>Hosted OpenRouter models on our bill</li>
-                <li>Manage plan on the web (Customer Portal)</li>
+                <li>Hosted chat and transcription through our API</li>
+                <li>Login on any Mac you own</li>
+                <li>Cancel or change card in Stripe portal</li>
+                <li>Monthly fair-use quota, shown in app</li>
               </ul>
-              <button class="btn btn-primary" id="subscribe-btn" type="button">
-                Subscribe with Stripe
-              </button>
+              <button class="btn btn--accent" type="button" data-subscribe>Subscribe with Stripe</button>
+              <p class="note" id="pro-note" style="margin-top: 12px"></p>
             </article>
           </div>
-          <p class="hero-note" style="margin-top: 1rem">
-            Pro checkout calls <code>api.kalfi.app</code> when the backend is live. Until then the
-            button shows setup status.
-          </p>
         </div>
       </section>
 
-      <section class="section" id="compare">
-        <div class="wrap">
-          <div class="section-head">
-            <h2>Where Kalfi sits</h2>
-            <p>Public marketing comparison — not a lab benchmark.</p>
-          </div>
-          <div class="compare">
+      <!-- COMPARE -->
+      <section class="band" id="compare">
+        <div class="shell band__head" data-reveal>
+          <span class="tagline">Landscape</span>
+          <h2>What the other tabs in your browser are charging.</h2>
+          <p>Public marketing and list prices, September 2026. Not a lab benchmark.</p>
+        </div>
+
+        <div class="shell">
+          <div class="tablewrap" data-reveal>
             <table>
               <thead>
                 <tr>
-                  <th></th>
-                  <th>Final Round</th>
-                  <th>Parakeet</th>
-                  <th>Cluely</th>
-                  <th>Kalfi</th>
+                  <th scope="col">&nbsp;</th>
+                  <th scope="col">Final Round</th>
+                  <th scope="col">ParakeetAI</th>
+                  <th scope="col">Cluely</th>
+                  <th scope="col">LazyJobSeeker</th>
+                  <th scope="col" class="is-us">Kalfi</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td>Live answers</td>
-                  <td>Pro</td>
-                  <td>Paid</td>
-                  <td>Assist</td>
-                  <td class="yes">BYOK or Pro</td>
+                  <td class="row-label">Live in-call answers</td>
+                  <td>Pro plan only</td>
+                  <td>Subscription or credits</td>
+                  <td>Assist shortcut</td>
+                  <td>After free session</td>
+                  <td class="is-us">Free with your key</td>
                 </tr>
                 <tr>
-                  <td>BYOK free forever</td>
-                  <td class="no">Not marketed</td>
-                  <td class="no">Not marketed</td>
-                  <td class="no">Not marketed</td>
-                  <td class="yes">Yes</td>
+                  <td class="row-label">Bring your own key</td>
+                  <td class="dim">not offered</td>
+                  <td class="dim">not offered</td>
+                  <td class="dim">not offered</td>
+                  <td class="dim">not offered</td>
+                  <td class="is-us">Primary path</td>
                 </tr>
                 <tr>
-                  <td>Client meetings</td>
-                  <td class="no">Interview-first</td>
-                  <td class="yes">Yes</td>
-                  <td class="yes">Meeting-first</td>
-                  <td class="yes">First-class mode</td>
+                  <td class="row-label">Client / sales meetings</td>
+                  <td class="dim">interview-first</td>
+                  <td>Yes</td>
+                  <td>Meeting-first</td>
+                  <td>Yes</td>
+                  <td class="is-us">Dedicated mode + threads</td>
                 </tr>
                 <tr>
-                  <td>Typical paid entry</td>
-                  <td>~$25+/mo</td>
-                  <td>~$150/mo</td>
+                  <td class="row-label">Answer style control</td>
+                  <td class="dim">preset</td>
+                  <td>Model choice</td>
+                  <td class="dim">preset</td>
+                  <td class="dim">preset</td>
+                  <td class="is-us">Length + tone per session</td>
+                </tr>
+                <tr>
+                  <td class="row-label">Entry price</td>
+                  <td>~$25 / mo</td>
+                  <td>~$149.90 / mo</td>
                   <td>Paid plans</td>
-                  <td class="yes">$0 or ~$12/mo</td>
+                  <td>Paid after trial</td>
+                  <td class="is-us">$0 or $12 / mo</td>
                 </tr>
               </tbody>
             </table>
@@ -237,76 +517,105 @@
         </div>
       </section>
 
-      <section class="section" id="faq">
-        <div class="wrap faq">
-          <div class="section-head">
-            <h2>FAQ</h2>
-          </div>
+      <!-- FAQ -->
+      <section class="band band--tight">
+        <div class="shell band__head" data-reveal>
+          <span class="tagline">Questions</span>
+          <h2>The things people ask before downloading.</h2>
+        </div>
+        <div class="shell">
+        <div class="faq" data-reveal>
           <details open>
-            <summary>Does the app run on my computer?</summary>
+            <summary>Does my API key ever touch your server?</summary>
             <p>
-              Yes. Kalfi is a desktop Electron app. Shared hosting only serves this landing page.
-              AI for Pro users goes through our VPS API; BYOK talks to your provider from the app.
+              No. On the Free plan the key lives in macOS encrypted storage and talks straight to
+              OpenAI or OpenRouter from your machine. Our API only appears when you choose Pro, and
+              then the provider key is ours, not yours.
             </p>
           </details>
           <details>
-            <summary>Is my BYOK key uploaded to your servers?</summary>
+            <summary>What actually runs where?</summary>
             <p>
-              No. Bring-your-own-key stays on device (encrypted). Only Pro hosted mode uses our
-              server-side provider key.
+              The app runs on your Mac — audio capture, transcript, session history, all local. This
+              page is static hosting. The Pro backend runs on a small VPS and only handles login,
+              subscription state and the model proxy.
             </p>
           </details>
           <details>
-            <summary>Where do I manage subscription?</summary>
+            <summary>Is this allowed in my interview or meeting?</summary>
             <p>
-              Subscribe from this site. Cancel or update payment in Stripe Customer Portal (linked
-              after login). The desktop app only checks whether Pro is active.
+              That depends on the room. Kalfi is built for calls where assistance is permitted —
+              client work, internal meetings, sales, practice, language support. If an employer,
+              school or client says no, respect it.
             </p>
           </details>
           <details>
-            <summary>Can it stay hidden on screen share?</summary>
+            <summary>Which providers and models work?</summary>
             <p>
-              Kalfi uses a panel-style overlay with content protection where the OS allows it — same
-              category expectation as other stealth copilots.
+              Anything OpenAI-compatible: OpenAI directly, OpenRouter for model choice, or a custom
+              base URL for your own gateway. Chat and transcription models are configurable per
+              install.
+            </p>
+          </details>
+          <details>
+            <summary>Windows and Linux?</summary>
+            <p>
+              The build targets exist, but macOS Apple Silicon is what ships tested today. The
+              overlay and stealth behaviour are tuned for macOS first.
             </p>
           </details>
         </div>
+        </div>
       </section>
 
-      <section class="section" id="download">
-        <div class="wrap cta-band">
-          <div>
-            <h2>Install Kalfi. Bring a key or go Pro.</h2>
-            <p>DMG for Apple Silicon first. Windows build can follow the same funnel.</p>
-          </div>
-          <div class="hero-actions">
-            <a
-              class="btn btn-primary"
-              href="https://github.com/haikallfikrii/AI-Meeting-Assistant/releases"
-              rel="noopener"
-              target="_blank"
-              >GitHub Releases</a
-            >
-            <a class="btn btn-ghost" href="mailto:hello@kalfi.app">Contact</a>
+      <!-- CLOSER -->
+      <section class="band band--tight" id="download">
+        <div class="shell">
+          <div class="closer" data-reveal>
+            <div>
+              <h2>Install it, paste a key, join your next call.</h2>
+              <p>
+                Apple Silicon DMG from GitHub Releases. The app is unsigned for now, so open it from
+                the right-click menu the first time.
+              </p>
+            </div>
+            <div class="hero__cta" style="margin: 0">
+              <a
+                class="btn btn--solid"
+                href="https://github.com/haikallfikrii/AI-Meeting-Assistant/releases"
+                target="_blank"
+                rel="noopener"
+                >Download DMG</a
+              >
+              <button class="btn btn--line" type="button" data-subscribe>Get Pro instead</button>
+            </div>
           </div>
         </div>
       </section>
     </main>
 
-    <footer class="site-footer">
-      <div class="wrap footer-row">
-        <span>© <span id="year"></span> Kalfi. Desktop AI for interviews & meetings.</span>
-        <span>Landing: Hostinger · API: VPS · App: your Mac</span>
+    <footer class="foot">
+      <div class="shell foot__row">
+        <span>© <span id="year">2026</span> Kalfi — desktop AI for interviews and meetings.</span>
+        <span>
+          <a href="https://github.com/haikallfikrii/AI-Meeting-Assistant" target="_blank" rel="noopener"
+            >Source</a
+          >
+          · <a href="mailto:hello@chatlm.tech">Contact</a>
+        </span>
       </div>
     </footer>
 
     <script>
       window.KALFI_CONFIG = {
-        apiBaseUrl: "https://api.kalfi.app",
-        // Set after Stripe + API are live, e.g. price_xxx
-        stripePriceId: ""
-      };
+        // Set once apps/api is live behind HTTPS, e.g. "https://api.chatlm.tech"
+        apiBaseUrl: '',
+        // Stripe price id for the Pro plan, e.g. "price_123"
+        stripePriceId: '',
+        proPrice: 12
+      }
     </script>
-    <script src="js/main.js"></script>
+    <script src="js/demo.js" defer></script>
+    <script src="js/main.js" defer></script>
   </body>
 </html>
