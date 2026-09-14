@@ -2897,11 +2897,10 @@ details p {
   }
 
   .timeline__rail > p {
-    max-width: 54ch;
+    max-width: none;
     margin-bottom: 16px;
   }
 
-  /* 2×2 grid — no horizontal page overflow from step chips */
   .timeline__dots {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2912,11 +2911,13 @@ details p {
     overflow: visible;
     margin: 0 0 4px;
     padding: 0;
+    list-style: none;
   }
 
   .timeline__dots a {
     min-width: 0;
     width: 100%;
+    box-sizing: border-box;
     justify-content: center;
     white-space: nowrap;
     padding: 8px 10px;
@@ -2938,14 +2939,32 @@ details p {
   .timeline__stream {
     min-width: 0;
     max-width: 100%;
+    overflow: hidden;
+  }
+
+  .timeline__beam > span {
+    width: 18px;
+    height: 18px;
   }
 }
 
 @media (max-width: 780px) {
+  :root {
+    --gut: 18px;
+  }
+
+  #flow {
+    overflow-x: clip;
+  }
+
   .timeline__stream {
-    --tl-gutter: 26px;
+    --tl-gutter: 24px;
     gap: 14px;
     overflow: hidden;
+  }
+
+  .tl-card {
+    max-width: 100%;
   }
 
   .tl-card__mark {
@@ -2956,6 +2975,8 @@ details p {
     padding: 18px 16px 16px;
     overflow-wrap: anywhere;
     word-break: break-word;
+    max-width: 100%;
+    box-sizing: border-box;
   }
 
   .tl-card__body > p {
@@ -2964,10 +2985,6 @@ details p {
 
   .tl-card:hover .tl-card__body {
     transform: none;
-  }
-
-  #flow {
-    overflow-x: clip;
   }
 }
 
