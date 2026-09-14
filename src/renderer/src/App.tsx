@@ -15,8 +15,7 @@ function App(): React.JSX.Element {
     settings,
     showHistory,
     setShowHistory,
-    setActiveSession,
-    setShowSessionEditor
+    setActiveSession
   } = useInterviewStore()
 
   useInterviewEvents()
@@ -32,15 +31,17 @@ function App(): React.JSX.Element {
         const active = await window.api.getActiveSession()
         setActiveSession(active)
 
+        // First launch / empty context: land on Sessions & history instead of a tall Edit modal
+        // that can clip Save/Close on the default overlay size.
         if (active && !hasAnyContext(active) && hasApiKeys) {
-          setShowSessionEditor(true, 'edit')
+          setShowHistory(true)
         }
       } catch (err) {
         console.error('Failed to bootstrap:', err)
       }
     }
     bootstrap()
-  }, [setShowSettings, setActiveSession, setShowSessionEditor])
+  }, [setShowSettings, setActiveSession, setShowHistory])
 
   useEffect(() => {
     if (settings.windowOpacity && settings.windowOpacity !== 1) {

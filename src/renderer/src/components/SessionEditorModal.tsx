@@ -112,21 +112,22 @@ export function SessionEditorModal(): React.ReactNode | null {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="w-full max-w-lg mx-4 bg-dark-900 rounded-xl border border-dark-700 shadow-2xl">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-dark-700">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/60 backdrop-blur-sm">
+      <div className="w-full max-w-lg max-h-[min(92vh,720px)] flex flex-col bg-dark-900 rounded-xl border border-dark-700 shadow-2xl overflow-hidden">
+        <div className="flex items-center justify-between px-4 sm:px-5 py-3 sm:py-4 border-b border-dark-700 shrink-0">
           <h2 className="text-lg font-semibold text-dark-100">
             {sessionEditorMode === 'edit' ? 'Edit Session' : 'New Session'}
           </h2>
           <button
             onClick={() => setShowSessionEditor(false)}
             className="p-1.5 rounded hover:bg-dark-700 text-dark-400 hover:text-dark-200"
+            aria-label="Close"
           >
             <X size={18} />
           </button>
         </div>
 
-        <div className="px-5 py-5 space-y-4 max-h-[36rem] overflow-y-auto custom-scrollbar">
+        <div className="px-4 sm:px-5 py-4 sm:py-5 space-y-4 flex-1 min-h-0 overflow-y-auto custom-scrollbar">
           <div className="space-y-2">
             <label className="block text-sm font-medium text-dark-200">Session Mode</label>
             <select
@@ -305,7 +306,7 @@ export function SessionEditorModal(): React.ReactNode | null {
           )}
         </div>
 
-        <div className="flex justify-end gap-2 px-5 py-4 border-t border-dark-700">
+        <div className="flex justify-end gap-2 px-4 sm:px-5 py-3 sm:py-4 border-t border-dark-700 shrink-0 bg-dark-900">
           <button
             onClick={() => setShowSessionEditor(false)}
             className="px-4 py-2 text-sm text-dark-300 hover:text-dark-100"

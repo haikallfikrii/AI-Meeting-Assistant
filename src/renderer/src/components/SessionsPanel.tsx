@@ -10,7 +10,7 @@ import {
   Trash2,
   X
 } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { WorkSession, useInterviewStore } from '../store/interviewStore'
 import { MarkdownRenderer } from './MarkdownRenderer'
 import { Tooltip } from './Tooltip'
@@ -48,6 +48,52 @@ export function SessionsPanel({ onClose }: SessionsPanelProps): React.JSX.Elemen
   const [summarizing, setSummarizing] = useState(false)
   /** Browse-only selection — does NOT switch the live active meeting */
   const [viewingId, setViewingId] = useState<string | null>(null)
+  const [sidebarWidth, setSidebarWidth] = useState(() => {
+    try {
+      const raw = localStorage.getItem('kalfi.sessionsSidebarWidth')
+      const n = raw ? Number(raw) : 200
+      if (Number.isFinite(n)) return Math.min(360, Math.max(140, n))
+    } catch {
+      /* ignore */
+    }
+    return 200
+  })
+  const sidebarWidthRef = useRef(sidebarWidth)
+  const draggingRef = useRef(false)
+  sidebarWidthRef.current = sidebarWidth
+
+  useEffect(() => {
+    const onMove = (e: MouseEvent): void => {
+      if (!draggingRef.current) return
+      const next = Math.min(360, Math.max(140, e.clientX))
+      sidebarWidthRef.current = next
+      setSidebarWidth(next)
+    }
+    const onUp = (): void => {
+      if (!draggingRef.current) return
+      draggingRef.current = false
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+      try {
+        localStorage.setItem('kalfi.sessionsSidebarWidth', String(sidebarWidthRef.current))
+      } catch {
+        /* ignore */
+      }
+    }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+    return () => {
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+    }
+  }, [])
+
+  const startResize = (e: React.MouseEvent): void => {
+    e.preventDefault()
+    draggingRef.current = true
+    document.body.style.cursor = 'col-resize'
+    document.body.style.userSelect = 'none'
+  }
 
   const refresh = useCallback(async () => {
     const list = await window.api.listSessions()
@@ -192,10 +238,24 @@ export function SessionsPanel({ onClose }: SessionsPanelProps): React.JSX.Elemen
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 grid grid-cols-[168px_1fr]">
-        <div className="border-r border-dark-800 overflow-y-auto custom-scrollbar p-2 space-y-3">
+      <div className="flex-1 min-h-0 flex">
+        <div
+          className="border-r border-dark-800 overflow-y-auto custom-scrollbar p-2 space-y-3 shrink-0"
+          style={{ width: sidebarWidth }}
+        >
           {loading ? (
             <p className="text-xs text-dark-500 p-2">Loading…</p>
+          ) : threads.length === 0 ? (
+            <div className="p-2 space-y-2">
+              <p className="text-xs text-dark-500">No sessions yet.</p>
+              <button
+                onClick={() => setShowSessionEditor(true, 'create')}
+                className="w-full flex items-center justify-center gap-1 px-2 py-1.5 text-xs rounded bg-blue-600 hover:bg-blue-500 text-white"
+              >
+                <Plus size={12} />
+                New thread
+              </button>
+            </div>
           ) : (
             threads.map((thread) => (
               <div key={thread.threadId} className="space-y-1">
@@ -250,7 +310,16 @@ export function SessionsPanel({ onClose }: SessionsPanelProps): React.JSX.Elemen
           )}
         </div>
 
-        <div className="flex flex-col min-h-0 overflow-hidden">
+        <div
+          role="separator"
+          aria-orientation="vertical"
+          aria-label="Resize sessions sidebar"
+          onMouseDown={startResize}
+          className="w-1.5 shrink-0 cursor-col-resize bg-dark-900 hover:bg-blue-500/40 active:bg-blue-500/60 transition-colors"
+          title="Drag to resize"
+        />
+
+        <div className="flex flex-col min-h-0 overflow-hidden flex-1 min-w-0">
           {viewing ? (
             <>
               <div className="px-3 py-2 border-b border-dark-800 flex items-start justify-between gap-2">

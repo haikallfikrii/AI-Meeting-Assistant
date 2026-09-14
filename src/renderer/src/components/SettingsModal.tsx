@@ -251,10 +251,10 @@ export function SettingsModal(): React.ReactNode | null {
   const previewLogo = localSettings.brandLogoDataUrl?.trim() || ''
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="w-full max-w-lg mx-4 bg-dark-900 rounded-xl border border-dark-700 shadow-2xl animate-fade-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/60 backdrop-blur-sm">
+      <div className="w-full max-w-lg max-h-[min(92vh,720px)] flex flex-col bg-dark-900 rounded-xl border border-dark-700 shadow-2xl animate-fade-in overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-dark-700">
+        <div className="flex items-center justify-between px-4 sm:px-5 py-3 sm:py-4 border-b border-dark-700 shrink-0">
           <div className="flex items-center gap-2.5">
             {previewLogo ? (
               <img
@@ -272,13 +272,14 @@ export function SettingsModal(): React.ReactNode | null {
           <button
             onClick={handleClose}
             className="p-1.5 rounded hover:bg-dark-700 transition-colors text-dark-400 hover:text-dark-200"
+            aria-label="Close"
           >
             <X size={18} />
           </button>
         </div>
 
         {/* Content */}
-        <div className="px-5 py-6 space-y-5 max-h-[36rem] overflow-y-auto custom-scrollbar">
+        <div className="px-4 sm:px-5 py-5 sm:py-6 space-y-5 flex-1 min-h-0 overflow-y-auto custom-scrollbar">
           <p className="text-xs text-dark-500">
             API & window preferences only. Company/client context lives in each{' '}
             <span className="text-dark-300">Session</span> (New Session from the header).
@@ -635,7 +636,7 @@ export function SettingsModal(): React.ReactNode | null {
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-5 py-4 border-t border-dark-700">
+        <div className="flex items-center justify-between px-4 sm:px-5 py-3 sm:py-4 border-t border-dark-700 shrink-0 bg-dark-900">
           <div className="flex items-center gap-3 min-h-[36px]">
             {saveStatus === 'error' && (
               <div className="flex items-center gap-2 text-sm text-red-400">
