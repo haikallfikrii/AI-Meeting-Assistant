@@ -33,6 +33,22 @@ export interface SessionContext {
   meetingGoals: string
   chatTopic: string
   chatNotes: string
+  meetingLanguage:
+    | 'auto'
+    | 'en'
+    | 'id'
+    | 'zh'
+    | 'ja'
+    | 'ko'
+    | 'es'
+    | 'fr'
+    | 'de'
+    | 'pt'
+    | 'hi'
+    | 'ar'
+    | 'vi'
+    | 'th'
+    | 'ms'
   answerLength: 'brief' | 'balanced' | 'detailed'
   answerTone: 'formal' | 'neutral' | 'casual'
 }

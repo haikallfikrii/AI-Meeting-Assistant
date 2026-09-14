@@ -93,7 +93,7 @@ export async function transcribeWithOpenRouter(options: {
     },
     body: JSON.stringify({
       model: options.model,
-      language: options.language || 'en',
+      ...(options.language ? { language: options.language } : {}),
       input_audio: {
         data: options.wavBuffer.toString('base64'),
         format: 'wav'

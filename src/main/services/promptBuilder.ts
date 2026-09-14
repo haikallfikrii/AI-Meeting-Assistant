@@ -39,11 +39,35 @@ function toneRules(tone: AnswerTone): string {
     case 'formal':
       return `TONE: FORMAL — Polished, professional wording. Complete sentences. No slang, no filler, no jokes unless asked.`
     case 'casual':
-      return `TONE: CASUAL / SANTAI — Natural spoken Indonesian/English mix as fits the conversation. Friendly, relaxed, short. Light slang OK if the other person uses it.`
+      return `TONE: CASUAL — Natural spoken style. Friendly, relaxed, short. Light slang OK if the other person uses it.`
     case 'neutral':
     default:
       return `TONE: NEUTRAL — Clear, confident, conversational. Not stiff, not too slangy.`
   }
+}
+
+function languageRules(lang: string | undefined): string {
+  const code = (lang || 'auto').toLowerCase()
+  const map: Record<string, string> = {
+    en: 'English',
+    id: 'Indonesian (Bahasa Indonesia)',
+    zh: 'Chinese (Simplified preferred unless the caller uses Traditional)',
+    ja: 'Japanese',
+    ko: 'Korean',
+    es: 'Spanish',
+    fr: 'French',
+    de: 'German',
+    pt: 'Portuguese',
+    hi: 'Hindi',
+    ar: 'Arabic',
+    vi: 'Vietnamese',
+    th: 'Thai',
+    ms: 'Malay'
+  }
+  if (code === 'auto' || !map[code]) {
+    return `LANGUAGE: Match the language the other person is speaking in this meeting. If mixed, prefer the language of the latest question. Do not translate unless they ask.`
+  }
+  return `LANGUAGE: Write the entire suggested reply in ${map[code]}. Do not switch languages unless the question is clearly in another language and they expect that reply.`
 }
 
 function speakingRules(ctx: SessionContext): string {
@@ -54,6 +78,7 @@ SPEAKING & FORMAT RULES:
 3. NO AI filler ("Certainly!", "Great question", "I'd be happy to..."). Jump straight to the answer.
 4. ${lengthRules(ctx.answerLength || 'balanced')}
 5. ${toneRules(ctx.answerTone || 'neutral')}
+6. ${languageRules(ctx.meetingLanguage)}
 `
 }
 
@@ -103,7 +128,7 @@ CORE GOAL: Answers that sound human, confident, and tailored to this company/rol
 Use prior turns in this session as continuity — do not contradict earlier answers.
 Prefer aligning skills with the job description. Pull from the answer bank when a question matches.
 ${speakingRules(ctx)}
-6. For conceptual "What is X?" questions: stay proportional to the length setting; no multi-line code unless asked.
+7. For conceptual "What is X?" questions: stay proportional to the length setting; no multi-line code unless asked.
 `
 }
 
@@ -128,7 +153,7 @@ CORE GOAL: Helpful, natural — match the energy of a normal conversation.
 Remember prior turns in this chat session for continuity.
 Do NOT sound like a job interview unless the other person is clearly interviewing.
 ${speakingRules(ctx)}
-6. Keep replies proportional to the other person's energy.
+7. Keep replies proportional to the other person's energy.
 `
 }
 

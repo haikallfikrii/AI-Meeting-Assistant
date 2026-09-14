@@ -8,6 +8,7 @@ import {
 
 type AnswerLength = WorkSession['context']['answerLength']
 type AnswerTone = WorkSession['context']['answerTone']
+type MeetingLanguage = WorkSession['context']['meetingLanguage']
 
 const emptyContext = (): WorkSession['context'] => ({
   companyName: '',
@@ -21,6 +22,7 @@ const emptyContext = (): WorkSession['context'] => ({
   meetingGoals: '',
   chatTopic: '',
   chatNotes: '',
+  meetingLanguage: 'auto',
   answerLength: 'balanced',
   answerTone: 'neutral'
 })
@@ -31,16 +33,34 @@ const MODE_LABELS: Record<SessionMode, string> = {
   'random-chat': 'Random Chat'
 }
 
+const LANGUAGE_OPTIONS: { id: MeetingLanguage; label: string }[] = [
+  { id: 'auto', label: 'Auto-detect (Whisper)' },
+  { id: 'en', label: 'English' },
+  { id: 'id', label: 'Indonesian' },
+  { id: 'zh', label: 'Chinese' },
+  { id: 'ja', label: 'Japanese' },
+  { id: 'ko', label: 'Korean' },
+  { id: 'es', label: 'Spanish' },
+  { id: 'fr', label: 'French' },
+  { id: 'de', label: 'German' },
+  { id: 'pt', label: 'Portuguese' },
+  { id: 'hi', label: 'Hindi' },
+  { id: 'ar', label: 'Arabic' },
+  { id: 'vi', label: 'Vietnamese' },
+  { id: 'th', label: 'Thai' },
+  { id: 'ms', label: 'Malay' }
+]
+
 const LENGTH_OPTIONS: { id: AnswerLength; label: string; hint: string }[] = [
-  { id: 'brief', label: 'Singkat', hint: '1–2 kalimat, langsung ke poin' },
-  { id: 'balanced', label: 'Sedang', hint: 'Jawaban inti + 2–3 bullet' },
-  { id: 'detailed', label: 'Detail', hint: 'Lebih lengkap, tetap bisa diucapkan' }
+  { id: 'brief', label: 'Brief', hint: '1–2 sentences, straight to the point' },
+  { id: 'balanced', label: 'Balanced', hint: 'Core answer + 2–3 bullets' },
+  { id: 'detailed', label: 'Detailed', hint: 'Fuller answer, still speakable' }
 ]
 
 const TONE_OPTIONS: { id: AnswerTone; label: string; hint: string }[] = [
-  { id: 'formal', label: 'Formal', hint: 'Polished, profesional' },
-  { id: 'neutral', label: 'Netral', hint: 'Jelas, percaya diri' },
-  { id: 'casual', label: 'Santai', hint: 'Natural, ringan' }
+  { id: 'formal', label: 'Formal', hint: 'Polished, professional' },
+  { id: 'neutral', label: 'Neutral', hint: 'Clear, confident' },
+  { id: 'casual', label: 'Casual', hint: 'Natural, relaxed' }
 ]
 
 export function SessionEditorModal(): React.ReactNode | null {
@@ -166,9 +186,27 @@ export function SessionEditorModal(): React.ReactNode | null {
           </div>
 
           <div className="space-y-3 rounded-lg border border-dark-700 p-3">
-            <p className="text-sm font-medium text-dark-200">Gaya bahasa</p>
+            <p className="text-sm font-medium text-dark-200">Meeting language & answer style</p>
             <div className="space-y-1.5">
-              <p className="text-xs text-dark-400">Panjang jawaban</p>
+              <label className="block text-xs text-dark-400">Spoken language (Whisper STT + replies)</label>
+              <select
+                value={context.meetingLanguage || 'auto'}
+                onChange={(e) => patch({ meetingLanguage: e.target.value as MeetingLanguage })}
+                className="w-full px-3 py-2 bg-dark-800 border border-dark-600 rounded-lg text-sm text-dark-100 focus:outline-none focus:border-blue-500"
+              >
+                {LANGUAGE_OPTIONS.map((opt) => (
+                  <option key={opt.id} value={opt.id}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+              <p className="text-[11px] text-dark-500">
+                Auto-detect lets Whisper pick the language. Pick a fixed language for cleaner
+                transcripts in that tongue; suggested replies follow the same setting.
+              </p>
+            </div>
+            <div className="space-y-1.5">
+              <p className="text-xs text-dark-400">Answer length</p>
               <div className="grid grid-cols-3 gap-1.5">
                 {LENGTH_OPTIONS.map((opt) => (
                   <button
@@ -188,7 +226,7 @@ export function SessionEditorModal(): React.ReactNode | null {
               </div>
             </div>
             <div className="space-y-1.5">
-              <p className="text-xs text-dark-400">Nada / tone</p>
+              <p className="text-xs text-dark-400">Tone</p>
               <div className="grid grid-cols-3 gap-1.5">
                 {TONE_OPTIONS.map((opt) => (
                   <button

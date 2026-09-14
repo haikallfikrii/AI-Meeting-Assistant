@@ -15,6 +15,23 @@ export interface SessionAnswer {
 
 export type AnswerLength = 'brief' | 'balanced' | 'detailed'
 export type AnswerTone = 'formal' | 'neutral' | 'casual'
+/** Whisper / answer language. `auto` = let Whisper detect. */
+export type MeetingLanguage =
+  | 'auto'
+  | 'en'
+  | 'id'
+  | 'zh'
+  | 'ja'
+  | 'ko'
+  | 'es'
+  | 'fr'
+  | 'de'
+  | 'pt'
+  | 'hi'
+  | 'ar'
+  | 'vi'
+  | 'th'
+  | 'ms'
 
 /** Shared + mode-specific context for a single workspace/session. */
 export interface SessionContext {
@@ -32,7 +49,8 @@ export interface SessionContext {
   // Random chat
   chatTopic: string
   chatNotes: string
-  // Speaking style
+  // Speaking style + meeting language (STT + answers)
+  meetingLanguage: MeetingLanguage
   answerLength: AnswerLength
   answerTone: AnswerTone
 }
@@ -71,6 +89,37 @@ export function normalizeAnswerTone(value: unknown): AnswerTone {
   return 'neutral'
 }
 
+const MEETING_LANGUAGES: MeetingLanguage[] = [
+  'auto',
+  'en',
+  'id',
+  'zh',
+  'ja',
+  'ko',
+  'es',
+  'fr',
+  'de',
+  'pt',
+  'hi',
+  'ar',
+  'vi',
+  'th',
+  'ms'
+]
+
+export function normalizeMeetingLanguage(value: unknown): MeetingLanguage {
+  if (typeof value === 'string' && (MEETING_LANGUAGES as string[]).includes(value)) {
+    return value as MeetingLanguage
+  }
+  return 'auto'
+}
+
+/** ISO-639-1 for Whisper, or undefined for auto-detect. */
+export function whisperLanguageCode(lang: MeetingLanguage | string | undefined): string | undefined {
+  const normalized = normalizeMeetingLanguage(lang)
+  return normalized === 'auto' ? undefined : normalized
+}
+
 export function emptySessionContext(): SessionContext {
   return {
     companyName: '',
@@ -84,6 +133,7 @@ export function emptySessionContext(): SessionContext {
     meetingGoals: '',
     chatTopic: '',
     chatNotes: '',
+    meetingLanguage: 'auto',
     answerLength: 'balanced',
     answerTone: 'neutral'
   }
@@ -155,6 +205,7 @@ export function normalizeSession(raw: Partial<WorkSession> & { id?: string }): W
   const merged = { ...emptySessionContext(), ...(raw.context || {}) }
   const context: SessionContext = {
     ...merged,
+    meetingLanguage: normalizeMeetingLanguage(merged.meetingLanguage),
     answerLength: normalizeAnswerLength(merged.answerLength),
     answerTone: normalizeAnswerTone(merged.answerTone)
   }

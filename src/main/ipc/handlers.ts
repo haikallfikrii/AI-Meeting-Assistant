@@ -14,7 +14,7 @@ import { ScreenshotService } from '../services/screenshotService'
 import { SessionManager } from '../services/sessionManager'
 import { SessionMode } from '../services/promptBuilder'
 import { AppSettings, SettingsManager } from '../services/settingsManager'
-import { WorkSession } from '../services/sessionTypes'
+import { WorkSession, whisperLanguageCode } from '../services/sessionTypes'
 import { VisionService } from '../services/visionService'
 import { WhisperService } from '../services/whisperService'
 import { applyOverlayWindowBehavior } from '../windowOverlay'
@@ -210,8 +210,11 @@ export function initializeIpcHandlers(window: BrowserWindow): void {
       }
     ) => {
       const session = sessionManager?.updateSession(id, updates)
-      if (openaiService && session && sessionManager?.getActiveSession()?.id === id) {
-        openaiService.loadSession(session)
+      if (session && sessionManager?.getActiveSession()?.id === id) {
+        if (openaiService) openaiService.loadSession(session)
+        if (whisperService) {
+          whisperService.setLanguage(whisperLanguageCode(session.context.meetingLanguage))
+        }
       }
       return session
     }
@@ -219,8 +222,11 @@ export function initializeIpcHandlers(window: BrowserWindow): void {
 
   ipcMain.handle('set-active-session', (_event, id: string) => {
     const session = sessionManager?.setActiveSession(id)
-    if (openaiService && session) {
-      openaiService.loadSession(session)
+    if (session) {
+      if (openaiService) openaiService.loadSession(session)
+      if (whisperService) {
+        whisperService.setLanguage(whisperLanguageCode(session.context.meetingLanguage))
+      }
     }
     return session
   })
@@ -368,17 +374,17 @@ export function initializeIpcHandlers(window: BrowserWindow): void {
 
       const provider = settings.llmProvider || 'openai'
 
-      // Initialize Whisper service for transcription
+      // Initialize Whisper service for transcription (language from active session)
+      const activeSession = sessionManager?.getActiveSession() || null
       whisperService = new WhisperService({
         apiKey: settings.openaiApiKey,
         provider,
         baseUrl: settings.apiBaseUrl,
         model: DEFAULT_STT_MODELS[provider],
-        language: 'en'
+        language: whisperLanguageCode(activeSession?.context.meetingLanguage)
       })
 
       // Initialize OpenAI-compatible service for answer generation (bound to active session)
-      const activeSession = sessionManager?.getActiveSession() || null
       openaiService = new OpenAIService({
         apiKey: settings.openaiApiKey,
         provider,
