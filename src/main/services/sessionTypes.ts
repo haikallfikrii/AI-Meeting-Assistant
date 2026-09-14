@@ -13,6 +13,9 @@ export interface SessionAnswer {
   timestamp: number
 }
 
+export type AnswerLength = 'brief' | 'balanced' | 'detailed'
+export type AnswerTone = 'formal' | 'neutral' | 'casual'
+
 /** Shared + mode-specific context for a single workspace/session. */
 export interface SessionContext {
   // Interview
@@ -29,6 +32,9 @@ export interface SessionContext {
   // Random chat
   chatTopic: string
   chatNotes: string
+  // Speaking style
+  answerLength: AnswerLength
+  answerTone: AnswerTone
 }
 
 export type TimeOfDay = 'morning' | 'afternoon' | 'evening' | 'night'
@@ -55,6 +61,16 @@ export interface WorkSession {
   answers: SessionAnswer[]
 }
 
+export function normalizeAnswerLength(value: unknown): AnswerLength {
+  if (value === 'brief' || value === 'balanced' || value === 'detailed') return value
+  return 'balanced'
+}
+
+export function normalizeAnswerTone(value: unknown): AnswerTone {
+  if (value === 'formal' || value === 'neutral' || value === 'casual') return value
+  return 'neutral'
+}
+
 export function emptySessionContext(): SessionContext {
   return {
     companyName: '',
@@ -67,7 +83,9 @@ export function emptySessionContext(): SessionContext {
     projectScope: '',
     meetingGoals: '',
     chatTopic: '',
-    chatNotes: ''
+    chatNotes: '',
+    answerLength: 'balanced',
+    answerTone: 'neutral'
   }
 }
 
@@ -134,7 +152,12 @@ export function defaultSessionTitle(mode: SessionMode, context: SessionContext):
 
 export function normalizeSession(raw: Partial<WorkSession> & { id?: string }): WorkSession {
   const mode = normalizeSessionMode(raw.mode)
-  const context = { ...emptySessionContext(), ...(raw.context || {}) }
+  const merged = { ...emptySessionContext(), ...(raw.context || {}) }
+  const context: SessionContext = {
+    ...merged,
+    answerLength: normalizeAnswerLength(merged.answerLength),
+    answerTone: normalizeAnswerTone(merged.answerTone)
+  }
   const now = Date.now()
   const id = raw.id || createSessionId()
   const threadTitle = raw.threadTitle?.trim() || defaultSessionTitle(mode, context)

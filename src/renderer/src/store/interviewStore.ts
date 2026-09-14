@@ -46,6 +46,7 @@ interface InterviewState {
   showHistory: boolean
   showSessionEditor: boolean
   sessionEditorMode: 'create' | 'edit'
+  editorTargetSession: WorkSession | null
   activeSession: WorkSession | null
   forceNextAsk: boolean
   isSummarizing: boolean
@@ -79,7 +80,11 @@ interface InterviewState {
   setShowSettings: (show: boolean) => void
 
   setShowHistory: (show: boolean) => void
-  setShowSessionEditor: (show: boolean, mode?: 'create' | 'edit') => void
+  setShowSessionEditor: (
+    show: boolean,
+    mode?: 'create' | 'edit',
+    target?: WorkSession | null
+  ) => void
   setActiveSession: (session: WorkSession | null) => void
 
   startSession: () => void
@@ -122,6 +127,7 @@ export const useInterviewStore = create<InterviewState>((set, get) => ({
   showHistory: false,
   showSessionEditor: false,
   sessionEditorMode: 'create',
+  editorTargetSession: null,
   activeSession: null,
   forceNextAsk: false,
   isSummarizing: false,
@@ -195,8 +201,12 @@ export const useInterviewStore = create<InterviewState>((set, get) => ({
   setShowSettings: (show) => set({ showSettings: show }),
 
   setShowHistory: (show) => set({ showHistory: show }),
-  setShowSessionEditor: (show, mode = 'create') =>
-    set({ showSessionEditor: show, sessionEditorMode: mode }),
+  setShowSessionEditor: (show, mode = 'create', target = null) =>
+    set({
+      showSessionEditor: show,
+      sessionEditorMode: mode,
+      editorTargetSession: show && mode === 'edit' ? target : null
+    }),
   setActiveSession: (session) => set({ activeSession: session }),
 
   startSession: () =>

@@ -1,11 +1,111 @@
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
-import { app, BrowserWindow, nativeImage, screen, session, shell } from 'electron'
+import { Menu, app, BrowserWindow, nativeImage, screen, session, shell } from 'electron'
 import { join } from 'path'
 import icon from '../../resources/icon.png?asset'
 import { cleanupIpcHandlers, initializeIpcHandlers } from './ipc/handlers'
 import { applyOverlayWindowBehavior } from './windowOverlay'
 
 let mainWindow: BrowserWindow | null = null
+
+/** Electron menu roles use ~0.5 zoom-level steps */
+const ZOOM_STEP = 0.5
+const ZOOM_MIN = -3
+const ZOOM_MAX = 5
+
+function adjustZoom(delta: number): void {
+  if (!mainWindow || mainWindow.isDestroyed()) return
+  const current = mainWindow.webContents.getZoomLevel()
+  const next = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, current + delta))
+  mainWindow.webContents.setZoomLevel(next)
+}
+
+function resetZoom(): void {
+  if (!mainWindow || mainWindow.isDestroyed()) return
+  mainWindow.webContents.setZoomLevel(0)
+}
+
+/**
+ * Explicit zoom shortcuts. Needed because electron-toolkit's
+ * watchWindowShortcuts({ zoom: false }) preventDefault's Cmd+- and
+ * Chromium alone won't zoom out on macOS.
+ */
+function installZoomShortcuts(win: BrowserWindow): void {
+  win.webContents.on('before-input-event', (event, input) => {
+    if (input.type !== 'keyDown') return
+    const mod = process.platform === 'darwin' ? input.meta : input.control
+    if (!mod || input.alt) return
+
+    const key = input.key
+    const code = input.code
+
+    // Zoom in: Cmd/Ctrl + = / + / NumpadAdd
+    if (key === '=' || key === '+' || code === 'Equal' || code === 'NumpadAdd') {
+      event.preventDefault()
+      adjustZoom(ZOOM_STEP)
+      return
+    }
+
+    // Zoom out: Cmd/Ctrl + - / _ / NumpadSubtract
+    if (key === '-' || key === '_' || code === 'Minus' || code === 'NumpadSubtract') {
+      event.preventDefault()
+      adjustZoom(-ZOOM_STEP)
+      return
+    }
+
+    // Reset: Cmd/Ctrl + 0
+    if (key === '0' || code === 'Digit0' || code === 'Numpad0') {
+      event.preventDefault()
+      resetZoom()
+    }
+  })
+}
+
+function setupAppMenu(): void {
+  const isMac = process.platform === 'darwin'
+  const template: Electron.MenuItemConstructorOptions[] = [
+    ...(isMac
+      ? [
+          {
+            label: app.name,
+            submenu: [
+              { role: 'about' as const },
+              { type: 'separator' as const },
+              { role: 'services' as const },
+              { type: 'separator' as const },
+              { role: 'hide' as const },
+              { role: 'hideOthers' as const },
+              { role: 'unhide' as const },
+              { type: 'separator' as const },
+              { role: 'quit' as const }
+            ]
+          }
+        ]
+      : []),
+    {
+      label: 'Edit',
+      submenu: [
+        { role: 'undo' },
+        { role: 'redo' },
+        { type: 'separator' },
+        { role: 'cut' },
+        { role: 'copy' },
+        { role: 'paste' },
+        { role: 'selectAll' }
+      ]
+    },
+    {
+      label: 'View',
+      submenu: [
+        { role: 'zoomIn' },
+        { role: 'zoomOut' },
+        { role: 'resetZoom' },
+        { type: 'separator' },
+        { role: 'toggleDevTools' }
+      ]
+    }
+  ]
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template))
+}
 
 function createWindow(): void {
   const appIcon = nativeImage.createFromPath(icon)
@@ -55,6 +155,8 @@ function createWindow(): void {
   // Float over fullscreen Meet/Chrome without splitting the Space
   applyOverlayWindowBehavior(mainWindow, true)
 
+  installZoomShortcuts(mainWindow)
+
   mainWindow.on('ready-to-show', () => {
     if (process.platform === 'win32' && !appIcon.isEmpty()) {
       mainWindow?.setIcon(appIcon)
@@ -87,14 +189,15 @@ function createWindow(): void {
   // Initialize IPC handlers
   initializeIpcHandlers(mainWindow)
 
-  // Grant microphone permissions
+  // Grant microphone / media permissions
   session.defaultSession.setPermissionRequestHandler((_webContents, permission, callback) => {
-    const allowedPermissions = ['media', 'mediaKeySystem', 'audioCapture']
-    if (allowedPermissions.includes(permission)) {
-      callback(true)
-    } else {
-      callback(false)
-    }
+    const allowedPermissions = ['media', 'mediaKeySystem', 'audioCapture', 'display-capture']
+    callback(allowedPermissions.includes(permission))
+  })
+
+  session.defaultSession.setPermissionCheckHandler((_webContents, permission) => {
+    const allowedPermissions = ['media', 'mediaKeySystem', 'audioCapture', 'display-capture']
+    return allowedPermissions.includes(permission)
   })
 
   // HMR for renderer base on electron-vite cli.
@@ -115,9 +218,12 @@ app.whenReady().then(() => {
     app.dock.hide()
   }
 
-  // Default open or close DevTools by F12 in development
+  setupAppMenu()
+
+  // F12 DevTools in dev. zoom:true is REQUIRED — default zoom:false
+  // calls preventDefault on Cmd+- so zoom-out never reaches Chromium/menus.
   app.on('browser-window-created', (_, window) => {
-    optimizer.watchWindowShortcuts(window)
+    optimizer.watchWindowShortcuts(window, { zoom: true })
   })
 
   createWindow()

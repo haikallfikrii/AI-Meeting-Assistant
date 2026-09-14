@@ -2,6 +2,7 @@ import { MessageSquare, Send } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useInterview } from '../hooks/useInterview'
 import { useInterviewStore } from '../store/interviewStore'
+import { Tooltip } from './Tooltip'
 
 export function TranscriptPanel(): React.JSX.Element {
   const { transcripts, currentTranscript, isCapturing, isSpeaking, isGenerating } = useInterview()
@@ -79,14 +80,15 @@ export function TranscriptPanel(): React.JSX.Element {
               >
                 <span className="text-dark-500 font-mono text-xs min-w-[20px]">{index + 1}.</span>
                 <p className="text-dark-200 leading-relaxed flex-1">{transcript.text}</p>
-                <button
-                  onClick={() => askText(transcript.id, transcript.text)}
-                  disabled={isGenerating || askingId === transcript.id}
-                  className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-blue-500/20 text-dark-400 hover:text-blue-300 transition-opacity disabled:opacity-40"
-                  title="Send this transcript to AI for an answer"
-                >
-                  <Send size={12} />
-                </button>
+                <Tooltip content="Send this transcript to AI for an answer" side="left">
+                  <button
+                    onClick={() => askText(transcript.id, transcript.text)}
+                    disabled={isGenerating || askingId === transcript.id}
+                    className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-blue-500/20 text-dark-400 hover:text-blue-300 transition-opacity disabled:opacity-40"
+                  >
+                    <Send size={12} />
+                  </button>
+                </Tooltip>
               </div>
             ))}
 

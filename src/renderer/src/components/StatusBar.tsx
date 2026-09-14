@@ -1,6 +1,7 @@
 import {
   AlertCircle,
   Camera,
+  Headphones,
   Loader2,
   Mic,
   Play,
@@ -10,8 +11,16 @@ import {
   Trash2,
   Volume2
 } from 'lucide-react'
+import { AudioSource } from '../hooks/useAudioCapture'
 import { useInterview } from '../hooks/useInterview'
 import { useInterviewStore } from '../store/interviewStore'
+import { Tooltip } from './Tooltip'
+
+const SOURCE_OPTIONS: { id: AudioSource; label: string; title: string }[] = [
+  { id: 'both', label: 'Both', title: 'System audio (Meet) + your microphone' },
+  { id: 'system', label: 'System', title: 'Only system / meeting audio' },
+  { id: 'microphone', label: 'Mic', title: 'Only your microphone' }
+]
 
 export function StatusBar(): React.JSX.Element {
   const {
@@ -27,7 +36,9 @@ export function StatusBar(): React.JSX.Element {
     currentAnswer,
     clearHistory,
     transcripts,
-    currentTranscript
+    currentTranscript,
+    audioSource,
+    setAudioSource
   } = useInterview()
 
   const {
@@ -41,6 +52,13 @@ export function StatusBar(): React.JSX.Element {
     setActiveSession
   } = useInterviewStore()
 
+  const sourceLabel =
+    audioSource === 'both'
+      ? 'System + Mic'
+      : audioSource === 'microphone'
+        ? 'Microphone'
+        : 'System Audio'
+
   const getStatusText = (): string => {
     if (error) return 'Error'
     if (isSummarizing) return 'Summarizing meeting...'
@@ -48,7 +66,7 @@ export function StatusBar(): React.JSX.Element {
     if (isGenerating) return 'Generating answer...'
     if (forceNextAsk) return 'Mic armed — speak, then AI will answer'
     if (isSpeaking) return 'Listening...'
-    if (isCapturing) return 'Listening to interviewer (System Audio)'
+    if (isCapturing) return `Listening (${sourceLabel})`
     return ''
   }
 
@@ -64,7 +82,7 @@ export function StatusBar(): React.JSX.Element {
   }
 
   const handleStart = (): void => {
-    startInterview('system')
+    startInterview(audioSource)
   }
 
   const hasContent = answers.length > 0 || currentAnswer
@@ -87,7 +105,11 @@ export function StatusBar(): React.JSX.Element {
 
   const toggleMicAsk = async (): Promise<void> => {
     if (!isCapturing) {
-      setError('Start listening first, then arm Mic Ask and speak the question.')
+      setError('Start listening first (prefer Both / Mic), then arm Mic Ask and speak.')
+      return
+    }
+    if (audioSource === 'system') {
+      setError('Mic Ask needs your mic. Switch source to Both or Mic, Stop, then Start again.')
       return
     }
     const next = !forceNextAsk
@@ -136,71 +158,105 @@ export function StatusBar(): React.JSX.Element {
         </div>
 
         <div className="flex items-center gap-1.5 flex-shrink-0">
-          <button
-            onClick={toggleMicAsk}
-            disabled={!isCapturing || isGenerating}
-            className={`px-2 py-1 rounded-md text-xs font-medium transition-all flex items-center gap-1 disabled:opacity-50
-              ${
-                forceNextAsk
-                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
-                  : 'bg-dark-800 text-dark-300 hover:bg-dark-700 border border-dark-700'
-              }`}
-            title="Arm mic: your next spoken line will be answered (re-ask without interviewer repeating)"
-          >
-            <Mic className="w-3.5 h-3.5" />
-            <span>Mic Ask</span>
-          </button>
+          {!isCapturing ? (
+            <div className="flex items-center rounded-md border border-dark-700 bg-dark-800 p-0.5">
+              {SOURCE_OPTIONS.map((opt) => (
+                <Tooltip key={opt.id} content={opt.title} side="bottom">
+                  <button
+                    type="button"
+                    onClick={() => setAudioSource(opt.id)}
+                    className={`px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors flex items-center gap-0.5 ${
+                      audioSource === opt.id
+                        ? 'bg-dark-700 text-dark-100'
+                        : 'text-dark-500 hover:text-dark-300'
+                    }`}
+                  >
+                    {opt.id === 'microphone' ? (
+                      <Mic className="w-3 h-3" />
+                    ) : opt.id === 'system' ? (
+                      <Headphones className="w-3 h-3" />
+                    ) : (
+                      <Volume2 className="w-3 h-3" />
+                    )}
+                    <span>{opt.label}</span>
+                  </button>
+                </Tooltip>
+              ))}
+            </div>
+          ) : null}
 
-          <button
-            onClick={askLatest}
-            disabled={isGenerating || (!transcripts.length && !currentTranscript)}
-            className="px-2 py-1 rounded-md text-xs font-medium bg-dark-800 text-dark-300 hover:bg-dark-700 border border-dark-700 flex items-center gap-1 disabled:opacity-50"
-            title="Force-answer the latest transcript line"
+          <Tooltip
+            content="Arm mic: your next spoken line will be answered (needs Both or Mic source)"
+            side="bottom"
           >
-            <Send className="w-3.5 h-3.5" />
-            <span>Ask</span>
-          </button>
+            <button
+              onClick={toggleMicAsk}
+              disabled={!isCapturing || isGenerating}
+              className={`px-2 py-1 rounded-md text-xs font-medium transition-all flex items-center gap-1 disabled:opacity-50
+                ${
+                  forceNextAsk
+                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                    : 'bg-dark-800 text-dark-300 hover:bg-dark-700 border border-dark-700'
+                }`}
+            >
+              <Mic className="w-3.5 h-3.5" />
+              <span>Mic Ask</span>
+            </button>
+          </Tooltip>
 
-          <button
-            onClick={summarize}
-            disabled={isSummarizing || isGenerating}
-            className="px-2 py-1 rounded-md text-xs font-medium bg-dark-800 text-dark-300 hover:bg-dark-700 border border-dark-700 flex items-center gap-1 disabled:opacity-50"
-            title="Summarize this meeting session"
-          >
-            {isSummarizing ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            ) : (
-              <Sparkles className="w-3.5 h-3.5" />
-            )}
-            <span>Summary</span>
-          </button>
+          <Tooltip content="Force-answer the latest transcript line" side="bottom">
+            <button
+              onClick={askLatest}
+              disabled={isGenerating || (!transcripts.length && !currentTranscript)}
+              className="px-2 py-1 rounded-md text-xs font-medium bg-dark-800 text-dark-300 hover:bg-dark-700 border border-dark-700 flex items-center gap-1 disabled:opacity-50"
+            >
+              <Send className="w-3.5 h-3.5" />
+              <span>Ask</span>
+            </button>
+          </Tooltip>
 
-          <button
-            onClick={captureAndAnalyzeScreenshot}
-            disabled={isProcessingScreenshot || isGenerating}
-            className={`
-              px-2.5 py-1 rounded-md text-xs font-medium transition-all
-              flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed
-              ${
-                isProcessingScreenshot
-                  ? 'bg-orange-500/15 text-orange-400 border border-orange-500/30'
-                  : 'bg-dark-800 text-dark-300 hover:bg-dark-700 hover:text-dark-100 border border-dark-700'
-              }
-            `}
-            title="Capture screenshot and analyze for interview questions"
-          >
-            {isProcessingScreenshot ? (
-              <>
+          <Tooltip content="Summarize this meeting session" side="bottom">
+            <button
+              onClick={summarize}
+              disabled={isSummarizing || isGenerating}
+              className="px-2 py-1 rounded-md text-xs font-medium bg-dark-800 text-dark-300 hover:bg-dark-700 border border-dark-700 flex items-center gap-1 disabled:opacity-50"
+            >
+              {isSummarizing ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                <span>Analyzing</span>
-              </>
-            ) : (
-              <>
-                <Camera className="w-3.5 h-3.5" />
-                <span>Shot</span>
-              </>
-            )}
-          </button>
+              ) : (
+                <Sparkles className="w-3.5 h-3.5" />
+              )}
+              <span>Summary</span>
+            </button>
+          </Tooltip>
+
+          <Tooltip content="Capture screenshot and analyze for interview questions" side="bottom">
+            <button
+              onClick={captureAndAnalyzeScreenshot}
+              disabled={isProcessingScreenshot || isGenerating}
+              className={`
+                px-2.5 py-1 rounded-md text-xs font-medium transition-all
+                flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed
+                ${
+                  isProcessingScreenshot
+                    ? 'bg-orange-500/15 text-orange-400 border border-orange-500/30'
+                    : 'bg-dark-800 text-dark-300 hover:bg-dark-700 hover:text-dark-100 border border-dark-700'
+                }
+              `}
+            >
+              {isProcessingScreenshot ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <span>Analyzing</span>
+                </>
+              ) : (
+                <>
+                  <Camera className="w-3.5 h-3.5" />
+                  <span>Shot</span>
+                </>
+              )}
+            </button>
+          </Tooltip>
 
           <button
             onClick={isCapturing ? stopInterview : handleStart}
@@ -234,13 +290,14 @@ export function StatusBar(): React.JSX.Element {
           </button>
 
           {hasContent && (
-            <button
-              onClick={clearHistory}
-              className="flex items-center gap-1 px-2 py-1 text-xs text-dark-400 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors"
-              title="Clear live answers"
-            >
-              <Trash2 className="w-3 h-3" />
-            </button>
+            <Tooltip content="Clear live answers" side="bottom">
+              <button
+                onClick={clearHistory}
+                className="flex items-center gap-1 px-2 py-1 text-xs text-dark-400 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors"
+              >
+                <Trash2 className="w-3 h-3" />
+              </button>
+            </Tooltip>
           )}
         </div>
       </div>

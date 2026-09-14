@@ -33,6 +33,8 @@ export interface SessionContext {
   meetingGoals: string
   chatTopic: string
   chatNotes: string
+  answerLength: 'brief' | 'balanced' | 'detailed'
+  answerTone: 'formal' | 'neutral' | 'casual'
 }
 
 export interface SessionMessage {

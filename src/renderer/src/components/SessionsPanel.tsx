@@ -4,6 +4,7 @@ import {
   Copy,
   MessageSquarePlus,
   Pencil,
+  Play,
   Plus,
   Sparkles,
   Trash2,
@@ -12,6 +13,7 @@ import {
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { WorkSession, useInterviewStore } from '../store/interviewStore'
 import { MarkdownRenderer } from './MarkdownRenderer'
+import { Tooltip } from './Tooltip'
 
 const MODE_BADGE: Record<WorkSession['mode'], string> = {
   interview: 'Interview',
@@ -44,12 +46,18 @@ export function SessionsPanel({ onClose }: SessionsPanelProps): React.JSX.Elemen
   const [loading, setLoading] = useState(true)
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [summarizing, setSummarizing] = useState(false)
+  /** Browse-only selection — does NOT switch the live active meeting */
+  const [viewingId, setViewingId] = useState<string | null>(null)
 
   const refresh = useCallback(async () => {
     const list = await window.api.listSessions()
     setSessions(list)
     const active = await window.api.getActiveSession()
     setActiveSession(active)
+    setViewingId((prev) => {
+      if (prev && list.some((s) => s.id === prev)) return prev
+      return active?.id || list[0]?.id || null
+    })
   }, [setActiveSession])
 
   useEffect(() => {
@@ -81,7 +89,13 @@ export function SessionsPanel({ onClose }: SessionsPanelProps): React.JSX.Elemen
       .sort((a, b) => (b.meetings[0]?.updatedAt || 0) - (a.meetings[0]?.updatedAt || 0))
   }, [sessions])
 
-  const selectSession = async (id: string): Promise<void> => {
+  /** Preview history only — stay in Sessions panel */
+  const browseSession = (id: string): void => {
+    setViewingId(id)
+  }
+
+  /** Make this meeting the live workspace (header + Listen / Ask) */
+  const useSession = async (id: string): Promise<void> => {
     const session = await window.api.setActiveSession(id)
     if (session) {
       setActiveSession(session)
@@ -94,6 +108,7 @@ export function SessionsPanel({ onClose }: SessionsPanelProps): React.JSX.Elemen
     const session = await window.api.continueThread(fromId)
     if (session) {
       setActiveSession(session)
+      setViewingId(session.id)
       clearAll()
       await refresh()
       onClose()
@@ -115,9 +130,11 @@ export function SessionsPanel({ onClose }: SessionsPanelProps): React.JSX.Elemen
     if (!confirm('Clear Q&A memory for this meeting? Context fields stay.')) return
     const updated = await window.api.clearSessionConversation(id)
     if (updated) {
-      setActiveSession(updated)
+      if (activeSession?.id === id) {
+        setActiveSession(updated)
+        clearAll()
+      }
       await refresh()
-      clearAll()
     }
   }
 
@@ -129,7 +146,9 @@ export function SessionsPanel({ onClose }: SessionsPanelProps): React.JSX.Elemen
         setError(result.error || 'Summarize failed')
         return
       }
-      if (result.session) setActiveSession(result.session)
+      if (result.session && activeSession?.id === result.session.id) {
+        setActiveSession(result.session)
+      }
       await refresh()
     } finally {
       setSummarizing(false)
@@ -142,9 +161,11 @@ export function SessionsPanel({ onClose }: SessionsPanelProps): React.JSX.Elemen
     setTimeout(() => setCopiedId(null), 1500)
   }
 
-  const viewing = activeSession
-    ? sessions.find((s) => s.id === activeSession.id) || activeSession
+  const viewing = viewingId
+    ? sessions.find((s) => s.id === viewingId) || null
     : null
+
+  const isLive = Boolean(viewing && activeSession && viewing.id === activeSession.id)
 
   return (
     <div className="flex flex-col h-full min-h-0 bg-dark-950">
@@ -163,13 +184,11 @@ export function SessionsPanel({ onClose }: SessionsPanelProps): React.JSX.Elemen
             <Plus size={12} />
             New thread
           </button>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded hover:bg-dark-800 text-dark-400"
-            title="Close"
-          >
-            <X size={14} />
-          </button>
+          <Tooltip content="Close" side="bottom">
+            <button onClick={onClose} className="p-1.5 rounded hover:bg-dark-800 text-dark-400">
+              <X size={14} />
+            </button>
+          </Tooltip>
         </div>
       </div>
 
@@ -189,33 +208,43 @@ export function SessionsPanel({ onClose }: SessionsPanelProps): React.JSX.Elemen
                       {thread.threadTitle}
                     </p>
                   </div>
-                  <button
-                    onClick={() => newMeetingInThread(thread.meetings[0].id)}
-                    className="p-1 rounded hover:bg-dark-800 text-blue-400 shrink-0"
-                    title="Start today's new meeting in this thread"
-                  >
-                    <Plus size={12} />
-                  </button>
+                  <Tooltip content="Start today's new meeting in this thread" side="right">
+                    <button
+                      onClick={() => newMeetingInThread(thread.meetings[0].id)}
+                      className="p-1 rounded hover:bg-dark-800 text-blue-400 shrink-0"
+                    >
+                      <Plus size={12} />
+                    </button>
+                  </Tooltip>
                 </div>
-                {thread.meetings.map((s) => (
-                  <button
-                    key={s.id}
-                    onClick={() => selectSession(s.id)}
-                    className={`w-full text-left rounded-lg px-2 py-1.5 transition-colors ${
-                      viewing?.id === s.id
-                        ? 'bg-dark-800 border border-blue-500/40'
-                        : 'hover:bg-dark-900 border border-transparent'
-                    }`}
-                  >
-                    <div className="flex items-center gap-1 mb-0.5">
-                      <span className="text-[9px] px-1 rounded bg-dark-700 text-dark-300">
-                        {TOD_BADGE[s.timeOfDay]}
-                      </span>
-                      <span className="text-[9px] text-dark-500 truncate">{s.meetingLabel}</span>
-                    </div>
-                    <p className="text-[10px] text-dark-400">{s.answers.length} replies</p>
-                  </button>
-                ))}
+                {thread.meetings.map((s) => {
+                  const live = activeSession?.id === s.id
+                  const selected = viewing?.id === s.id
+                  return (
+                    <button
+                      key={s.id}
+                      onClick={() => browseSession(s.id)}
+                      className={`w-full text-left rounded-lg px-2 py-1.5 transition-colors ${
+                        selected
+                          ? 'bg-dark-800 border border-blue-500/40'
+                          : 'hover:bg-dark-900 border border-transparent'
+                      }`}
+                    >
+                      <div className="flex items-center gap-1 mb-0.5">
+                        <span className="text-[9px] px-1 rounded bg-dark-700 text-dark-300">
+                          {TOD_BADGE[s.timeOfDay]}
+                        </span>
+                        {live ? (
+                          <span className="text-[9px] px-1 rounded bg-green-500/20 text-green-300">
+                            Live
+                          </span>
+                        ) : null}
+                        <span className="text-[9px] text-dark-500 truncate">{s.meetingLabel}</span>
+                      </div>
+                      <p className="text-[10px] text-dark-400">{s.answers.length} replies</p>
+                    </button>
+                  )
+                })}
               </div>
             ))
           )}
@@ -230,45 +259,62 @@ export function SessionsPanel({ onClose }: SessionsPanelProps): React.JSX.Elemen
                   <p className="text-[10px] text-dark-500 flex items-center gap-1 mt-0.5">
                     <Clock size={10} />
                     {viewing.meetingLabel}
+                    {isLive ? ' · currently live' : ' · browsing only'}
                   </p>
                 </div>
                 <div className="flex gap-1 shrink-0">
-                  <button
-                    onClick={() => newMeetingInThread(viewing.id)}
-                    className="p-1.5 rounded hover:bg-dark-800 text-blue-400"
-                    title="New meeting today (same project/thread)"
-                  >
-                    <Plus size={13} />
-                  </button>
-                  <button
-                    onClick={() => summarize(viewing.id)}
-                    disabled={summarizing}
-                    className="p-1.5 rounded hover:bg-dark-800 text-amber-300"
-                    title="Summarize this meeting"
-                  >
-                    <Sparkles size={13} />
-                  </button>
-                  <button
-                    onClick={() => setShowSessionEditor(true, 'edit')}
-                    className="p-1.5 rounded hover:bg-dark-800 text-dark-400"
-                    title="Edit context"
-                  >
-                    <Pencil size={13} />
-                  </button>
-                  <button
-                    onClick={() => clearConversation(viewing.id)}
-                    className="p-1.5 rounded hover:bg-dark-800 text-dark-400"
-                    title="Clear conversation memory"
-                  >
-                    <MessageSquarePlus size={13} />
-                  </button>
-                  <button
-                    onClick={() => deleteSession(viewing.id)}
-                    className="p-1.5 rounded hover:bg-red-500/20 text-dark-400 hover:text-red-400"
-                    title="Delete meeting"
-                  >
-                    <Trash2 size={13} />
-                  </button>
+                  {!isLive ? (
+                    <Tooltip content="Switch live workspace to this meeting" side="bottom">
+                      <button
+                        onClick={() => useSession(viewing.id)}
+                        className="flex items-center gap-1 px-2 py-1 rounded text-[11px] bg-blue-600 hover:bg-blue-500 text-white"
+                      >
+                        <Play size={11} />
+                        Use
+                      </button>
+                    </Tooltip>
+                  ) : null}
+                  <Tooltip content="New meeting today (same project/thread)" side="bottom">
+                    <button
+                      onClick={() => newMeetingInThread(viewing.id)}
+                      className="p-1.5 rounded hover:bg-dark-800 text-blue-400"
+                    >
+                      <Plus size={13} />
+                    </button>
+                  </Tooltip>
+                  <Tooltip content="Summarize this meeting" side="bottom">
+                    <button
+                      onClick={() => summarize(viewing.id)}
+                      disabled={summarizing}
+                      className="p-1.5 rounded hover:bg-dark-800 text-amber-300"
+                    >
+                      <Sparkles size={13} />
+                    </button>
+                  </Tooltip>
+                  <Tooltip content="Edit context" side="bottom">
+                    <button
+                      onClick={() => setShowSessionEditor(true, 'edit', viewing)}
+                      className="p-1.5 rounded hover:bg-dark-800 text-dark-400"
+                    >
+                      <Pencil size={13} />
+                    </button>
+                  </Tooltip>
+                  <Tooltip content="Clear conversation memory" side="bottom">
+                    <button
+                      onClick={() => clearConversation(viewing.id)}
+                      className="p-1.5 rounded hover:bg-dark-800 text-dark-400"
+                    >
+                      <MessageSquarePlus size={13} />
+                    </button>
+                  </Tooltip>
+                  <Tooltip content="Delete meeting" side="bottom">
+                    <button
+                      onClick={() => deleteSession(viewing.id)}
+                      className="p-1.5 rounded hover:bg-red-500/20 text-dark-400 hover:text-red-400"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </Tooltip>
                 </div>
               </div>
 
@@ -284,7 +330,7 @@ export function SessionsPanel({ onClose }: SessionsPanelProps): React.JSX.Elemen
 
                 {viewing.answers.length === 0 ? (
                   <p className="text-sm text-dark-500 text-center py-8">
-                    No replies yet in this meeting. Start listening or use Ask / Mic Ask.
+                    No replies yet in this meeting.
                   </p>
                 ) : (
                   viewing.answers.map((entry) => (

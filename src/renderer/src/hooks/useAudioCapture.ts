@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState } from 'react'
 import { AudioCaptureService } from '../services/audioCapture'
 
-export type AudioSource = 'microphone' | 'system'
+export type AudioSource = 'microphone' | 'system' | 'both'
 
 interface UseAudioCaptureReturn {
   isCapturing: boolean
@@ -15,56 +15,52 @@ interface UseAudioCaptureReturn {
 export function useAudioCapture(): UseAudioCaptureReturn {
   const [isCapturing, setIsCapturing] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [audioSource, setAudioSource] = useState<AudioSource>('system')
+  // Default: system (Meet) + own mic so Mic Ask / your voice are heard
+  const [audioSource, setAudioSource] = useState<AudioSource>('both')
   const audioServiceRef = useRef<AudioCaptureService | null>(null)
+
+  const resolveSystemSourceId = async (sourceId?: string): Promise<string> => {
+    const sources = await window.api.getAudioSources()
+
+    if (sources.length === 0) {
+      throw new Error('No screen/audio sources available. Grant screen recording access for Kalfi.')
+    }
+
+    if (sourceId) return sourceId
+
+    const screenSource = sources.find(
+      (s) =>
+        s.name.toLowerCase().includes('entire screen') ||
+        s.name.toLowerCase().includes('screen 1') ||
+        s.name.toLowerCase() === 'screen'
+    )
+
+    return screenSource?.id || sources[0].id
+  }
 
   const startCapture = useCallback(
     async (source: AudioSource = audioSource, sourceId?: string) => {
       try {
         setError(null)
 
-        // Start backend capture service first
         await window.api.startCapture()
 
-        // Create and start audio capture
         audioServiceRef.current = new AudioCaptureService({
           sampleRate: 16000,
           channelCount: 1
         })
 
-        if (source === 'system') {
-          // Get available audio sources
-          const sources = await window.api.getAudioSources()
-
-          if (sources.length === 0) {
-            throw new Error('No audio sources available. Please share your screen first.')
-          }
-
-          // Use provided sourceId or find the best source
-          let targetSourceId = sourceId
-
-          if (!targetSourceId) {
-            // Try to find the entire screen source first
-            const screenSource = sources.find(
-              (s) =>
-                s.name.toLowerCase().includes('entire screen') ||
-                s.name.toLowerCase().includes('screen 1') ||
-                s.name.toLowerCase() === 'screen'
-            )
-
-            if (screenSource) {
-              targetSourceId = screenSource.id
-            } else {
-              // Fall back to first available source
-              targetSourceId = sources[0].id
-            }
-          }
-
+        if (source === 'microphone') {
+          console.log('Starting microphone capture')
+          await audioServiceRef.current.startMicrophoneCapture()
+        } else if (source === 'system') {
+          const targetSourceId = await resolveSystemSourceId(sourceId)
           console.log('Starting system audio capture with source:', targetSourceId)
           await audioServiceRef.current.startSystemAudioCapture(targetSourceId)
         } else {
-          console.log('Starting microphone capture')
-          await audioServiceRef.current.startMicrophoneCapture()
+          const targetSourceId = await resolveSystemSourceId(sourceId)
+          console.log('Starting mixed mic + system capture:', targetSourceId)
+          await audioServiceRef.current.startMixedCapture(targetSourceId)
         }
 
         setIsCapturing(true)
@@ -73,7 +69,6 @@ export function useAudioCapture(): UseAudioCaptureReturn {
         setError(message)
         console.error('Audio capture error:', err)
 
-        // Clean up on error
         if (audioServiceRef.current) {
           await audioServiceRef.current.stop()
           audioServiceRef.current = null
@@ -91,13 +86,11 @@ export function useAudioCapture(): UseAudioCaptureReturn {
 
   const stopCapture = useCallback(async () => {
     try {
-      // Stop audio capture
       if (audioServiceRef.current) {
         await audioServiceRef.current.stop()
         audioServiceRef.current = null
       }
 
-      // Stop backend service
       await window.api.stopCapture()
 
       setIsCapturing(false)

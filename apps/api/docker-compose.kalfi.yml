@@ -1,0 +1,33 @@
+# Drop-in beside n8n on the same Hostinger VPS Docker host.
+# Usage:
+#   cp .env.example .env   # fill secrets
+#   docker compose -f docker-compose.kalfi.yml up -d --build
+#
+# Put Traefik/Nginx in front:
+#   api.yourdomain.com -> 127.0.0.1:8787
+
+services:
+  kalfi-api:
+    build: .
+    container_name: kalfi-api
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "8787:8787"
+    volumes:
+      - kalfi_api_data:/data
+    mem_limit: 512m
+    cpus: 1.0
+    networks:
+      - proxy
+
+volumes:
+  kalfi_api_data:
+
+networks:
+  proxy:
+    # If you already have an external network for n8n/traefik, rename & set external: true
+    # external: true
+    # name: root_default
+    driver: bridge

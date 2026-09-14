@@ -112,7 +112,8 @@ export class WhisperService extends EventEmitter {
 
     const rms = Math.sqrt(sum / samples)
     // Threshold for considering it as actual audio vs silence
-    return rms > 500
+    // Lower than before so quieter laptop mics still register
+    return rms > 250
   }
 
   private getBufferDurationMs(): number {
