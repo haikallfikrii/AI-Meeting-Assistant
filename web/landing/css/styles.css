@@ -261,6 +261,12 @@ button {
     transform 0.18s ease;
 }
 
+.btn.is-disabled,
+a.btn.is-disabled {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
 .btn:active {
   transform: translateY(1px);
 }
@@ -2020,6 +2026,20 @@ details p {
   gap: 8px;
 }
 
+.download-os--hero {
+  max-width: 28rem;
+  margin: 4px auto 0;
+}
+
+.hero-copy .download-os--hero {
+  margin-inline: auto;
+}
+
+.download-meta--hero {
+  text-align: center;
+  margin-top: 4px;
+}
+
 .download-os__btn {
   display: flex;
   flex-direction: column;
@@ -2032,7 +2052,7 @@ details p {
   color: var(--fg-dim);
   font-size: 0.86rem;
   font-weight: 500;
-  transition: border-color 0.18s ease, color 0.18s ease, background 0.18s ease;
+  transition: border-color 0.18s ease, color 0.18s ease, background 0.18s ease, opacity 0.18s ease;
 }
 
 .download-os__btn span {
@@ -2051,6 +2071,16 @@ details p {
   border-color: rgba(91, 140, 255, 0.55);
   background: rgba(91, 140, 255, 0.08);
   color: var(--fg);
+}
+
+.download-os__btn[data-available="false"] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.download-os__btn[data-available="false"]:hover {
+  color: var(--fg-dim);
+  border-color: var(--line);
 }
 
 .download-alt {
@@ -2075,6 +2105,15 @@ details p {
 @media (max-width: 780px) {
   .download-os {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .hero-copy .download-os--hero {
+    margin-inline: 0;
+    max-width: none;
+  }
+
+  .download-meta--hero {
+    text-align: left;
   }
 }
 

@@ -18,7 +18,10 @@
     "build:win": "electron-vite build && electron-builder --win --x64",
     "build:mac": "electron-vite build && electron-builder --mac",
     "build:linux": "electron-vite build && electron-builder --linux --x64",
-    "build:desktop": "electron-vite build && electron-builder --mac --win --linux"
+    "build:desktop": "electron-vite build && electron-builder --mac --win --linux",
+    "release:mac": "electron-vite build && electron-builder --mac --publish always",
+    "release:win": "electron-vite build && electron-builder --win --x64 --publish always",
+    "release:linux": "electron-vite build && electron-builder --linux --x64 --publish always"
   },
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.2",

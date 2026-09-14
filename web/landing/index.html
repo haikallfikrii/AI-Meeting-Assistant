@@ -104,7 +104,33 @@
                   Run the demo <span class="kbd">⌘↵</span>
                 </button>
               </div>
-              <dl class="facts hero-in" style="--d: 4">
+              <div class="download-os download-os--hero hero-in" style="--d: 4" role="list" aria-label="Downloads for every OS">
+                <a
+                  class="download-os__btn"
+                  data-download-os="mac"
+                  role="listitem"
+                  href="#download"
+                  >macOS <span>.dmg</span></a
+                >
+                <a
+                  class="download-os__btn"
+                  data-download-os="win"
+                  role="listitem"
+                  href="#download"
+                  >Windows <span>.exe</span></a
+                >
+                <a
+                  class="download-os__btn"
+                  data-download-os="linux"
+                  role="listitem"
+                  href="#download"
+                  >Linux <span>.AppImage</span></a
+                >
+              </div>
+              <p class="download-meta download-meta--hero hero-in" style="--d: 5" data-download-meta>
+                Detecting your system…
+              </p>
+              <dl class="facts hero-in" style="--d: 6">
                 <div>
                   <dt>Modes</dt>
                   <dd>Interview · Client · Chat</dd>
@@ -975,10 +1001,12 @@
         proPrice: 19,
         version: '1.0.0',
         githubRepo: 'haikallfikrii/AI-Meeting-Assistant',
+        // Absolute asset URLs preferred once a GitHub Release exists.
+        // Leave empty to auto-resolve from the latest release API (never invent 404 links).
         downloads: {
-          mac: 'kalfi-1.0.0-mac.dmg',
-          win: 'kalfi-1.0.0-win-setup.exe',
-          linux: 'kalfi-1.0.0-linux.AppImage'
+          mac: '',
+          win: '',
+          linux: ''
         }
       }
     </script>
