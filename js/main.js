@@ -524,10 +524,18 @@
     update()
   }
 
-  /* ---------- Lemon Squeezy billing (pricing toggle + checkout links) ---------- */
+  /* ---------- Lemon Squeezy billing (pricing toggle + per-variant checkout) ---------- */
 
   function isPlaceholderCheckout(url) {
     return !url || /LEMON_SQUEEZY_CHECKOUT_URL_/.test(url)
+  }
+
+  function planSku(plan, interval) {
+    if (plan === 'byok') return interval === 'annual' ? 'byok_annual' : 'byok_monthly'
+    if (plan === 'hosted') return interval === 'annual' ? 'hosted_annual' : 'hosted_monthly'
+    if (plan === 'team') return 'team'
+    if (plan === 'singleSession') return 'single_session'
+    return ''
   }
 
   function resolveLemonUrl(plan, interval) {
@@ -547,7 +555,27 @@
     var note = document.getElementById('pro-note')
     var toggle = document.getElementById('billing-toggle')
     var plans = document.getElementById('plans')
+    var banner = document.getElementById('checkout-success')
     var interval = 'monthly'
+
+    // After Lemon redirect: ?checkout=success&plan=...&email=...
+    try {
+      var params = new URLSearchParams(window.location.search)
+      if (params.get('checkout') === 'success' && banner) {
+        banner.hidden = false
+        var planParam = params.get('plan') || ''
+        var emailParam = params.get('email') || ''
+        var detail = banner.querySelector('[data-success-detail]')
+        if (detail) {
+          detail.textContent =
+            'Plan ' +
+            (planParam || 'purchased') +
+            ' is linked to the email you used at checkout' +
+            (emailParam ? ' (' + emailParam + ')' : '') +
+            '. Open the Kalfi app → Settings → Account: set password (first time) or log in with that email. Your plan syncs automatically.'
+        }
+      }
+    } catch (_) {}
 
     var paintInterval = function () {
       if (plans) plans.setAttribute('data-billing', interval)
@@ -557,35 +585,49 @@
         })
       }
 
-      Array.prototype.forEach.call(document.querySelectorAll('[data-plan-card="byok"], [data-plan-card="hosted"]'), function (card) {
-        var main = card.querySelector('[data-price-main]')
-        var suffix = card.querySelector('[data-price-suffix]')
-        var billed = card.querySelector('[data-price-billed]')
-        var save = card.querySelector('[data-price-save]')
-        var cta = card.querySelector('[data-lemon-checkout]')
-        var monthly = card.getAttribute('data-price-monthly')
-        var annualMo = card.getAttribute('data-price-annual-mo')
-        var annual = card.getAttribute('data-price-annual')
-        var saveLabel = card.getAttribute('data-save-annual')
+      Array.prototype.forEach.call(
+        document.querySelectorAll('[data-plan-card="byok"], [data-plan-card="hosted"]'),
+        function (card) {
+          var main = card.querySelector('[data-price-main]')
+          var suffix = card.querySelector('[data-price-suffix]')
+          var billed = card.querySelector('[data-price-billed]')
+          var save = card.querySelector('[data-price-save]')
+          var cta = card.querySelector('[data-lemon-checkout]')
+          var monthly = card.getAttribute('data-price-monthly')
+          var annualMo = card.getAttribute('data-price-annual-mo')
+          var annual = card.getAttribute('data-price-annual')
+          var saveLabel = card.getAttribute('data-save-annual')
 
-        if (interval === 'annual') {
-          if (main) main.textContent = annualMo
-          if (suffix) suffix.textContent = ' / month'
-          if (billed) {
-            billed.hidden = false
-            billed.textContent = 'Billed $' + annual + ' / year'
+          if (interval === 'annual') {
+            if (main) main.textContent = annualMo
+            if (suffix) suffix.textContent = ' / month'
+            if (billed) {
+              billed.hidden = false
+              billed.textContent = 'Billed $' + annual + ' / year'
+            }
+            if (save) {
+              save.hidden = false
+              save.textContent = 'Save ' + saveLabel
+            }
+          } else {
+            if (main) main.textContent = monthly
+            if (suffix) suffix.textContent = ' / month'
+            if (billed) billed.hidden = true
+            if (save) save.hidden = true
           }
-          if (save) {
-            save.hidden = false
-            save.textContent = 'Save ' + saveLabel
+          if (cta) {
+            cta.setAttribute('data-interval', interval)
+            var href = resolveLemonUrl(cta.getAttribute('data-lemon-checkout'), interval)
+            if (href && !isPlaceholderCheckout(href)) cta.setAttribute('href', href)
           }
-        } else {
-          if (main) main.textContent = monthly
-          if (suffix) suffix.textContent = ' / month'
-          if (billed) billed.hidden = true
-          if (save) save.hidden = true
         }
-        if (cta) cta.setAttribute('data-interval', interval)
+      )
+
+      // Keep static hrefs fresh for team / session too
+      Array.prototype.forEach.call(document.querySelectorAll('[data-lemon-checkout]'), function (cta) {
+        var p = cta.getAttribute('data-lemon-checkout')
+        var href = resolveLemonUrl(p, cta.getAttribute('data-interval') || interval)
+        if (href && !isPlaceholderCheckout(href)) cta.setAttribute('href', href)
       })
 
       var anyLive = false
@@ -596,7 +638,7 @@
 
       if (note) {
         note.textContent = anyLive
-          ? 'Secure checkout by Lemon Squeezy. On the subscription page, pick BYOK / Hosted / Team (monthly or annual). Cancel any time from your receipt email.'
+          ? 'Each button opens Lemon checkout with that exact plan pre-selected. No login needed to pay — use the same email later in the app to claim your account.'
           : 'Checkout links go live once Lemon Squeezy variant URLs are pasted into KALFI_CONFIG.'
       }
     }
@@ -616,17 +658,63 @@
       e.preventDefault()
       var plan = link.getAttribute('data-lemon-checkout')
       var linkInterval = link.getAttribute('data-interval') || interval
-      var url = resolveLemonUrl(plan, linkInterval)
-      if (isPlaceholderCheckout(url)) {
-        var target = document.getElementById('pricing')
-        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' })
-        if (note) {
-          note.textContent =
-            'Lemon checkout URL for this plan is still a placeholder. Paste the real link in KALFI_CONFIG after publishing on Lemon Squeezy.'
+      var sku = planSku(plan, linkInterval)
+      var fallback = resolveLemonUrl(plan, linkInterval)
+      var original = link.textContent
+
+      var go = function (url) {
+        if (!url || isPlaceholderCheckout(url)) {
+          var target = document.getElementById('pricing')
+          if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          if (note) {
+            note.textContent =
+              'Checkout URL missing for this plan. Check KALFI_CONFIG.lemonCheckout.'
+          }
+          return
         }
+        window.location.href = url
+      }
+
+      // Prefer API checkout (locks enabled_variants); fall back to per-variant buy link.
+      if (CONFIG.apiBaseUrl && sku) {
+        link.setAttribute('aria-busy', 'true')
+        if (link.tagName === 'A' || link.tagName === 'BUTTON') {
+          link.textContent = 'Opening checkout…'
+        }
+        fetch(String(CONFIG.apiBaseUrl).replace(/\/$/, '') + '/v1/billing/checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            plan: sku,
+            successUrl:
+              window.location.origin +
+              '/?checkout=success&plan=' +
+              encodeURIComponent(sku)
+          })
+        })
+          .then(function (res) {
+            return res.json().then(function (data) {
+              return { ok: res.ok, data: data }
+            })
+          })
+          .then(function (result) {
+            if (result.ok && result.data && result.data.url) {
+              go(result.data.url)
+              return
+            }
+            go(fallback)
+          })
+          .catch(function () {
+            go(fallback)
+          })
+          .finally(function () {
+            link.removeAttribute('aria-busy')
+            link.textContent = original
+          })
         return
       }
-      window.location.href = url
+
+      go(fallback)
     })
 
     paintInterval()
