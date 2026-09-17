@@ -752,6 +752,17 @@
     return 'mac'
   }
 
+  function bindModEnterLabels() {
+    var apple = detectClientOS() === 'mac'
+    var label = apple ? '⌘↵' : 'Ctrl+Enter'
+    var spoken = apple ? 'Command Enter' : 'Control Enter'
+    Array.prototype.forEach.call(document.querySelectorAll('[data-mod-enter]'), function (el) {
+      el.textContent = label
+      el.setAttribute('title', spoken)
+      el.setAttribute('aria-label', spoken)
+    })
+  }
+
   function pickAssetUrl(assets, os) {
     var list = assets || []
     var name = function (a) {
@@ -1259,6 +1270,7 @@
 
   function init() {
     chrome()
+    bindModEnterLabels()
     heroMotion()
     timeline()
     reveal()
