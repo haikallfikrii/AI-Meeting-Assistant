@@ -1277,33 +1277,32 @@
       aria-modal="true"
       aria-labelledby="install-modal-title"
     >
-      <div class="install-modal__backdrop" data-install-close tabindex="-1"></div>
+      <div class="install-modal__backdrop" aria-hidden="true"></div>
       <div class="install-modal__panel">
-        <button type="button" class="install-modal__x" data-install-close aria-label="Close">
-          ×
-        </button>
         <span class="tagline" data-install-os-label>macOS</span>
         <h2 id="install-modal-title">Download started — finish install</h2>
         <p class="install-modal__lead" data-install-lead>
           Follow the steps below. You do not need Terminal for a normal install.
         </p>
-        <ol class="install-modal__steps" data-install-steps></ol>
-        <div class="install-modal__advanced" data-install-cmd-wrap hidden>
-          <p class="install-modal__advanced-title" data-install-cmd-title>
-            Optional — only if the steps above failed
-          </p>
-          <p class="install-modal__advanced-help" data-install-cmd-help></p>
-          <ol class="install-modal__advanced-how" data-install-cmd-how></ol>
-          <div class="copy-cmd" data-copy-cmd>
-            <code data-install-cmd></code>
-            <button type="button" class="copy-cmd__btn" data-copy-btn aria-label="Copy command">
-              <span class="copy-cmd__label" data-copy-label>Copy</span>
-            </button>
+        <div class="install-modal__scroll">
+          <ol class="install-modal__steps" data-install-steps></ol>
+          <div class="install-modal__advanced" data-install-cmd-wrap hidden>
+            <p class="install-modal__advanced-title" data-install-cmd-title>
+              Optional — only if the steps above failed
+            </p>
+            <p class="install-modal__advanced-help" data-install-cmd-help></p>
+            <ol class="install-modal__advanced-how" data-install-cmd-how></ol>
+            <div class="copy-cmd" data-copy-cmd>
+              <code data-install-cmd></code>
+              <button type="button" class="copy-cmd__btn" data-copy-btn aria-label="Copy command">
+                <span class="copy-cmd__label" data-copy-label>Copy</span>
+              </button>
+            </div>
+            <p class="install-modal__advanced-note" data-install-cmd-note></p>
           </div>
-          <p class="install-modal__advanced-note" data-install-cmd-note></p>
         </div>
         <div class="install-modal__actions">
-          <a class="btn btn--line" href="docs/#docs-install">Full docs</a>
+          <a class="btn btn--line" href="docs/#docs-install" data-install-close>Full docs</a>
           <button type="button" class="btn btn--accent" data-install-close>Got it</button>
         </div>
       </div>
