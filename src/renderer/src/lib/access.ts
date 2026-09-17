@@ -1,11 +1,23 @@
 import type { AppSettings } from '../store/interviewStore'
 
+/** Test accounts while Lemon is in test mode / unverified. */
+const TEST_EMAIL_ALLOWLIST = new Set(['muhamadfikrih29@gmail.com'])
+
+export function isTestAllowlisted(email?: string | null): boolean {
+  if (!email) return false
+  return TEST_EMAIL_ALLOWLIST.has(String(email).trim().toLowerCase())
+}
+
 /** Mirrors main hasPaidAccess — signed-in + active/trial paid plan. */
-export function hasPaidAccess(settings: Pick<
-  AppSettings,
-  'authToken' | 'membershipPlan' | 'membershipStatus' | 'singleSession'
->): boolean {
+export function hasPaidAccess(
+  settings: Pick<
+    AppSettings,
+    'authToken' | 'membershipPlan' | 'membershipStatus' | 'singleSession' | 'accountEmail'
+  >
+): boolean {
   if (!settings.authToken?.trim()) return false
+  if (isTestAllowlisted(settings.accountEmail)) return true
+
   const status = settings.membershipStatus
   if (status !== 'active' && status !== 'trial') return false
 
@@ -24,4 +36,15 @@ export function hasPaidAccess(settings: Pick<
     return s === 'unused' || s === 'active_in_session'
   }
   return false
+}
+
+/** Local plan override for allowlisted testers (UI + consistency). */
+export function testEntitlementPatch(email: string): Partial<AppSettings> | null {
+  if (!isTestAllowlisted(email)) return null
+  return {
+    accountEmail: email.trim().toLowerCase(),
+    membershipPlan: 'byok_monthly',
+    membershipStatus: 'active',
+    billingInterval: 'month'
+  }
 }

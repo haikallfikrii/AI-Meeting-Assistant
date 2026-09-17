@@ -49,7 +49,13 @@ function assertEntitled(): void {
   const s = settingsManager?.getSettings()
   if (
     !s ||
-    !hasPaidAccess(s.membershipPlan, s.membershipStatus, s.authToken, s.singleSession)
+    !hasPaidAccess(
+      s.membershipPlan,
+      s.membershipStatus,
+      s.authToken,
+      s.singleSession,
+      s.accountEmail
+    )
   ) {
     throw new Error(
       'Sign in with an active Kalfi plan to use the app. Open Account or visit kalfi.app to subscribe.'

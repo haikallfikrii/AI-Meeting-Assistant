@@ -6,8 +6,11 @@ import {
   findUserByEmail,
   publicUser,
   setUserPassword,
+  updateUser,
   verifyPassword
 } from '../lib/store.js'
+
+const TEST_PLAN_ALLOWLIST = new Set(['muhamadfikrih29@gmail.com'])
 
 const registerSchema = z.object({
   email: z.string().email(),
@@ -25,7 +28,11 @@ authRoutes.post('/register', async (c) => {
   const body = registerSchema.safeParse(await c.req.json())
   if (!body.success) return c.json({ error: 'Invalid payload' }, 400)
   try {
-    const user = createUser(body.data.email, body.data.password, { needsPasswordSetup: false })
+    let user = createUser(body.data.email, body.data.password, { needsPasswordSetup: false })
+    if (TEST_PLAN_ALLOWLIST.has(user.email)) {
+      user =
+        updateUser(user.id, { plan: 'byok_monthly', subStatus: 'active' }) || user
+    }
     const token = await signAccessToken(user.id, user.email)
     return c.json({ token, user: publicUser(user) })
   } catch (err) {
@@ -36,7 +43,7 @@ authRoutes.post('/register', async (c) => {
 authRoutes.post('/login', async (c) => {
   const body = registerSchema.safeParse(await c.req.json())
   if (!body.success) return c.json({ error: 'Invalid payload' }, 400)
-  const user = findUserByEmail(body.data.email)
+  let user = findUserByEmail(body.data.email)
   if (!user) return c.json({ error: 'Invalid email or password' }, 401)
 
   if (user.needsPasswordSetup) {
@@ -53,6 +60,13 @@ authRoutes.post('/login', async (c) => {
   if (!verifyPassword(body.data.password, user.passwordHash)) {
     return c.json({ error: 'Invalid email or password' }, 401)
   }
+
+  // Keep Lemon test allowlist accounts entitled even before webhook/deploy grant
+  if (TEST_PLAN_ALLOWLIST.has(user.email) && (user.plan === 'free' || user.subStatus !== 'active')) {
+    user =
+      updateUser(user.id, { plan: 'byok_monthly', subStatus: 'active' }) || user
+  }
+
   const token = await signAccessToken(user.id, user.email)
   return c.json({ token, user: publicUser(user) })
 })

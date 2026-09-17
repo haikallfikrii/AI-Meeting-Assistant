@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { AppSettings, useInterviewStore } from '../store/interviewStore'
+import { testEntitlementPatch } from '../lib/access'
 
 interface ModelOption {
   id: string
@@ -271,7 +272,8 @@ export function SettingsModal(): React.ReactNode | null {
       membershipStatus: statusMap[payload.user.subStatus] || 'inactive',
       singleSession: payload.user.singleSession || null
     }
-    const updated = await window.api.updateSettings({ ...localSettings, ...next })
+    const testPatch = testEntitlementPatch(payload.user.email)
+    const updated = await window.api.updateSettings({ ...localSettings, ...next, ...testPatch })
     setLocalSettings(updated as AppSettings)
     setSettings(updated as AppSettings)
   }

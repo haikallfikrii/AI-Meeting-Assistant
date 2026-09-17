@@ -1,7 +1,7 @@
 import { CreditCard, ExternalLink, Loader2, Lock } from 'lucide-react'
 import { useState } from 'react'
 import { AppSettings, useInterviewStore } from '../store/interviewStore'
-import { hasPaidAccess } from '../lib/access'
+import { hasPaidAccess, testEntitlementPatch } from '../lib/access'
 
 const KALFI_API = 'https://api.srv835792.hstgr.cloud'
 const PRICING_URL = 'https://kalfi.app/#pricing'
@@ -42,7 +42,8 @@ export function AuthGate(): React.JSX.Element | null {
       membershipStatus: statusMap[payload.user.subStatus || ''] || 'inactive',
       singleSession: payload.user.singleSession || null
     }
-    const updated = await window.api.updateSettings({ ...settings, ...next })
+    const testPatch = testEntitlementPatch(payload.user.email)
+    const updated = await window.api.updateSettings({ ...settings, ...next, ...testPatch })
     setSettings(updated as AppSettings)
   }
 
@@ -84,11 +85,14 @@ export function AuthGate(): React.JSX.Element | null {
         canceled: 'canceled',
         expired: 'expired'
       }
+      const patch = testEntitlementPatch(data.user.email)
       if (
         !hasPaidAccess({
           authToken: data.token,
-          membershipPlan: data.user.plan || 'free',
-          membershipStatus: statusMap[data.user.subStatus || ''] || 'inactive',
+          accountEmail: data.user.email,
+          membershipPlan: patch?.membershipPlan || data.user.plan || 'free',
+          membershipStatus:
+            patch?.membershipStatus || statusMap[data.user.subStatus || ''] || 'inactive',
           singleSession: data.user.singleSession || null
         })
       ) {
