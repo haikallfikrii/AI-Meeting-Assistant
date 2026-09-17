@@ -4074,35 +4074,39 @@ details p {
   .hero-copy {
     padding-top: calc((1 - var(--p)) * 6px);
     padding-bottom: 0;
-    text-align: left;
+    text-align: center;
     max-height: calc((1 - var(--p)) * 520px);
     filter: blur(calc(var(--p) * 8px));
   }
 
   .hero-copy .tagline {
-    justify-content: flex-start;
+    justify-content: center;
   }
 
   .hero-copy h1 {
     font-size: clamp(1.75rem, 7.6vw, 2.35rem);
     margin-bottom: 10px;
+    margin-inline: auto;
+    text-wrap: balance;
   }
 
   .hero-copy .hero__lead {
-    margin-inline: 0;
+    margin-inline: auto;
     margin-bottom: 16px;
     font-size: 0.94rem;
+    max-width: 42ch;
     display: -webkit-box;
-    -webkit-line-clamp: 3;
+    -webkit-line-clamp: 4;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
 
   .hero-copy .hero__cta {
-    justify-content: stretch;
+    justify-content: center;
     flex-direction: column;
-    align-items: stretch;
+    align-items: center;
     width: 100%;
+    margin-inline: auto;
     margin-bottom: 10px;
     gap: 10px;
   }
@@ -4110,16 +4114,18 @@ details p {
   .hero-copy .dl,
   .hero-copy .dl--hero,
   .hero-copy .btn--hero-side {
-    width: 100%;
-    max-width: none;
+    width: min(100%, 320px);
+    max-width: 320px;
+    margin-inline: auto;
   }
 
   .hero-copy .download-meta--hero {
-    text-align: left;
+    text-align: center;
+    margin-inline: auto;
   }
 
   .hero-copy .facts {
-    margin-inline: 0;
+    margin-inline: auto;
     display: none;
   }
 
