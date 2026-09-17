@@ -217,6 +217,12 @@ export interface Api {
   onForceNextQuestionChanged: (callback: (enabled: boolean) => void) => () => void
   onTriggerShot: (callback: () => void) => () => void
   getShotShortcut: () => Promise<string>
+  kalfiApi: (opts: {
+    path: string
+    method?: string
+    body?: unknown
+    token?: string
+  }) => Promise<{ ok: boolean; status: number; data: unknown }>
 }
 
 declare global {

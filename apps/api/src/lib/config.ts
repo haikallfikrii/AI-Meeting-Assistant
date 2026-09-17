@@ -9,7 +9,10 @@ export function requireEnv(name: string): string {
 }
 
 export function corsOrigins(): string[] {
-  return env('CORS_ORIGINS', 'http://localhost:5500,https://kalfi.app')
+  return env(
+    'CORS_ORIGINS',
+    'http://localhost:5500,https://kalfi.app,http://localhost:5173,http://127.0.0.1:5173'
+  )
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean)

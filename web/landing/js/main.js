@@ -638,7 +638,7 @@
 
       if (note) {
         note.textContent = anyLive
-          ? 'Each button opens Lemon checkout with that exact plan pre-selected. No login needed to pay — use the same email later in the app to claim your account.'
+          ? 'Before checkout we verify your email with a one-time code, then open Lemon with that address locked. Use the same email later in the app to claim your account.'
           : 'Checkout links go live once Lemon Squeezy variant URLs are pasted into KALFI_CONFIG.'
       }
     }
@@ -660,64 +660,269 @@
       var linkInterval = link.getAttribute('data-interval') || interval
       var sku = planSku(plan, linkInterval)
       var fallback = resolveLemonUrl(plan, linkInterval)
-      var original = link.textContent
 
-      var go = function (url) {
-        if (!url || isPlaceholderCheckout(url)) {
-          var target = document.getElementById('pricing')
-          if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' })
-          if (note) {
-            note.textContent =
-              'Checkout URL missing for this plan. Check KALFI_CONFIG.lemonCheckout.'
-          }
-          return
+      if (!sku && isPlaceholderCheckout(fallback)) {
+        var target = document.getElementById('pricing')
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        if (note) {
+          note.textContent =
+            'Checkout URL missing for this plan. Check KALFI_CONFIG.lemonCheckout.'
         }
-        window.location.href = url
-      }
-
-      // Prefer API checkout (locks enabled_variants); fall back to per-variant buy link.
-      if (CONFIG.apiBaseUrl && sku) {
-        link.setAttribute('aria-busy', 'true')
-        if (link.tagName === 'A' || link.tagName === 'BUTTON') {
-          link.textContent = 'Opening checkout…'
-        }
-        fetch(String(CONFIG.apiBaseUrl).replace(/\/$/, '') + '/v1/billing/checkout', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            plan: sku,
-            successUrl:
-              window.location.origin +
-              '/?checkout=success&plan=' +
-              encodeURIComponent(sku)
-          })
-        })
-          .then(function (res) {
-            return res.json().then(function (data) {
-              return { ok: res.ok, data: data }
-            })
-          })
-          .then(function (result) {
-            if (result.ok && result.data && result.data.url) {
-              go(result.data.url)
-              return
-            }
-            go(fallback)
-          })
-          .catch(function () {
-            go(fallback)
-          })
-          .finally(function () {
-            link.removeAttribute('aria-busy')
-            link.textContent = original
-          })
         return
       }
 
-      go(fallback)
+      openCheckoutEmailGate({
+        plan: plan,
+        sku: sku,
+        interval: linkInterval,
+        fallback: fallback
+      })
     })
 
     paintInterval()
+  }
+
+  function openCheckoutEmailGate(opts) {
+    var existing = document.getElementById('checkout-email-gate')
+    if (existing) existing.remove()
+
+    var apiBase = String(CONFIG.apiBaseUrl || '').replace(/\/$/, '')
+    var root = document.createElement('div')
+    root.id = 'checkout-email-gate'
+    root.className = 'email-gate'
+    root.innerHTML =
+      '<div class="email-gate__card" role="dialog" aria-modal="true" aria-labelledby="email-gate-title">' +
+      '<button type="button" class="email-gate__close" data-gate-close aria-label="Close">×</button>' +
+      '<h3 id="email-gate-title">Verify your email first</h3>' +
+      '<p class="email-gate__lead">We send a one-time code so checkout uses the correct inbox — the same email you will claim in the app.</p>' +
+      '<label class="email-gate__label">Email' +
+      '<input type="email" data-gate-email placeholder="you@email.com" autocomplete="email" /></label>' +
+      '<div class="email-gate__otp" data-gate-otp-wrap hidden>' +
+      '<label class="email-gate__label">6-digit code' +
+      '<input type="text" inputmode="numeric" maxlength="6" data-gate-code placeholder="123456" autocomplete="one-time-code" /></label>' +
+      '</div>' +
+      '<p class="email-gate__msg" data-gate-msg hidden></p>' +
+      '<div class="email-gate__actions">' +
+      '<button type="button" class="btn btn--solid" data-gate-send>Email me a code</button>' +
+      '<button type="button" class="btn btn--accent" data-gate-continue hidden>Continue to checkout</button>' +
+      '</div>' +
+      '<button type="button" class="email-gate__resend" data-gate-resend hidden>Resend code</button>' +
+      '</div>'
+
+    document.body.appendChild(root)
+
+    var emailEl = root.querySelector('[data-gate-email]')
+    var codeEl = root.querySelector('[data-gate-code]')
+    var otpWrap = root.querySelector('[data-gate-otp-wrap]')
+    var msgEl = root.querySelector('[data-gate-msg]')
+    var sendBtn = root.querySelector('[data-gate-send]')
+    var continueBtn = root.querySelector('[data-gate-continue]')
+    var resendBtn = root.querySelector('[data-gate-resend]')
+    var emailProof = ''
+
+    function setMsg(text, isError) {
+      if (!msgEl) return
+      if (!text) {
+        msgEl.hidden = true
+        msgEl.textContent = ''
+        return
+      }
+      msgEl.hidden = false
+      msgEl.textContent = text
+      msgEl.classList.toggle('is-error', Boolean(isError))
+    }
+
+    function close() {
+      root.remove()
+    }
+
+    root.addEventListener('click', function (ev) {
+      if (ev.target === root || ev.target.closest('[data-gate-close]')) close()
+    })
+
+    function requestCode() {
+      var email = (emailEl && emailEl.value || '').trim()
+      if (!email || email.indexOf('@') < 1) {
+        setMsg('Enter a valid email address.', true)
+        return
+      }
+      if (!apiBase) {
+        setMsg('Checkout API is not configured.', true)
+        return
+      }
+      sendBtn.disabled = true
+      sendBtn.textContent = 'Sending…'
+      setMsg('')
+      fetch(apiBase + '/v1/auth/otp/request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email, purpose: 'checkout' })
+      })
+        .then(function (res) {
+          return res.json().then(function (data) {
+            return { ok: res.ok, status: res.status, data: data }
+          })
+        })
+        .then(function (result) {
+          // Older API without OTP — fall back to direct checkout
+          if (result.status === 404) {
+            close()
+            legacyCheckout(opts, email)
+            return
+          }
+          if (!result.ok) {
+            setMsg((result.data && result.data.error) || 'Could not send code.', true)
+            return
+          }
+          otpWrap.hidden = false
+          continueBtn.hidden = false
+          resendBtn.hidden = false
+          sendBtn.hidden = true
+          setMsg(
+            (result.data && result.data.message) ||
+              'Check your inbox for a 6-digit code.'
+          )
+          if (result.data && result.data.devCode && codeEl) {
+            codeEl.value = result.data.devCode
+            setMsg('Test mode code filled in — continue to checkout.')
+          }
+        })
+        .catch(function () {
+          setMsg('Network error while sending the code. Try again.', true)
+        })
+        .finally(function () {
+          sendBtn.disabled = false
+          sendBtn.textContent = 'Email me a code'
+        })
+    }
+
+    function legacyCheckout(gateOpts, email) {
+      var successUrl =
+        window.location.origin +
+        '/?checkout=success&plan=' +
+        encodeURIComponent(gateOpts.sku || '') +
+        '&email=' +
+        encodeURIComponent(email || '')
+      if (!apiBase || !gateOpts.sku) {
+        var url = gateOpts.fallback
+        if (url && email) {
+          url +=
+            (url.indexOf('?') >= 0 ? '&' : '?') +
+            'checkout[email]=' +
+            encodeURIComponent(email)
+        }
+        if (url && !isPlaceholderCheckout(url)) window.location.href = url
+        return
+      }
+      fetch(apiBase + '/v1/billing/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          plan: gateOpts.sku,
+          email: email,
+          successUrl: successUrl
+        })
+      })
+        .then(function (res) {
+          return res.json().then(function (data) {
+            return { ok: res.ok, data: data }
+          })
+        })
+        .then(function (result) {
+          var url =
+            result.ok && result.data && result.data.url
+              ? result.data.url
+              : gateOpts.fallback
+          if (url && !isPlaceholderCheckout(url)) window.location.href = url
+        })
+        .catch(function () {
+          if (gateOpts.fallback && !isPlaceholderCheckout(gateOpts.fallback)) {
+            window.location.href = gateOpts.fallback
+          }
+        })
+    }
+
+    function continueCheckout() {
+      var email = (emailEl && emailEl.value || '').trim()
+      var code = (codeEl && codeEl.value || '').trim()
+      if (!email || !code) {
+        setMsg('Enter the email and the 6-digit code.', true)
+        return
+      }
+      continueBtn.disabled = true
+      continueBtn.textContent = 'Verifying…'
+      setMsg('')
+
+      fetch(apiBase + '/v1/auth/otp/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email, purpose: 'checkout', code: code })
+      })
+        .then(function (res) {
+          return res.json().then(function (data) {
+            return { ok: res.ok, data: data }
+          })
+        })
+        .then(function (result) {
+          if (!result.ok || !result.data || !result.data.emailProof) {
+            setMsg((result.data && result.data.error) || 'Invalid or expired code.', true)
+            return null
+          }
+          emailProof = result.data.emailProof
+          continueBtn.textContent = 'Opening checkout…'
+          return fetch(apiBase + '/v1/billing/checkout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              plan: opts.sku,
+              email: email,
+              emailProof: emailProof,
+              successUrl:
+                window.location.origin +
+                '/?checkout=success&plan=' +
+                encodeURIComponent(opts.sku) +
+                '&email=' +
+                encodeURIComponent(email)
+            })
+          })
+        })
+        .then(function (res) {
+          if (!res) return null
+          return res.json().then(function (data) {
+            return { ok: res.ok, data: data }
+          })
+        })
+        .then(function (result) {
+          if (!result) return
+          var url =
+            result.ok && result.data && result.data.url
+              ? result.data.url
+              : opts.fallback
+          if (!url || isPlaceholderCheckout(url)) {
+            setMsg('Checkout is not ready for this plan yet.', true)
+            return
+          }
+          // Prefer Lemon URL with verified email locked when using static buy link
+          if (url.indexOf('checkout') !== -1 && url.indexOf('email') === -1) {
+            url +=
+              (url.indexOf('?') >= 0 ? '&' : '?') +
+              'checkout[email]=' +
+              encodeURIComponent((emailEl && emailEl.value || '').trim())
+          }
+          window.location.href = url
+        })
+        .catch(function () {
+          setMsg('Could not open checkout. Try again.', true)
+        })
+        .finally(function () {
+          continueBtn.disabled = false
+          continueBtn.textContent = 'Continue to checkout'
+        })
+    }
+
+    sendBtn.addEventListener('click', requestCode)
+    resendBtn.addEventListener('click', requestCode)
+    continueBtn.addEventListener('click', continueCheckout)
   }
 
   /* ---------- multi-OS downloads ---------- */

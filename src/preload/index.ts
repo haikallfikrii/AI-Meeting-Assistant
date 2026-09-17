@@ -310,7 +310,14 @@ const api = {
     ipcRenderer.on('trigger-shot', handler)
     return () => ipcRenderer.removeListener('trigger-shot', handler)
   },
-  getShotShortcut: (): Promise<string> => ipcRenderer.invoke('get-shot-shortcut')
+  getShotShortcut: (): Promise<string> => ipcRenderer.invoke('get-shot-shortcut'),
+  kalfiApi: (opts: {
+    path: string
+    method?: string
+    body?: unknown
+    token?: string
+  }): Promise<{ ok: boolean; status: number; data: unknown }> =>
+    ipcRenderer.invoke('kalfi-api', opts)
 }
 
 if (process.contextIsolated) {

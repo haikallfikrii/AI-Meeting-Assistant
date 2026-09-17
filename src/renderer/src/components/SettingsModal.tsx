@@ -246,8 +246,6 @@ export function SettingsModal(): React.ReactNode | null {
     }
   }
 
-  const KALFI_API = 'https://api.srv835792.hstgr.cloud'
-
   const applyCloudUser = async (payload: {
     token: string
     user: {
@@ -288,12 +286,12 @@ export function SettingsModal(): React.ReactNode | null {
     setAccountAuthMsg(null)
     try {
       const path = accountMode === 'claim' ? '/v1/auth/claim' : '/v1/auth/login'
-      const res = await fetch(`${KALFI_API}${path}`, {
+      const res = await window.api.kalfiApi({
+        path,
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password: accountPassword })
+        body: { email, password: accountPassword }
       })
-      const data = (await res.json()) as {
+      const data = (res.data || {}) as {
         error?: string
         code?: string
         token?: string
@@ -309,7 +307,12 @@ export function SettingsModal(): React.ReactNode | null {
           setAccountMode('claim')
           setAccountAuthMsg('First time after checkout — switch to Set password and create one.')
         } else {
-          setAccountAuthMsg(data.error || 'Auth failed')
+          setAccountAuthMsg(
+            data.error ||
+              (res.status === 0
+                ? 'Cannot reach Kalfi servers. Check your internet.'
+                : 'Auth failed')
+          )
         }
         return
       }
@@ -336,10 +339,12 @@ export function SettingsModal(): React.ReactNode | null {
     setAccountAuthBusy(true)
     setAccountAuthMsg(null)
     try {
-      const res = await fetch(`${KALFI_API}/v1/billing/status`, {
-        headers: { Authorization: `Bearer ${localSettings.authToken}` }
+      const res = await window.api.kalfiApi({
+        path: '/v1/billing/status',
+        method: 'GET',
+        token: localSettings.authToken
       })
-      const data = (await res.json()) as {
+      const data = (res.data || {}) as {
         error?: string
         user?: {
           email: string
