@@ -143,6 +143,29 @@ billingRoutes.post('/checkout', async (c) => {
   })
 })
 
+/** Landing success redirect — funnel only (does not grant plan). */
+billingRoutes.post('/checkout-return', async (c) => {
+  const body = z
+    .object({
+      email: z.string().email(),
+      plan: z.string().max(64).optional()
+    })
+    .safeParse(await c.req.json())
+  if (!body.success) return c.json({ error: 'Invalid payload' }, 400)
+
+  const email = body.data.email.trim().toLowerCase()
+  const lead = upsertLead(email, {
+    status: 'payment_returned',
+    plan: body.data.plan,
+    source: 'pricing_success'
+  })
+  recordEvent('checkout_return', {
+    email,
+    meta: { source: 'checkout_return', plan: body.data.plan, note: 'awaiting_webhook' }
+  })
+  return c.json({ ok: true, lead })
+})
+
 billingRoutes.get('/status', requireAuth, async (c) => {
   return c.json({ user: publicUser(c.get('user')) })
 })
