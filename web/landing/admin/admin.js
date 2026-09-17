@@ -77,7 +77,7 @@
   }
 
   function switchTab(name) {
-    ;['overview', 'users', 'create', 'analytics'].forEach(function (tab) {
+    ;['overview', 'users', 'leads', 'create', 'analytics'].forEach(function (tab) {
       var el = document.getElementById('tab-' + tab)
       if (el) el.hidden = tab !== name
     })
@@ -87,12 +87,14 @@
     var titles = {
       overview: 'Overview',
       users: 'Users',
+      leads: 'Checkout leads',
       create: 'Add user',
       analytics: 'Sales & activity'
     }
     pageTitle.textContent = titles[name] || 'Admin'
     if (name === 'overview') loadOverview()
     if (name === 'users') loadUsers()
+    if (name === 'leads') loadLeads()
     if (name === 'analytics') loadAnalytics()
   }
 
@@ -205,14 +207,72 @@
     })
   }
 
+  function loadLeads() {
+    var q = document.getElementById('lead-q').value.trim()
+    var status = document.getElementById('lead-status').value
+    var qs =
+      '/v1/admin/leads?limit=100&q=' +
+      encodeURIComponent(q) +
+      '&status=' +
+      encodeURIComponent(status)
+    api(qs).then(function (res) {
+      if (!res.ok) {
+        document.getElementById('leads-meta').textContent =
+          (res.data && res.data.error) || 'Failed to load leads'
+        return
+      }
+      var summary = res.data.summary || {}
+      document.getElementById('leads-cards').innerHTML = [
+        ['Emails submitted', summary.otp_sent || 0],
+        ['Verified OTP', summary.otp_verified || 0],
+        ['Opened checkout', summary.checkout_opened || 0],
+        ['Subscribed', summary.subscribed || 0]
+      ]
+        .map(function (row) {
+          return (
+            '<div class="stat"><span>' +
+            row[0] +
+            '</span><strong>' +
+            row[1] +
+            '</strong></div>'
+          )
+        })
+        .join('')
+      var leads = res.data.leads || []
+      document.getElementById('leads-meta').textContent =
+        leads.length + ' shown · ' + (res.data.total || 0) + ' total'
+      document.getElementById('leads-body').innerHTML = leads
+        .map(function (l) {
+          var ok = l.status === 'subscribed'
+          return (
+            '<tr><td>' +
+            escapeHtml(l.email) +
+            '</td><td><span class="pill ' +
+            (ok ? 'pill--ok' : '') +
+            '">' +
+            escapeHtml(l.status) +
+            '</span></td><td>' +
+            escapeHtml(l.plan || l.sku || '—') +
+            '</td><td>' +
+            fmtDate(l.updatedAt) +
+            '</td></tr>'
+          )
+        })
+        .join('')
+    })
+  }
+
   function loadAnalytics() {
     api('/v1/admin/analytics').then(function (res) {
       if (!res.ok) return
       var sales = res.data.sales || {}
       var o = res.data.overview || {}
+      var leadSummary = (res.data.leads && res.data.leads.summary) || {}
       document.getElementById('sales-cards').innerHTML = [
         ['Lemon events (30d)', sales.lemonEvents30d],
         ['Checkout OTPs (30d)', sales.checkoutOtps30d],
+        ['Leads submitted', leadSummary.otp_sent || 0],
+        ['Leads subscribed', leadSummary.subscribed || 0],
         ['Paid active', o.paidActive],
         ['Total users', o.totalUsers]
       ]
@@ -392,6 +452,10 @@
   document.getElementById('btn-search-users').addEventListener('click', loadUsers)
   document.getElementById('user-q').addEventListener('keydown', function (ev) {
     if (ev.key === 'Enter') loadUsers()
+  })
+  document.getElementById('btn-search-leads').addEventListener('click', loadLeads)
+  document.getElementById('lead-q').addEventListener('keydown', function (ev) {
+    if (ev.key === 'Enter') loadLeads()
   })
 
   document.getElementById('users-body').addEventListener('click', function (ev) {

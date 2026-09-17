@@ -6,6 +6,7 @@ import { type BillingPlan, planFromVariantId } from '../lib/entitlement.js'
 import { checkoutUrlForPlan, lemonStoreId, lemonVariantMap } from '../lib/lemon-variants.js'
 import { verifyEmailProof } from '../lib/otp.js'
 import { recordEvent } from '../lib/events.js'
+import { markLeadSubscribed, upsertLead } from '../lib/leads.js'
 import { requireAuth, type AppVars } from '../middleware/auth.js'
 import {
   createUser,
@@ -117,11 +118,23 @@ billingRoutes.post('/checkout', async (c) => {
     }
 
     if (res.ok && data.data?.attributes?.url) {
+      upsertLead(verifiedEmail, {
+        status: 'checkout_opened',
+        plan,
+        sku: plan,
+        source: 'pricing'
+      })
       return c.json({ url: data.data.attributes.url, id: data.data.id, plan, locked: true })
     }
     console.warn('Lemon checkout API failed, falling back to buy link', data.errors)
   }
 
+  upsertLead(verifiedEmail, {
+    status: 'checkout_opened',
+    plan,
+    sku: plan,
+    source: 'pricing'
+  })
   return c.json({
     url: checkoutUrlForPlan(plan),
     plan,
@@ -257,6 +270,7 @@ export async function handleLemonWebhook(
       email: email || undefined,
       meta: { plan, orderId, customerId, variantId }
     })
+    if (email) markLeadSubscribed(email, plan || undefined)
     return { ok: true }
   }
 
@@ -295,6 +309,7 @@ export async function handleLemonWebhook(
       userId: user.id,
       meta: { event, plan: nextPlan, status, subscriptionId }
     })
+    if (active) markLeadSubscribed(user.email, nextPlan)
     return { ok: true }
   }
 
