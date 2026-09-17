@@ -1,7 +1,7 @@
 {
-  "version": "1.0.7",
-  "tag": "v1.0.7",
-  "mac": "https://github.com/haikallfikrii/AI-Meeting-Assistant/releases/download/v1.0.7/kalfi-1.0.7-mac.dmg",
-  "win": "https://github.com/haikallfikrii/AI-Meeting-Assistant/releases/download/v1.0.7/kalfi-1.0.7-win-setup.exe",
+  "version": "1.0.8",
+  "tag": "v1.0.8",
+  "mac": "https://github.com/haikallfikrii/AI-Meeting-Assistant/releases/download/v1.0.8/kalfi-1.0.8-mac.dmg",
+  "win": "https://github.com/haikallfikrii/AI-Meeting-Assistant/releases/download/v1.0.8/kalfi-1.0.8-win-setup.exe",
   "linux": "https://github.com/haikallfikrii/AI-Meeting-Assistant/releases/download/v1.0.7/kalfi-1.0.7-linux.AppImage"
 }
