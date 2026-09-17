@@ -1084,33 +1084,61 @@
   var INSTALL_GUIDES = {
     mac: {
       label: 'macOS',
+      lead: 'Follow these clicks — no Terminal needed for a normal install.',
       steps: [
-        'Open the downloaded <strong>.dmg</strong> from your Downloads folder.',
-        'Drag <strong>Kalfi</strong> into the <strong>Applications</strong> folder.',
-        'Open Kalfi from Applications. If Gatekeeper blocks it, use System Settings → Privacy &amp; Security → <strong>Open Anyway</strong>.',
-        'Allow microphone / system audio when asked, then paste your API key in Settings (BYOK) or log in (Hosted).'
+        'Find the file in your <strong>Downloads</strong> folder (ends with <strong>.dmg</strong>) and double-click it.',
+        'A small window opens. Drag the <strong>Kalfi</strong> icon onto the <strong>Applications</strong> folder icon.',
+        'Open <strong>Finder → Applications</strong> and double-click <strong>Kalfi</strong>.',
+        'If Mac says the app is damaged or can’t be opened: go to <strong>System Settings → Privacy &amp; Security</strong>, scroll to Security, click <strong>Open Anyway</strong>, then open Kalfi again. (That message is normal for apps Apple has not notarized yet — the download is fine.)',
+        'When macOS asks for <strong>microphone</strong> or <strong>system audio</strong> access, click Allow.',
+        'In Kalfi Settings: paste your OpenAI/OpenRouter key (BYOK), or log in with the email you used at checkout (Hosted).'
       ],
-      cmd: 'xattr -cr /Applications/Kalfi.app'
+      advanced: {
+        title: 'Still blocked after Open Anyway?',
+        help: 'Only then use this optional Terminal fix. Terminal is a built-in Mac app for typing one command — you do not need to know coding.',
+        how: [
+          'Press <kbd>⌘</kbd> + <kbd>Space</kbd>, type <strong>Terminal</strong>, press Enter.',
+          'Click <strong>Copy</strong> below, then in Terminal press <kbd>⌘</kbd> + <kbd>V</kbd> to paste, then press Enter.',
+          'Nothing appearing is normal. Go back to Applications and open Kalfi again.'
+        ],
+        cmd: 'xattr -cr /Applications/Kalfi.app',
+        note: 'This only clears a macOS security flag on the app. It does not change your files or password.'
+      }
     },
     win: {
       label: 'Windows',
+      lead: 'Use the installer like any other Windows app. No command line needed.',
       steps: [
-        'Open the downloaded <strong>.exe</strong> installer.',
-        'If SmartScreen appears: click <strong>More info</strong> → <strong>Run anyway</strong>.',
-        'Follow Next → Install, then launch Kalfi from the Start menu.',
-        'Allow microphone access, then add your API key or log in to your plan.'
+        'Open your <strong>Downloads</strong> folder and double-click the Kalfi <strong>.exe</strong> file.',
+        'If Windows shows <strong>“Windows protected your PC”</strong>: click <strong>More info</strong>, then <strong>Run anyway</strong>. This is SmartScreen being cautious with new apps — the file from kalfi.app is fine.',
+        'Click through the installer (<strong>Next → Install</strong>) and finish.',
+        'Open Kalfi from the Start menu or desktop shortcut.',
+        'Allow microphone access when Windows asks.',
+        'In Settings: paste your API key (BYOK) or log in with your checkout email (Hosted).'
       ],
-      cmd: ''
+      advanced: null
     },
     linux: {
       label: 'Linux',
+      lead: 'Prefer the click method first. Terminal is only an alternative if your desktop blocks double-click.',
       steps: [
-        'Find the downloaded <strong>.AppImage</strong>.',
-        'Make it executable (Properties → Allow executing file as program), or use the command below.',
-        'Double-click the AppImage (or run it from the terminal).',
-        'Grant mic / audio permissions, then finish first-time setup in the app.'
+        'Find the downloaded <strong>.AppImage</strong> in your Downloads folder.',
+        'Right-click the file → <strong>Properties</strong> (wording varies) → enable <strong>Allow executing file as program</strong> / “executable”.',
+        'Close Properties, then double-click the AppImage to launch Kalfi.',
+        'Allow microphone / audio access if your desktop asks.',
+        'In Settings: paste your API key (BYOK) or log in with your checkout email (Hosted).'
       ],
-      cmd: 'chmod +x kalfi-*.AppImage && ./kalfi-*.AppImage'
+      advanced: {
+        title: 'Prefer Terminal instead of Properties?',
+        help: 'Optional. Open your Terminal app (search “Terminal” in your app menu), then run the two actions below in the folder where the AppImage is.',
+        how: [
+          'In your file manager, open the Downloads folder (or wherever the AppImage landed).',
+          'Right-click empty space → <strong>Open in Terminal</strong> (if available), or open Terminal and type <code>cd ~/Downloads</code> then Enter.',
+          'Click <strong>Copy</strong> below, paste into Terminal (<kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>V</kbd> on many desktops), press Enter.'
+        ],
+        cmd: 'chmod +x kalfi-*.AppImage && ./kalfi-*.AppImage',
+        note: 'chmod makes the file runnable; the second part starts Kalfi. Replace nothing unless your filename differs.'
+      }
     }
   }
 
@@ -1120,20 +1148,38 @@
 
     var stepsEl = modal.querySelector('[data-install-steps]')
     var osLabel = modal.querySelector('[data-install-os-label]')
+    var leadEl = modal.querySelector('[data-install-lead]')
     var cmdWrap = modal.querySelector('[data-install-cmd-wrap]')
     var cmdEl = modal.querySelector('[data-install-cmd]')
+    var cmdTitle = modal.querySelector('[data-install-cmd-title]')
+    var cmdHelp = modal.querySelector('[data-install-cmd-help]')
+    var cmdHow = modal.querySelector('[data-install-cmd-how]')
+    var cmdNote = modal.querySelector('[data-install-cmd-note]')
 
     var open = function (os) {
       var guide = INSTALL_GUIDES[os] || INSTALL_GUIDES.mac
       if (osLabel) osLabel.textContent = guide.label
+      if (leadEl) leadEl.innerHTML = guide.lead
       if (stepsEl) {
-        stepsEl.innerHTML = guide.steps.map(function (s) {
-          return '<li>' + s + '</li>'
-        }).join('')
+        stepsEl.innerHTML = guide.steps
+          .map(function (s) {
+            return '<li>' + s + '</li>'
+          })
+          .join('')
       }
-      if (cmdWrap && cmdEl) {
-        if (guide.cmd) {
-          cmdEl.textContent = guide.cmd
+      if (cmdWrap) {
+        if (guide.advanced && guide.advanced.cmd) {
+          if (cmdTitle) cmdTitle.textContent = guide.advanced.title
+          if (cmdHelp) cmdHelp.textContent = guide.advanced.help
+          if (cmdHow) {
+            cmdHow.innerHTML = (guide.advanced.how || [])
+              .map(function (s) {
+                return '<li>' + s + '</li>'
+              })
+              .join('')
+          }
+          if (cmdEl) cmdEl.textContent = guide.advanced.cmd
+          if (cmdNote) cmdNote.textContent = guide.advanced.note || ''
           cmdWrap.hidden = false
         } else {
           cmdWrap.hidden = true
@@ -1161,10 +1207,55 @@
       if (go.classList.contains('is-disabled')) return
       var href = go.getAttribute('href') || ''
       if (!href || href.charAt(0) === '#' || href.indexOf('docs') === 0) return
-      // Let the browser start the download, then show the guide.
       window.setTimeout(function () {
         open(selectedOS || detectClientOS())
       }, 180)
+    })
+  }
+
+  function faqAccordion() {
+    var items = document.querySelectorAll('.faq details')
+    if (!items.length) return
+
+    Array.prototype.forEach.call(items, function (details) {
+      var summary = details.querySelector('summary')
+      var anim = details.querySelector('.faq__anim')
+      if (!summary || !anim) return
+
+      // Start open items in open visual state
+      if (details.open) {
+        details.classList.add('is-open')
+        anim.style.gridTemplateRows = '1fr'
+      } else {
+        details.classList.remove('is-open')
+        anim.style.gridTemplateRows = '0fr'
+      }
+
+      summary.addEventListener('click', function (e) {
+        e.preventDefault()
+        var isOpen = details.classList.contains('is-open')
+
+        if (isOpen) {
+          // Smooth close
+          anim.style.gridTemplateRows = '1fr'
+          // force reflow
+          void anim.offsetHeight
+          details.classList.remove('is-open')
+          anim.style.gridTemplateRows = '0fr'
+          var onEnd = function (ev) {
+            if (ev.propertyName !== 'grid-template-rows') return
+            details.open = false
+            anim.removeEventListener('transitionend', onEnd)
+          }
+          anim.addEventListener('transitionend', onEnd)
+        } else {
+          details.open = true
+          details.classList.add('is-open')
+          anim.style.gridTemplateRows = '0fr'
+          void anim.offsetHeight
+          anim.style.gridTemplateRows = '1fr'
+        }
+      })
     })
   }
 
@@ -1182,6 +1273,7 @@
     downloads()
     copyCommands()
     installModal()
+    faqAccordion()
   }
 
   if (document.readyState === 'loading') {
