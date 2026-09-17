@@ -1,12 +1,15 @@
 import { useEffect } from 'react'
 import { AnswerPanel } from './components/AnswerPanel'
+import { AuthGate } from './components/AuthGate'
 import { Header } from './components/Header'
+import { OnboardingTour } from './components/OnboardingTour'
 import { SessionEditorModal } from './components/SessionEditorModal'
 import { SessionsPanel } from './components/SessionsPanel'
 import { SettingsModal } from './components/SettingsModal'
 import { StatusBar } from './components/StatusBar'
 import { TranscriptPanel } from './components/TranscriptPanel'
 import { useInterviewEvents } from './hooks/useInterviewEvents'
+import { hasPaidAccess } from './lib/access'
 import { WorkSession, useInterviewStore } from './store/interviewStore'
 
 function App(): React.JSX.Element {
@@ -23,6 +26,15 @@ function App(): React.JSX.Element {
   useEffect(() => {
     const bootstrap = async (): Promise<void> => {
       try {
+        const saved = await window.api.getSettings()
+        useInterviewStore.getState().setSettings(saved)
+
+        const entitled = hasPaidAccess(saved)
+        if (!entitled) {
+          // Auth gate handles login; don't also force settings open
+          return
+        }
+
         const hasApiKeys = await window.api.hasApiKeys()
         if (!hasApiKeys) {
           setShowSettings(true)
@@ -31,8 +43,6 @@ function App(): React.JSX.Element {
         const active = await window.api.getActiveSession()
         setActiveSession(active)
 
-        // First launch / empty context: land on Sessions & history instead of a tall Edit modal
-        // that can clip Save/Close on the default overlay size.
         if (active && !hasAnyContext(active) && hasApiKeys) {
           setShowHistory(true)
         }
@@ -63,6 +73,8 @@ function App(): React.JSX.Element {
       </main>
       <SettingsModal />
       <SessionEditorModal />
+      <AuthGate />
+      <OnboardingTour />
     </div>
   )
 }

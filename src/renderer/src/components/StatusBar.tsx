@@ -11,6 +11,7 @@ import {
   Trash2,
   Volume2
 } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { AudioSource } from '../hooks/useAudioCapture'
 import { useInterview } from '../hooks/useInterview'
 import { useInterviewStore } from '../store/interviewStore'
@@ -51,6 +52,20 @@ export function StatusBar(): React.JSX.Element {
     activeSession,
     setActiveSession
   } = useInterviewStore()
+
+  const [shotShortcut, setShotShortcut] = useState('⌘⇧S')
+
+  useEffect(() => {
+    void window.api.getShotShortcut().then(setShotShortcut).catch(() => undefined)
+  }, [])
+
+  useEffect(() => {
+    const unsub = window.api.onTriggerShot(() => {
+      if (isProcessingScreenshot || isGenerating) return
+      void captureAndAnalyzeScreenshot()
+    })
+    return unsub
+  }, [captureAndAnalyzeScreenshot, isProcessingScreenshot, isGenerating])
 
   const sourceLabel =
     audioSource === 'both'
@@ -231,7 +246,10 @@ export function StatusBar(): React.JSX.Element {
             </button>
           </Tooltip>
 
-          <Tooltip content="Capture screenshot and analyze for interview questions" side="bottom">
+          <Tooltip
+            content={`Capture screenshot and analyze (${shotShortcut})`}
+            side="bottom"
+          >
             <button
               onClick={captureAndAnalyzeScreenshot}
               disabled={isProcessingScreenshot || isGenerating}
@@ -254,6 +272,9 @@ export function StatusBar(): React.JSX.Element {
                 <>
                   <Camera className="w-3.5 h-3.5" />
                   <span>Shot</span>
+                  <kbd className="hidden sm:inline text-[9px] opacity-60 font-mono ml-0.5">
+                    {shotShortcut}
+                  </kbd>
                 </>
               )}
             </button>

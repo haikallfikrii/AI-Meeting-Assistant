@@ -50,6 +50,8 @@ export interface AppSettings {
   /** Derived for display — not authoritative */
   billingInterval?: BillingInterval
   singleSession?: SingleSessionState | null
+  /** First-run product tour completed */
+  onboardingCompleted: boolean
 }
 
 type PersistedSettings = Omit<AppSettings, 'openaiApiKey' | 'brandLogoDataUrl'> & {
@@ -133,7 +135,8 @@ const DEFAULT_SETTINGS: AppSettings = {
   membershipPlan: 'free',
   membershipStatus: 'inactive',
   billingInterval: 'none',
-  singleSession: null
+  singleSession: null,
+  onboardingCompleted: false
 }
 
 export class SettingsManager {
@@ -262,7 +265,12 @@ export class SettingsManager {
               : DEFAULT_SETTINGS.authToken,
           membershipPlan: normalizeBillingPlan(savedSettings.membershipPlan),
           membershipStatus: normalizeMembershipStatus(savedSettings.membershipStatus),
-          singleSession: normalizeSingleSession(savedSettings.singleSession)
+          singleSession: normalizeSingleSession(savedSettings.singleSession),
+          onboardingCompleted:
+            typeof (savedSettings as { onboardingCompleted?: unknown }).onboardingCompleted ===
+            'boolean'
+              ? Boolean((savedSettings as { onboardingCompleted?: boolean }).onboardingCompleted)
+              : DEFAULT_SETTINGS.onboardingCompleted
         }
 
         merged.billingInterval = billingIntervalOf(merged.membershipPlan)

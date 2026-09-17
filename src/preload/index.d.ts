@@ -113,6 +113,7 @@ export interface AppSettings {
     expiresAt: number
     sessionStartedAt?: number
   } | null
+  onboardingCompleted: boolean
 }
 
 export interface AudioSource {
@@ -214,6 +215,8 @@ export interface Api {
   onScreenshotNoQuestion: (callback: (data: { message: string }) => void) => () => void
   onSessionUpdated: (callback: (session: WorkSession) => void) => () => void
   onForceNextQuestionChanged: (callback: (enabled: boolean) => void) => () => void
+  onTriggerShot: (callback: () => void) => () => void
+  getShotShortcut: () => Promise<string>
 }
 
 declare global {

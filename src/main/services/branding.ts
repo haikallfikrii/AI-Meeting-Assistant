@@ -182,12 +182,18 @@ export function clearStoredBrandLogo(logoPath?: string | null): void {
 }
 
 export function applyDockVisibility(hideFromDock: boolean): void {
-  if (process.platform !== 'darwin' || !app.dock) return
+  if (process.platform !== 'darwin') return
   try {
-    if (hideFromDock) {
-      app.dock.hide()
-    } else {
-      app.dock.show()
+    // accessory = not in Dock / Cmd+Tab; more reliable than dock.hide() alone
+    if (typeof app.setActivationPolicy === 'function') {
+      app.setActivationPolicy(hideFromDock ? 'accessory' : 'regular')
+    }
+    if (app.dock) {
+      if (hideFromDock) {
+        app.dock.hide()
+      } else {
+        app.dock.show()
+      }
     }
   } catch (error) {
     console.error('Failed to toggle Dock visibility:', error)

@@ -140,20 +140,34 @@ export function createUnusedSingleSession(purchasedAt = Date.now()): SingleSessi
   }
 }
 
-/** BYOK paid users use local key; Hosted/Team/active pass may use cloud */
+/** Plan/status gate (token checked separately via hasPaidAccess). */
 export function canUseAppFeatures(
   plan: BillingPlan,
   status: MembershipStatus,
   singleSession?: SingleSessionState | null
 ): boolean {
-  if (status !== 'active' && status !== 'trial') return plan === 'free'
+  if (status !== 'active' && status !== 'trial') return false
   const tier = featureTierOf(plan)
   if (tier === 'byok' || tier === 'hosted' || tier === 'team') return true
   if (tier === 'single_session' && singleSession) {
     const s = evaluateSingleSession(singleSession)
     return s.status === 'unused' || s.status === 'active_in_session'
   }
-  return plan === 'free'
+  return false
+}
+
+/**
+ * App requires signed-in account + active/trial paid plan (or usable Single Session Pass).
+ * Free / inactive / no token → blocked.
+ */
+export function hasPaidAccess(
+  plan: BillingPlan,
+  status: MembershipStatus,
+  authToken?: string | null,
+  singleSession?: SingleSessionState | null
+): boolean {
+  if (!authToken || !String(authToken).trim()) return false
+  return canUseAppFeatures(plan, status, singleSession)
 }
 
 export function planLabel(plan: BillingPlan): string {

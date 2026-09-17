@@ -114,6 +114,7 @@ export interface AppSettings {
     expiresAt: number
     sessionStartedAt?: number
   } | null
+  onboardingCompleted: boolean
 }
 
 export interface AudioSource {
@@ -303,7 +304,13 @@ const api = {
     const handler = (_event: Electron.IpcRendererEvent, enabled: boolean): void => callback(enabled)
     ipcRenderer.on('force-next-question-changed', handler)
     return () => ipcRenderer.removeListener('force-next-question-changed', handler)
-  }
+  },
+  onTriggerShot: (callback: () => void): (() => void) => {
+    const handler = (): void => callback()
+    ipcRenderer.on('trigger-shot', handler)
+    return () => ipcRenderer.removeListener('trigger-shot', handler)
+  },
+  getShotShortcut: (): Promise<string> => ipcRenderer.invoke('get-shot-shortcut')
 }
 
 if (process.contextIsolated) {
