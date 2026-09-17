@@ -87,7 +87,9 @@ authRoutes.post('/otp/request', async (c) => {
 
   return c.json({
     ok: true,
-    message: 'Check your inbox for a 6-digit code (expires in 10 minutes).',
+    message: sent.devCode
+      ? 'Email sending is in test mode — use the code shown in the app (expires in 10 minutes).'
+      : 'Check your inbox for a 6-digit code (expires in 10 minutes).',
     ...(sent.devCode ? { devCode: sent.devCode } : {})
   })
 })
