@@ -764,7 +764,10 @@
   }
 
   function pickAssetUrl(assets, os) {
-    var list = assets || []
+    var list = (assets || []).filter(function (a) {
+      var n = (a && a.name) || ''
+      return n && !/\.blockmap$/i.test(n) && !/^latest(-|$)/i.test(n)
+    })
     var name = function (a) {
       return (a && a.name) || ''
     }
@@ -806,6 +809,36 @@
     if (!value) return ''
     if (/^https?:\/\//i.test(value) || value.charAt(0) === '/') return value
     return ''
+  }
+
+  /** Stable CDN links from CONFIG.version — works even when api.github.com is rate-limited. */
+  function versionFallbackUrls() {
+    var ver = String(CONFIG.version || '')
+      .replace(/^v/i, '')
+      .trim()
+    var repo = CONFIG.githubRepo || 'haikallfikrii/AI-Meeting-Assistant'
+    if (!ver || !/^\d+\.\d+\.\d+/.test(ver)) return { mac: '', win: '', linux: '' }
+    var base = 'https://github.com/' + repo + '/releases/download/v' + ver + '/'
+    return {
+      mac: base + 'kalfi-' + ver + '-mac.dmg',
+      win: base + 'kalfi-' + ver + '-win-setup.exe',
+      linux: base + 'kalfi-' + ver + '-linux.AppImage'
+    }
+  }
+
+  function mergeDownloadUrls() {
+    var sources = Array.prototype.slice.call(arguments)
+    var out = { mac: '', win: '', linux: '' }
+    ;['mac', 'win', 'linux'].forEach(function (os) {
+      for (var i = 0; i < sources.length; i++) {
+        var u = sources[i] && sources[i][os]
+        if (u) {
+          out[os] = u
+          break
+        }
+      }
+    })
+    return out
   }
 
   function osLabel(os) {
@@ -1013,34 +1046,63 @@
 
   function downloads() {
     selectedOS = detectClientOS()
-    var seeded = {
+    var configured = {
       mac: configuredUrl('mac'),
       win: configuredUrl('win'),
       linux: configuredUrl('linux')
     }
-    applyDownloadLinks(seeded, selectedOS, {
-      status: 'Checking GitHub Releases for installers…'
-    })
+    var fallback = versionFallbackUrls()
+    var seeded = mergeDownloadUrls(configured, fallback)
+    var tagHint = CONFIG.version ? 'v' + String(CONFIG.version).replace(/^v/i, '') : ''
+    applyDownloadLinks(seeded, selectedOS, { tag: tagHint })
 
     var repo = CONFIG.githubRepo || 'haikallfikrii/AI-Meeting-Assistant'
-    fetch('https://api.github.com/repos/' + repo + '/releases/latest')
+
+    // Same-origin manifest first (never blocked by GitHub API rate limits).
+    fetch('downloads.json?v=' + encodeURIComponent(CONFIG.version || Date.now()), {
+      cache: 'no-store'
+    })
       .then(function (res) {
-        if (!res.ok) throw new Error('no release')
+        if (!res.ok) throw new Error('no manifest')
         return res.json()
       })
       .then(function (data) {
-        var assets = (data && data.assets) || []
-        var urls = {
-          mac: seeded.mac || pickAssetUrl(assets, 'mac'),
-          win: seeded.win || pickAssetUrl(assets, 'win'),
-          linux: seeded.linux || pickAssetUrl(assets, 'linux')
+        var fromFile = {
+          mac: (data && data.mac) || '',
+          win: (data && data.win) || '',
+          linux: (data && data.linux) || ''
         }
-        applyDownloadLinks(urls, selectedOS, { tag: data.tag_name || '' })
+        var urls = mergeDownloadUrls(fromFile, seeded)
+        var tag = (data && (data.tag || data.version)) || tagHint
+        if (tag && tag.charAt(0) !== 'v') tag = 'v' + tag
+        applyDownloadLinks(urls, selectedOS, { tag: tag })
+        seeded = urls
       })
       .catch(function () {
-        applyDownloadLinks(seeded, selectedOS, {
-          status: 'Could not reach Releases — try again in a moment, or use Docs → Install.'
+        /* keep seeded */
+      })
+      .then(function () {
+        // Optional refresh from GitHub (often 403 when rate-limited — ignore).
+        return fetch('https://api.github.com/repos/' + repo + '/releases/latest', {
+          headers: { Accept: 'application/vnd.github+json' }
         })
+          .then(function (res) {
+            if (!res.ok) throw new Error('no release')
+            return res.json()
+          })
+          .then(function (data) {
+            var assets = (data && data.assets) || []
+            var fromApi = {
+              mac: pickAssetUrl(assets, 'mac'),
+              win: pickAssetUrl(assets, 'win'),
+              linux: pickAssetUrl(assets, 'linux')
+            }
+            var urls = mergeDownloadUrls(fromApi, seeded)
+            applyDownloadLinks(urls, selectedOS, { tag: data.tag_name || tagHint })
+          })
+          .catch(function () {
+            /* seeded / downloads.json already applied */
+          })
       })
   }
 
