@@ -833,7 +833,7 @@
 
       <!-- PRICING -->
       <section class="band" id="pricing">
-        <div class="shell band__head" data-reveal>
+        <div class="shell band__head band__head--center" data-reveal>
           <span class="tagline">Pricing</span>
           <h2>Clear packs. Still a fraction of $150 tools.</h2>
           <p>
@@ -852,19 +852,21 @@
             <a class="btn btn--accent btn--sm" href="#download">Download Kalfi</a>
           </div>
 
-          <div
-            class="billing-toggle"
-            role="group"
-            aria-label="Billing period"
-            data-reveal
-            id="billing-toggle"
-          >
-            <button type="button" class="billing-toggle__btn is-on" data-billing="monthly">
-              Monthly
-            </button>
-            <button type="button" class="billing-toggle__btn" data-billing="annual">
-              Annual
-            </button>
+          <div class="billing-toggle-wrap" data-reveal>
+            <div
+              class="billing-toggle"
+              role="group"
+              aria-label="Billing period"
+              id="billing-toggle"
+            >
+              <button type="button" class="billing-toggle__btn is-on" data-billing="monthly">
+                Monthly
+              </button>
+              <button type="button" class="billing-toggle__btn" data-billing="annual">
+                Annual
+                <span class="billing-toggle__save">Save up to 29%</span>
+              </button>
+            </div>
           </div>
 
           <div class="plans" data-reveal data-reveal-stagger data-billing="monthly" id="plans">
@@ -1089,71 +1091,90 @@
 
       <!-- FAQ -->
       <section class="band band--tight band--faq" id="faq">
-        <div class="shell faq-shell" data-reveal>
-          <div class="band__head band__head--center">
+        <div class="shell" data-reveal>
+          <div class="band__head">
             <span class="tagline">Questions</span>
             <h2>The things people ask before downloading.</h2>
           </div>
           <div class="faq">
             <details open>
               <summary>Mac says “Kalfi is damaged and can’t be opened” — is my download broken?</summary>
-              <p>
-                No. That message is Apple’s Gatekeeper blocking an app that is not Apple-notarized yet.
-                The file is fine. Follow
-                <a href="docs/#install-mac">Docs → Install → macOS</a>: try
-                <strong>System Settings → Privacy &amp; Security → Open Anyway</strong>, or Control-click
-                → Open. Only if those fail, use the one-line Terminal fix
-                (<code>xattr -cr /Applications/Kalfi.app</code>).
-              </p>
+              <div class="faq__body">
+                <p>
+                  No. That message is Apple’s Gatekeeper blocking an app that is not Apple-notarized yet.
+                  The file is fine. Follow
+                  <a href="docs/#install-mac">Docs → Install → macOS</a>: try
+                  <strong>System Settings → Privacy &amp; Security → Open Anyway</strong>, or Control-click
+                  → Open. Only if those fail, use the one-line Terminal fix:
+                </p>
+                <div class="copy-cmd" data-copy-cmd>
+                  <code>xattr -cr /Applications/Kalfi.app</code>
+                  <button type="button" class="copy-cmd__btn" data-copy-btn aria-label="Copy command">
+                    <span class="copy-cmd__label" data-copy-label>Copy</span>
+                  </button>
+                </div>
+              </div>
             </details>
             <details>
               <summary>How do I install and use Kalfi for the first time?</summary>
-              <p>
-                See the full guide in
-                <a href="docs/">Documentation</a>
-                — install, first-time setup, and daily use. On Mac prefer
-                <code>kalfi-…-mac.dmg</code>.
-              </p>
+              <div class="faq__body">
+                <p>
+                  See the full guide in
+                  <a href="docs/">Documentation</a>
+                  — install, first-time setup, and daily use. On Mac prefer
+                  <code>kalfi-…-mac.dmg</code>.
+                </p>
+              </div>
             </details>
             <details>
               <summary>Does my API key ever touch your server?</summary>
-              <p>
-                No. On BYOK the key lives in encrypted storage on your machine and talks straight to
-                OpenAI or OpenRouter. Our API only appears when you choose Hosted / Pro, and then the
-                provider key is ours, not yours.
-              </p>
+              <div class="faq__body">
+                <p>
+                  No. On BYOK the key lives in encrypted storage on your machine and talks straight to
+                  OpenAI or OpenRouter. Our API only appears when you choose Hosted / Pro, and then the
+                  provider key is ours, not yours.
+                </p>
+              </div>
             </details>
             <details>
               <summary>What actually runs where?</summary>
-              <p>
-                The app runs on your computer — audio capture, transcript, session history, all local.
-                This page is static hosting. The Pro backend runs on a small VPS and only handles login,
-                subscription state and the model proxy.
-              </p>
+              <div class="faq__body">
+                <p>
+                  The app runs on your computer — audio capture, transcript, session history, all local.
+                  This page is static hosting. The Pro backend runs on a small VPS and only handles login,
+                  subscription state and the model proxy.
+                </p>
+              </div>
             </details>
             <details>
               <summary>Is this allowed in my interview or meeting?</summary>
-              <p>
-                That depends on the room. Kalfi is built for calls where assistance is permitted —
-                client work, internal meetings, sales, practice, language support. If an employer,
-                school or client says no, respect it.
-              </p>
+              <div class="faq__body">
+                <p>
+                  That depends on the room. Kalfi is built for calls where assistance is permitted —
+                  client work, internal meetings, sales, practice, language support. If an employer,
+                  school or client says no, respect it.
+                </p>
+              </div>
             </details>
             <details>
               <summary>Which providers and models work?</summary>
-              <p>
-                Anything OpenAI-compatible: OpenAI directly, OpenRouter for model choice, or a custom
-                base URL for your own gateway. Chat and transcription models are configurable per
-                install.
-              </p>
+              <div class="faq__body">
+                <p>
+                  Anything OpenAI-compatible: OpenAI directly, OpenRouter for model choice, or a custom
+                  base URL for your own gateway. Chat and transcription models are configurable per
+                  install.
+                </p>
+              </div>
             </details>
             <details>
               <summary>Windows and Linux builds?</summary>
-              <p>
-                Yes. macOS, Windows, and Linux installers ship from the latest GitHub Release. The
-                homepage download button detects your OS and downloads the matching file directly. See
-                <a href="docs/#docs-install">Docs → Install</a> for SmartScreen and AppImage notes.
-              </p>
+              <div class="faq__body">
+                <p>
+                  Yes. macOS, Windows, and Linux installers ship from the latest GitHub Release. The
+                  homepage download button detects your OS and downloads the matching file directly. See
+                  <a href="docs/#docs-install">Docs → Install</a> for SmartScreen and AppImage notes.
+                </p>
+              </div>
             </details>
           </div>
         </div>
@@ -1247,6 +1268,37 @@
         </div>
       </section>
     </main>
+
+    <div
+      class="install-modal"
+      id="install-modal"
+      hidden
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="install-modal-title"
+    >
+      <div class="install-modal__backdrop" data-install-close tabindex="-1"></div>
+      <div class="install-modal__panel" data-reveal>
+        <button type="button" class="install-modal__x" data-install-close aria-label="Close">
+          ×
+        </button>
+        <span class="tagline" data-install-os-label>macOS</span>
+        <h2 id="install-modal-title">Download started — finish install</h2>
+        <ol class="install-modal__steps" data-install-steps></ol>
+        <div class="install-modal__cmd" data-install-cmd-wrap hidden>
+          <div class="copy-cmd" data-copy-cmd>
+            <code data-install-cmd></code>
+            <button type="button" class="copy-cmd__btn" data-copy-btn aria-label="Copy command">
+              <span class="copy-cmd__label" data-copy-label>Copy</span>
+            </button>
+          </div>
+        </div>
+        <div class="install-modal__actions">
+          <a class="btn btn--line" href="docs/#docs-install">Full docs</a>
+          <button type="button" class="btn btn--accent" data-install-close>Got it</button>
+        </div>
+      </div>
+    </div>
 
     <footer class="foot">
       <div class="shell foot__row">
