@@ -33,7 +33,7 @@ export interface AppSettings {
   autoStart: boolean
   /** Empty = default "Kalfi". Shown in header, window title, process title. */
   brandName: string
-  /** Absolute path under userData/branding — empty = default mic icon. */
+  /** Absolute path under userData/branding — empty = default Kalfi mark. */
   brandLogoPath: string
   /** Computed for the renderer; never written to disk. */
   brandLogoDataUrl?: string
