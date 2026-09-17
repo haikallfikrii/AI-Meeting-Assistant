@@ -157,7 +157,7 @@ export function StatusBar(): React.JSX.Element {
           )}
         </div>
 
-        <div className="flex items-center gap-1.5 flex-shrink-0">
+        <div className="flex items-center gap-1.5 flex-shrink-0 max-w-[70%] overflow-x-auto custom-scrollbar">
           {!isCapturing ? (
             <div className="flex items-center rounded-md border border-dark-700 bg-dark-800 p-0.5">
               {SOURCE_OPTIONS.map((opt) => (

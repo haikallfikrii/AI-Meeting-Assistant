@@ -82,6 +82,20 @@ const IGNORE_PATTERNS = [
   /^(tell me about yourself).*$/i
 ]
 
+/** Candidate repeating / confirming the interviewer's question before answering */
+const CONFIRMATION_PATTERNS = [
+  /^(so )?(you('re| are) asking|the question is|just to (confirm|clarify)|did you (mean|ask)|so if I understand|let me (confirm|make sure|repeat)|you mean|are you asking|is (that|it) (correct|right))/i,
+  /\b(just to confirm|if I understand (you )?correctly|so the question is|did I (get|hear) that right)\b/i,
+  /^(jadi|kalau begitu|berarti|maksud(nya| Anda| kamu)|apakah maksud|kalau saya paham|biar saya pastikan)/i,
+  /^(so )?.{0,40}\?\s*(is that (right|correct)|correct\??|right\??)\s*$/i
+]
+
+/** First-person candidate speech — usually not an interviewer question */
+const SELF_SPEECH_PATTERNS = [
+  /^(i |i'm |i've |i'd |my |mine |we |we're |our )/i,
+  /^(in my (experience|opinion)|from my perspective|personally)/i
+]
+
 export class QuestionDetector extends EventEmitter {
   private transcriptBuffer: string[] = []
   private minQuestionLength = 20 // Minimum characters for a valid question
@@ -89,9 +103,46 @@ export class QuestionDetector extends EventEmitter {
   private confidenceThreshold = 0.6 // Higher threshold for question detection
   private earlyDetectionThreshold = 0.8 // Higher threshold for early detection (without waiting)
   private lastEarlyDetection: string | null = null // Track last early detection to avoid duplicates
+  /** Last question attributed to the interviewer (for confirm → answer) */
+  private lastInterviewerQuestion: string | null = null
 
   constructor() {
     super()
+  }
+
+  getLastInterviewerQuestion(): string | null {
+    return this.lastInterviewerQuestion
+  }
+
+  setLastInterviewerQuestion(text: string | null): void {
+    const trimmed = (text || '').trim()
+    this.lastInterviewerQuestion = trimmed || null
+  }
+
+  isConfirmation(text: string): boolean {
+    const trimmed = text.trim()
+    if (!trimmed) return false
+    for (const pattern of CONFIRMATION_PATTERNS) {
+      if (pattern.test(trimmed)) return true
+    }
+    // Near-echo of previous interviewer question (user repeating it)
+    if (this.lastInterviewerQuestion) {
+      const a = trimmed.toLowerCase().replace(/[^\w\s]/g, ' ')
+      const b = this.lastInterviewerQuestion.toLowerCase().replace(/[^\w\s]/g, ' ')
+      if (a.length >= 12 && b.includes(a.slice(0, Math.min(40, a.length)))) return true
+      if (b.length >= 12 && a.includes(b.slice(0, Math.min(40, b.length)))) return true
+    }
+    return false
+  }
+
+  isLikelySelfSpeech(text: string): boolean {
+    const trimmed = text.trim()
+    if (!trimmed) return false
+    if (this.isConfirmation(trimmed)) return true
+    for (const pattern of SELF_SPEECH_PATTERNS) {
+      if (pattern.test(trimmed)) return true
+    }
+    return false
   }
 
   addTranscript(text: string, isFinal: boolean): void {
@@ -131,6 +182,9 @@ export class QuestionDetector extends EventEmitter {
         `[QuestionDetector] ⚡ EARLY DETECTION: "${trimmedText}" (confidence: ${detection.confidence.toFixed(2)})`
       )
       this.lastEarlyDetection = trimmedText
+      if (!this.isLikelySelfSpeech(trimmedText)) {
+        this.lastInterviewerQuestion = trimmedText
+      }
       return detection
     }
 
@@ -175,6 +229,9 @@ export class QuestionDetector extends EventEmitter {
 
     if (detection.confidence >= this.confidenceThreshold) {
       console.log(`[QuestionDetector] ✓ QUESTION DETECTED: "${fullText}"`)
+      if (!this.isLikelySelfSpeech(fullText)) {
+        this.lastInterviewerQuestion = fullText
+      }
       this.emit('questionDetected', detection)
     } else {
       console.log(`[QuestionDetector] ✗ Not a question (confidence too low)`)

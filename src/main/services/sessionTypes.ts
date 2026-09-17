@@ -170,13 +170,34 @@ export function timeOfDayLabel(tod: TimeOfDay): string {
 
 export function formatMeetingLabel(date = new Date()): string {
   const tod = getTimeOfDay(date)
-  const day = date.toLocaleDateString(undefined, {
-    weekday: 'short',
+  const day = date.toLocaleDateString('en-GB', {
     day: 'numeric',
     month: 'short'
   })
-  const time = date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
+  const time = date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false })
   return `${day} · ${timeOfDayLabel(tod)} · ${time}`
+}
+
+/** Compact absolute timestamp for tight UI (never clip mid-word). */
+export function formatCompactTimestamp(timestamp: number): string {
+  const date = new Date(timestamp)
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const entryDay = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+  const time = date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false })
+
+  if (entryDay.getTime() === today.getTime()) return `Today ${time}`
+
+  const yesterday = new Date(today)
+  yesterday.setDate(yesterday.getDate() - 1)
+  if (entryDay.getTime() === yesterday.getTime()) return `Yesterday ${time}`
+
+  const day = date.toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+  })
+  return `${day} · ${time}`
 }
 
 export function defaultSessionTitle(mode: SessionMode, context: SessionContext): string {

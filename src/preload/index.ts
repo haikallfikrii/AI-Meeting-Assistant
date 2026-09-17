@@ -182,7 +182,8 @@ const api = {
   ): Promise<{ success: boolean; summary?: string; session?: WorkSession; error?: string }> =>
     ipcRenderer.invoke('summarize-session', sessionId),
 
-  startCapture: (): Promise<{ success: boolean }> => ipcRenderer.invoke('start-capture'),
+  startCapture: (source?: 'microphone' | 'system' | 'both'): Promise<{ success: boolean }> =>
+    ipcRenderer.invoke('start-capture', source),
   stopCapture: (): Promise<{ success: boolean }> => ipcRenderer.invoke('stop-capture'),
   getCaptureStatus: (): Promise<boolean> => ipcRenderer.invoke('get-capture-status'),
   sendAudioData: (audioData: ArrayBuffer): void => ipcRenderer.send('audio-data', audioData),

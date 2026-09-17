@@ -43,7 +43,7 @@ export function useAudioCapture(): UseAudioCaptureReturn {
       try {
         setError(null)
 
-        await window.api.startCapture()
+        await window.api.startCapture(source)
 
         audioServiceRef.current = new AudioCaptureService({
           sampleRate: 16000,

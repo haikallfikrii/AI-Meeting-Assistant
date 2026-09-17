@@ -55,37 +55,34 @@ export class VisionService {
         messages: [
           {
             role: 'system',
-            content: `You are an expert at analyzing screenshots to detect interview questions. 
-Your task is to determine if the screenshot contains:
-1. A LeetCode coding problem (algorithm/data structure questions, programming challenges)
-2. A system design problem (architecture, scalability, distributed systems, design questions)
-3. Any other technical interview question (coding, algorithms, data structures, technical problems)
+            content: `You are an expert at reading interview screenshots and classifying the question type.
 
-IMPORTANT: Be lenient in detection. If you see ANY coding problem, algorithm question, programming challenge, or technical problem, consider it an interview question.
+Detect whether the screenshot shows:
+1. A LeetCode-style coding/algorithm problem (implement a function, DSA challenge) → questionType "leetcode"
+2. A system design prompt → questionType "system-design"
+3. Any other interview question (behavioral, conceptual, simple math, definitions) → questionType "other"
 
-You MUST respond ONLY with valid JSON in this exact format:
+IMPORTANT:
+- Be accurate, not eager to call everything "leetcode".
+- Simple questions like "What is 1+1?", "What is OOP?", or short behavioral prompts are "other".
+- Only use "leetcode" when the screen clearly shows a coding challenge to solve/implement.
+
+Respond ONLY with valid JSON:
 {
   "isQuestion": true/false,
   "questionText": "full question text if detected, otherwise empty string",
   "questionType": "leetcode" | "system-design" | "other",
   "confidence": 0.0-1.0
-}
-
-If you see any coding problem, algorithm, or technical question, set isQuestion to true and extract the question text.`
+}`
           },
           {
             role: 'user',
             content: [
               {
                 type: 'text',
-                text: `Analyze this screenshot carefully. Look for:
-- Coding problems or programming challenges
-- Algorithm questions
-- Data structure problems  
-- System design questions
-- Any technical interview questions
-
-If you find ANY of these, respond with JSON where isQuestion=true and include the full question text. Be thorough - extract all visible text that appears to be a question or problem statement.`
+                text: `Extract the question text from this screenshot and classify it.
+If there is no interview question, set isQuestion=false.
+Prefer questionType "other" unless coding/system-design is obvious.`
               },
               {
                 type: 'image_url',
