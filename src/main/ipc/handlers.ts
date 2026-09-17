@@ -20,9 +20,11 @@ import { VisionService } from '../services/visionService'
 import { WhisperService } from '../services/whisperService'
 import { applyOverlayWindowBehavior } from '../windowOverlay'
 import {
+  applyDockVisibility,
   applyRuntimeBranding,
   clearStoredBrandLogo,
-  pickAndStoreBrandLogo
+  pickAndStoreBrandLogo,
+  shouldHideFromDock
 } from '../services/branding'
 
 let whisperService: WhisperService | null = null
@@ -142,8 +144,12 @@ export function initializeIpcHandlers(window: BrowserWindow): void {
     mainWindow,
     bootSettings.brandName,
     bootSettings.brandLogoPath,
-    bootSettings.hideFromDock
+    shouldHideFromDock(bootSettings.hideFromDock)
   )
+  // Persist default hide-from-dock so first-run settings already match reality
+  if (typeof bootSettings.hideFromDock !== 'boolean') {
+    settingsManager.updateSettings({ hideFromDock: true })
+  }
 
   // Settings handlers
   ipcMain.handle('get-settings', () => {
@@ -861,6 +867,11 @@ export function initializeIpcHandlers(window: BrowserWindow): void {
       }
     }
   })
+}
+
+export function reapplyDockPreference(): void {
+  const hide = shouldHideFromDock(settingsManager?.getSettings()?.hideFromDock)
+  applyDockVisibility(hide)
 }
 
 export function cleanupIpcHandlers(): void {

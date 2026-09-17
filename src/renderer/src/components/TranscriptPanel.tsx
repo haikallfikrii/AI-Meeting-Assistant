@@ -128,7 +128,7 @@ export function TranscriptPanel(): React.JSX.Element {
 
       <div
         ref={scrollRef}
-        className="flex-1 min-h-0 overflow-y-auto overflow-x-auto px-4 py-3 scroll-smooth custom-scrollbar space-y-2"
+        className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-4 py-3 scroll-smooth custom-scrollbar space-y-2"
       >
         {!isCapturing && !hasContent ? (
           <p className="text-sm text-dark-500 italic">

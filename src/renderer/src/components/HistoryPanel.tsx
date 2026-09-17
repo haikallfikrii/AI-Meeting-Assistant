@@ -225,9 +225,9 @@ export function HistoryPanel({ onClose }: HistoryPanelProps): React.JSX.Element 
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1">
                     <p className="text-xs text-dark-400 font-medium mb-1">Q: {entry.question}</p>
-                    <div className="flex items-center gap-1 text-xs text-dark-500 min-w-0 overflow-x-auto">
+                    <div className="flex items-center gap-1 text-xs text-dark-500 min-w-0">
                       <Clock className="w-3 h-3 shrink-0" />
-                      <span className="whitespace-nowrap">{formatDate(entry.timestamp)}</span>
+                      <span className="truncate">{formatDate(entry.timestamp)}</span>
                     </div>
                   </div>
                   <button

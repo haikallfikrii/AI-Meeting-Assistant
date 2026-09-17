@@ -52,9 +52,15 @@ body {
   -webkit-app-region: no-drag;
 }
 
-/* Custom scrollbar */
+/* Custom scrollbar — thin on both axes */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--dark-700) transparent;
+}
+
 .custom-scrollbar::-webkit-scrollbar {
-  width: 6px;
+  width: 4px;
+  height: 4px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
@@ -63,11 +69,31 @@ body {
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background-color: var(--dark-700);
-  border-radius: 3px;
+  border-radius: 999px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background-color: var(--dark-600);
+}
+
+/* Scroll without always showing a fat bar (status / chip rows) */
+.scrollbar-auto {
+  scrollbar-width: thin;
+  scrollbar-color: var(--dark-700) transparent;
+}
+
+.scrollbar-auto::-webkit-scrollbar {
+  width: 3px;
+  height: 3px;
+}
+
+.scrollbar-auto::-webkit-scrollbar-thumb {
+  background-color: rgba(71, 85, 105, 0.7);
+  border-radius: 999px;
+}
+
+.scrollbar-auto::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 /* Selection */

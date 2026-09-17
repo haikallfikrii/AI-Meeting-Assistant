@@ -619,16 +619,27 @@ export function SettingsModal(): React.ReactNode | null {
               <input
                 type="checkbox"
                 checked={localSettings.hideFromDock !== false}
-                onChange={(e) =>
-                  setLocalSettings({ ...localSettings, hideFromDock: e.target.checked })
-                }
+                onChange={async (e) => {
+                  const hideFromDock = e.target.checked
+                  setLocalSettings({ ...localSettings, hideFromDock })
+                  try {
+                    const updated = await window.api.updateSettings({
+                      ...localSettings,
+                      hideFromDock
+                    })
+                    setLocalSettings(updated as AppSettings)
+                    setSettings(updated as AppSettings)
+                  } catch (err) {
+                    console.error('Failed to apply Dock visibility:', err)
+                  }
+                }}
                 className="mt-0.5 accent-blue-500"
               />
               <span>
                 <span className="block text-sm text-dark-200">Hide from Dock</span>
                 <span className="block text-xs text-dark-500 mt-0.5">
-                  Recommended for stealth. Uncheck to show in Dock / Cmd+Tab (logo applies to Dock
-                  icon when visible). Save to apply.
+                  Recommended for stealth. Applies immediately. Uncheck to show in Dock / Cmd+Tab
+                  (custom logo applies to Dock when visible).
                 </span>
               </span>
             </label>

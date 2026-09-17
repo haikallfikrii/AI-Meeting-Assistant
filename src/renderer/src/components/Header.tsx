@@ -56,17 +56,17 @@ export function Header(): React.JSX.Element {
           {brandLabel}
         </span>
         {activeSession ? (
-          <div className="flex items-center gap-2 min-w-0 overflow-x-auto custom-scrollbar max-w-[min(55vw,420px)]">
+          <div className="flex items-center gap-2 min-w-0 overflow-hidden max-w-[min(55vw,420px)]">
             <span className="text-[10px] px-1.5 py-0.5 rounded bg-dark-800 text-dark-400 border border-dark-700 shrink-0">
               {modeLabel}
             </span>
             <Tooltip content={activeSession.threadTitle || activeSession.title} side="bottom">
-              <span className="text-[11px] text-dark-300 whitespace-nowrap shrink-0">
+              <span className="text-[11px] text-dark-300 truncate min-w-0">
                 {activeSession.threadTitle || activeSession.title}
               </span>
             </Tooltip>
             <Tooltip content={activeSession.meetingLabel} side="bottom">
-              <span className="text-[10px] text-dark-500 whitespace-nowrap shrink-0">
+              <span className="text-[10px] text-dark-500 truncate shrink min-w-0 hidden sm:inline">
                 {activeSession.meetingLabel}
               </span>
             </Tooltip>
