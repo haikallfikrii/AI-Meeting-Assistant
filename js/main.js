@@ -811,19 +811,9 @@
     return ''
   }
 
-  /** Stable CDN links from CONFIG.version — works even when api.github.com is rate-limited. */
+  /** Do not invent release URLs — only use CONFIG / downloads.json / GitHub API. */
   function versionFallbackUrls() {
-    var ver = String(CONFIG.version || '')
-      .replace(/^v/i, '')
-      .trim()
-    var repo = CONFIG.githubRepo || 'haikallfikrii/AI-Meeting-Assistant'
-    if (!ver || !/^\d+\.\d+\.\d+/.test(ver)) return { mac: '', win: '', linux: '' }
-    var base = 'https://github.com/' + repo + '/releases/download/v' + ver + '/'
-    return {
-      mac: base + 'kalfi-' + ver + '-mac.dmg',
-      win: base + 'kalfi-' + ver + '-win-setup.exe',
-      linux: base + 'kalfi-' + ver + '-linux.AppImage'
-    }
+    return { mac: '', win: '', linux: '' }
   }
 
   function mergeDownloadUrls() {
