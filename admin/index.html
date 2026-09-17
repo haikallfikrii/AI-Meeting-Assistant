@@ -44,6 +44,7 @@
       <nav class="nav">
         <button type="button" class="nav__btn is-active" data-tab="overview">Overview</button>
         <button type="button" class="nav__btn" data-tab="users">Users</button>
+        <button type="button" class="nav__btn" data-tab="leads">Leads</button>
         <button type="button" class="nav__btn" data-tab="create">Add user</button>
         <button type="button" class="nav__btn" data-tab="analytics">Sales & activity</button>
       </nav>
@@ -100,6 +101,35 @@
                 </tr>
               </thead>
               <tbody id="users-body"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="tab-leads" class="panel" hidden>
+          <div class="cards" id="leads-cards"></div>
+          <div class="toolbar">
+            <input type="search" id="lead-q" placeholder="Search lead email…" />
+            <select id="lead-status">
+              <option value="all">All statuses</option>
+              <option value="otp_sent">otp_sent (email submitted)</option>
+              <option value="otp_verified">otp_verified</option>
+              <option value="checkout_opened">checkout_opened</option>
+              <option value="subscribed">subscribed</option>
+            </select>
+            <button type="button" class="btn btn--primary" id="btn-search-leads">Search</button>
+          </div>
+          <p id="leads-meta" class="muted"></p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Email</th>
+                  <th>Status</th>
+                  <th>Plan</th>
+                  <th>Updated</th>
+                </tr>
+              </thead>
+              <tbody id="leads-body"></tbody>
             </table>
           </div>
         </section>
