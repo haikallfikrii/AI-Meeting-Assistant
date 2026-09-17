@@ -5,6 +5,7 @@ import { env } from '../lib/config.js'
 import { type BillingPlan, planFromVariantId } from '../lib/entitlement.js'
 import { checkoutUrlForPlan, lemonStoreId, lemonVariantMap } from '../lib/lemon-variants.js'
 import { verifyEmailProof } from '../lib/otp.js'
+import { recordEvent } from '../lib/events.js'
 import { requireAuth, type AppVars } from '../middleware/auth.js'
 import {
   createUser,
@@ -252,6 +253,10 @@ export async function handleLemonWebhook(
         })
       }
     }
+    recordEvent('lemon_order', {
+      email: email || undefined,
+      meta: { plan, orderId, customerId, variantId }
+    })
     return { ok: true }
   }
 
@@ -284,6 +289,11 @@ export async function handleLemonWebhook(
       lemonSubscriptionId: subscriptionId || user.lemonSubscriptionId,
       lemonVariantId: variantId != null ? String(variantId) : user.lemonVariantId,
       singleSession: plan && plan !== 'single_session' ? undefined : user.singleSession
+    })
+    recordEvent('lemon_subscription', {
+      email: user.email,
+      userId: user.id,
+      meta: { event, plan: nextPlan, status, subscriptionId }
     })
     return { ok: true }
   }

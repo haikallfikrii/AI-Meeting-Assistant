@@ -13,7 +13,7 @@ export type FeatureTier = 'free' | 'byok' | 'hosted' | 'team' | 'single_session'
 
 export type BillingInterval = 'none' | 'month' | 'year' | 'one_time'
 
-export type SubStatus = 'none' | 'active' | 'past_due' | 'canceled' | 'expired'
+export type SubStatus = 'none' | 'active' | 'past_due' | 'canceled' | 'expired' | 'suspended'
 
 /**
  * Single Session Pass state machine:

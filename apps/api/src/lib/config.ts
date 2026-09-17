@@ -9,13 +9,20 @@ export function requireEnv(name: string): string {
 }
 
 export function corsOrigins(): string[] {
-  return env(
-    'CORS_ORIGINS',
-    'http://localhost:5500,https://kalfi.app,http://localhost:5173,http://127.0.0.1:5173'
-  )
+  const defaults = [
+    'https://kalfi.app',
+    'https://www.kalfi.app',
+    'https://ai.chatlm.tech',
+    'http://localhost:5500',
+    'http://127.0.0.1:5500',
+    'http://localhost:5173',
+    'http://127.0.0.1:5173'
+  ]
+  const fromEnv = env('CORS_ORIGINS')
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean)
+  return Array.from(new Set([...defaults, ...fromEnv]))
 }
 
 export function proTokenCap(): number {

@@ -787,8 +787,12 @@
             setMsg('Test mode code filled in — continue to checkout.')
           }
         })
-        .catch(function () {
-          setMsg('Network error while sending the code. Try again.', true)
+        .catch(function (err) {
+          var detail =
+            err && err.message
+              ? String(err.message)
+              : 'Browser blocked the request (often CORS or offline).'
+          setMsg('Network error while sending the code. ' + detail, true)
         })
         .finally(function () {
           sendBtn.disabled = false
