@@ -631,12 +631,39 @@ a.btn.is-disabled {
 }
 
 .hero-copy .hero__cta {
+  display: flex;
   justify-content: center;
   align-items: center;
+  width: 100%;
+}
+
+.hero__cta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
 }
 
 .hero-copy .dl--hero {
-  margin-inline: auto;
+  margin-inline: 0;
+  flex: 0 0 auto;
+}
+
+.hero-copy .btn--hero-side {
+  margin-inline: 0;
+  flex: 0 0 auto;
+}
+
+.hero-copy .btn--hero-side .kbd {
+  margin-left: 8px;
+  font-size: 0.78rem;
+  padding: 3px 8px;
+  border-radius: 6px;
+  letter-spacing: 0.02em;
+  color: var(--fg);
+  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .hero-copy .facts {
@@ -667,11 +694,8 @@ a.btn.is-disabled {
 
 .hero__cta {
   display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-bottom: 10px;
-  align-items: center;
   justify-content: center;
+  margin-bottom: 10px;
 }
 
 .btn--hero-side {
@@ -682,6 +706,7 @@ a.btn.is-disabled {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 2px;
   box-sizing: border-box;
   white-space: nowrap;
 }
@@ -3594,7 +3619,6 @@ details p {
   flex-direction: column;
   gap: 8px;
   width: min(100%, 320px);
-  margin-inline: auto;
   position: relative;
   z-index: 5;
 }
@@ -3602,6 +3626,9 @@ details p {
 .dl--hero {
   width: min(100%, 300px);
   flex: 0 0 auto;
+}
+
+.download-panel .dl {
   margin-inline: auto;
 }
 
@@ -4109,12 +4136,15 @@ details p {
   }
 
   .hero-copy .hero__cta {
-    justify-content: center;
-    flex-direction: column;
-    align-items: center;
     width: 100%;
     margin-inline: auto;
     margin-bottom: 10px;
+  }
+
+  .hero-copy .hero__cta-row {
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
     gap: 10px;
   }
 
