@@ -8,6 +8,7 @@ export type LeadStatus =
   | 'otp_sent'
   | 'otp_verified'
   | 'checkout_opened'
+  | 'payment_returned'
   | 'subscribed'
 
 export interface Lead {
@@ -22,6 +23,7 @@ export interface Lead {
   otpSentAt?: number
   verifiedAt?: number
   checkoutAt?: number
+  paymentReturnedAt?: number
   subscribedAt?: number
 }
 
@@ -59,7 +61,8 @@ const STATUS_RANK: Record<LeadStatus, number> = {
   otp_sent: 2,
   otp_verified: 3,
   checkout_opened: 4,
-  subscribed: 5
+  payment_returned: 5,
+  subscribed: 6
 }
 
 export function upsertLead(
@@ -100,6 +103,7 @@ export function upsertLead(
   if (patch.status === 'otp_sent') lead.otpSentAt = now
   if (patch.status === 'otp_verified') lead.verifiedAt = now
   if (patch.status === 'checkout_opened') lead.checkoutAt = now
+  if (patch.status === 'payment_returned') lead.paymentReturnedAt = now
   if (patch.status === 'subscribed') lead.subscribedAt = now
 
   write(db)

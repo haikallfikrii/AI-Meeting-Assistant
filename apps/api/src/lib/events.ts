@@ -14,6 +14,7 @@ export type AdminEventType =
   | 'lemon_subscription'
   | 'otp_checkout'
   | 'otp_reset'
+  | 'checkout_return'
 
 export interface AdminEvent {
   id: string

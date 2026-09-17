@@ -226,6 +226,7 @@
         ['Emails submitted', summary.otp_sent || 0],
         ['Verified OTP', summary.otp_verified || 0],
         ['Opened checkout', summary.checkout_opened || 0],
+        ['Returned from pay', summary.payment_returned || 0],
         ['Subscribed', summary.subscribed || 0]
       ]
         .map(function (row) {
