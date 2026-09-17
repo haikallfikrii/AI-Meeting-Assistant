@@ -2,10 +2,8 @@ import { createHmac, timingSafeEqual } from 'node:crypto'
 import { Hono } from 'hono'
 import { z } from 'zod'
 import { env } from '../lib/config.js'
-import {
-  type BillingPlan,
-  planFromVariantId
-} from '../lib/entitlement.js'
+import { type BillingPlan, planFromVariantId } from '../lib/entitlement.js'
+import { checkoutUrlForPlan, lemonStoreId, lemonVariantMap } from '../lib/lemon-variants.js'
 import { requireAuth, type AppVars } from '../middleware/auth.js'
 import {
   createUser,
@@ -21,19 +19,8 @@ import {
 
 export const billingRoutes = new Hono<{ Variables: AppVars }>()
 
-function variantMap(): Partial<Record<BillingPlan, string>> {
-  return {
-    byok_monthly: env('LEMONSQUEEZY_VARIANT_BYOK_MONTHLY') || env('LEMONSQUEEZY_VARIANT_BYOK'),
-    byok_annual: env('LEMONSQUEEZY_VARIANT_BYOK_ANNUAL'),
-    hosted_monthly: env('LEMONSQUEEZY_VARIANT_HOSTED_MONTHLY') || env('LEMONSQUEEZY_VARIANT_HOSTED'),
-    hosted_annual: env('LEMONSQUEEZY_VARIANT_HOSTED_ANNUAL'),
-    team: env('LEMONSQUEEZY_VARIANT_TEAM'),
-    single_session: env('LEMONSQUEEZY_VARIANT_SINGLE_SESSION')
-  }
-}
-
 function lemonConfigured(): boolean {
-  return Boolean(env('LEMONSQUEEZY_API_KEY') && env('LEMONSQUEEZY_STORE_ID'))
+  return Boolean(env('LEMONSQUEEZY_API_KEY') && lemonStoreId())
 }
 
 const checkoutSchema = z.object({
@@ -51,69 +38,80 @@ const checkoutSchema = z.object({
 })
 
 billingRoutes.post('/checkout', async (c) => {
-  if (!lemonConfigured()) return c.json({ error: 'Lemon Squeezy not configured' }, 503)
-
   const body = checkoutSchema.safeParse(await c.req.json())
   if (!body.success) return c.json({ error: 'Invalid payload' }, 400)
 
-  const variantId = variantMap()[body.data.plan]
-  if (!variantId) return c.json({ error: `Missing variant id for ${body.data.plan}` }, 400)
+  const plan = body.data.plan
+  const variantId = lemonVariantMap()[plan]
+  if (!variantId) return c.json({ error: `Missing variant id for ${plan}` }, 400)
 
-  const storeId = env('LEMONSQUEEZY_STORE_ID')!
-  const apiKey = env('LEMONSQUEEZY_API_KEY')!
   const appUrl = env('APP_URL', 'https://kalfi.app')
+  const successUrl =
+    body.data.successUrl ||
+    `${appUrl}/?checkout=success&plan=${encodeURIComponent(plan)}${
+      body.data.email ? `&email=${encodeURIComponent(body.data.email)}` : ''
+    }`
 
-  const payload = {
-    data: {
-      type: 'checkouts',
-      attributes: {
-        checkout_data: {
-          email: body.data.email,
-          custom: {
-            plan: body.data.plan
+  if (lemonConfigured()) {
+    const storeId = lemonStoreId()
+    const apiKey = env('LEMONSQUEEZY_API_KEY')!
+    const variantNum = Number(variantId)
+
+    const payload = {
+      data: {
+        type: 'checkouts',
+        attributes: {
+          checkout_data: {
+            email: body.data.email,
+            custom: { plan }
+          },
+          product_options: {
+            redirect_url: successUrl,
+            receipt_button_text: 'Open Kalfi',
+            receipt_link_url: successUrl,
+            enabled_variants: [variantNum]
+          },
+          checkout_options: {
+            embed: false,
+            media: false,
+            logo: true,
+            desc: true
           }
         },
-        product_options: {
-          redirect_url: body.data.successUrl || `${appUrl}/?checkout=success`,
-          receipt_button_text: 'Return to Kalfi',
-          receipt_link_url: body.data.successUrl || `${appUrl}/?checkout=success`
-        },
-        checkout_options: {
-          embed: false,
-          media: false,
-          logo: true
+        relationships: {
+          store: { data: { type: 'stores', id: String(storeId) } },
+          variant: { data: { type: 'variants', id: String(variantId) } }
         }
-      },
-      relationships: {
-        store: { data: { type: 'stores', id: String(storeId) } },
-        variant: { data: { type: 'variants', id: String(variantId) } }
       }
     }
+
+    const res = await fetch('https://api.lemonsqueezy.com/v1/checkouts', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/vnd.api+json',
+        'Content-Type': 'application/vnd.api+json',
+        Authorization: `Bearer ${apiKey}`
+      },
+      body: JSON.stringify(payload)
+    })
+
+    const data = (await res.json()) as {
+      data?: { id?: string; attributes?: { url?: string } }
+      errors?: Array<{ detail?: string }>
+    }
+
+    if (res.ok && data.data?.attributes?.url) {
+      return c.json({ url: data.data.attributes.url, id: data.data.id, plan, locked: true })
+    }
+    console.warn('Lemon checkout API failed, falling back to buy link', data.errors)
   }
 
-  const res = await fetch('https://api.lemonsqueezy.com/v1/checkouts', {
-    method: 'POST',
-    headers: {
-      Accept: 'application/vnd.api+json',
-      'Content-Type': 'application/vnd.api+json',
-      Authorization: `Bearer ${apiKey}`
-    },
-    body: JSON.stringify(payload)
+  return c.json({
+    url: checkoutUrlForPlan(plan),
+    plan,
+    locked: true,
+    via: 'static'
   })
-
-  const data = (await res.json()) as {
-    data?: { id?: string; attributes?: { url?: string } }
-    errors?: Array<{ detail?: string }>
-  }
-
-  if (!res.ok || !data.data?.attributes?.url) {
-    return c.json(
-      { error: data.errors?.[0]?.detail || 'Could not create Lemon checkout' },
-      502
-    )
-  }
-
-  return c.json({ url: data.data.attributes.url, id: data.data.id })
 })
 
 billingRoutes.get('/status', requireAuth, async (c) => {
@@ -123,7 +121,10 @@ billingRoutes.get('/status', requireAuth, async (c) => {
 billingRoutes.post('/single-session/start', requireAuth, async (c) => {
   const result = beginSingleSession(c.get('user').id)
   if (!result.ok) {
-    return c.json({ error: result.reason || 'Cannot start session', user: publicUser(result.user!) }, 402)
+    return c.json(
+      { error: result.reason || 'Cannot start session', user: publicUser(result.user!) },
+      402
+    )
   }
   return c.json({ user: publicUser(result.user!) })
 })
@@ -137,7 +138,6 @@ billingRoutes.post('/single-session/end', requireAuth, async (c) => {
 billingRoutes.post('/portal', requireAuth, async (c) => {
   const customerId = c.get('user').lemonCustomerId
   if (!customerId) return c.json({ error: 'No Lemon customer on this account' }, 400)
-  // Lemon customer portal is typically linked from receipt emails; expose customer id for support.
   return c.json({
     message: 'Manage billing from your Lemon Squeezy receipt email, or contact hello@kalfi.app',
     lemonCustomerId: customerId
@@ -157,11 +157,11 @@ function verifyLemonSignature(rawBody: string, signature: string | undefined): b
   }
 }
 
-function ensureUser(email: string) {
+function ensureUserFromCheckout(email: string) {
   let user = findUserByEmail(email)
   if (!user) {
     const tempPass = `tmp_${Math.random().toString(36).slice(2)}A1!`
-    user = createUser(email, tempPass)
+    user = createUser(email, tempPass, { needsPasswordSetup: true })
   }
   return user
 }
@@ -170,7 +170,7 @@ function resolvePlan(
   variantId: number | string | undefined,
   customPlan?: string
 ): BillingPlan | null {
-  const fromVariant = planFromVariantId(variantId, variantMap())
+  const fromVariant = planFromVariantId(variantId, lemonVariantMap())
   if (fromVariant) return fromVariant
   if (
     customPlan === 'byok_monthly' ||
@@ -185,16 +185,6 @@ function resolvePlan(
   return null
 }
 
-/**
- * Lemon Squeezy webhook events we handle:
- * - order_created              → Single Session Pass (one-time)
- * - subscription_created       → BYOK / Hosted / Team activate
- * - subscription_updated       → plan/status sync (incl. past_due)
- * - subscription_cancelled     → downgrade when ends
- * - subscription_expired       → free
- * - subscription_payment_success → ensure active
- * - subscription_payment_failed → past_due
- */
 export async function handleLemonWebhook(
   rawBody: string,
   signature: string | undefined
@@ -228,7 +218,8 @@ export async function handleLemonWebhook(
     .trim()
     .toLowerCase()
   const customerId = String(attrs.customer_id || '')
-  const subscriptionId = payload.data?.type === 'subscriptions' ? String(payload.data.id || '') : ''
+  const subscriptionId =
+    payload.data?.type === 'subscriptions' ? String(payload.data.id || '') : ''
   const orderId = payload.data?.type === 'orders' ? String(payload.data.id || '') : ''
   const variantId =
     (attrs.variant_id as number | string | undefined) ||
@@ -237,9 +228,14 @@ export async function handleLemonWebhook(
   if (event === 'order_created') {
     const plan = resolvePlan(variantId, customPlan)
     if (plan === 'single_session' && email) {
-      const user = ensureUser(email)
+      const user = ensureUserFromCheckout(email)
       grantSingleSessionPass(user.id, orderId || undefined)
-      if (customerId) updateUser(user.id, { lemonCustomerId: customerId, lemonVariantId: String(variantId || '') })
+      if (customerId) {
+        updateUser(user.id, {
+          lemonCustomerId: customerId,
+          lemonVariantId: String(variantId || '')
+        })
+      }
     }
     return { ok: true }
   }
@@ -257,15 +253,17 @@ export async function handleLemonWebhook(
       (customerId && findUserByLemonCustomer(customerId)) ||
       (email ? findUserByEmail(email) : null)
 
-    if (!user && email) user = ensureUser(email)
+    if (!user && email) user = ensureUserFromCheckout(email)
     if (!user) return { ok: true }
 
     const status = String(attrs.status || 'active')
-    const active = status === 'active' || status === 'on_trial' || event === 'subscription_payment_success'
+    const active =
+      status === 'active' || status === 'on_trial' || event === 'subscription_payment_success'
     const pastDue = status === 'past_due' || status === 'unpaid'
+    const nextPlan = plan && plan !== 'single_session' ? plan : plan || user.plan
 
     updateUser(user.id, {
-      plan: plan || user.plan,
+      plan: nextPlan,
       subStatus: active ? 'active' : pastDue ? 'past_due' : 'canceled',
       lemonCustomerId: customerId || user.lemonCustomerId,
       lemonSubscriptionId: subscriptionId || user.lemonSubscriptionId,
@@ -291,7 +289,8 @@ export async function handleLemonWebhook(
       (email ? findUserByEmail(email) : null)
     if (user) {
       const endsAt = attrs.ends_at ? Date.parse(String(attrs.ends_at)) : NaN
-      const stillActive = event === 'subscription_cancelled' && Number.isFinite(endsAt) && endsAt > Date.now()
+      const stillActive =
+        event === 'subscription_cancelled' && Number.isFinite(endsAt) && endsAt > Date.now()
       if (!stillActive) {
         updateUser(user.id, {
           plan: 'free',
@@ -308,7 +307,6 @@ export async function handleLemonWebhook(
   return { ok: true }
 }
 
-/** @deprecated Stripe path kept only so old imports compile during cutover */
 export async function handleStripeWebhook(
   _rawBody: string,
   _signature: string | undefined

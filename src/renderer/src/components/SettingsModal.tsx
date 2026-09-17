@@ -77,6 +77,10 @@ export function SettingsModal(): React.ReactNode | null {
   const [models, setModels] = useState<ModelOption[]>([])
   const [modelsLoading, setModelsLoading] = useState(false)
   const [modelsError, setModelsError] = useState<string | null>(null)
+  const [accountPassword, setAccountPassword] = useState('')
+  const [accountAuthBusy, setAccountAuthBusy] = useState(false)
+  const [accountAuthMsg, setAccountAuthMsg] = useState<string | null>(null)
+  const [accountMode, setAccountMode] = useState<'login' | 'claim'>('login')
   const fetchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   const [prevSettings, setPrevSettings] = useState(settings)
@@ -191,8 +195,11 @@ export function SettingsModal(): React.ReactNode | null {
         hideFromDock: localSettings.hideFromDock !== false,
         accountName: localSettings.accountName?.trim() || '',
         accountEmail: localSettings.accountEmail?.trim() || '',
+        authToken: localSettings.authToken || '',
         membershipPlan: localSettings.membershipPlan || 'free',
-        membershipStatus: localSettings.membershipStatus || 'inactive'
+        membershipStatus: localSettings.membershipStatus || 'inactive',
+        billingInterval: localSettings.billingInterval || 'none',
+        singleSession: localSettings.singleSession || null
       }
       const updatedSettings = await window.api.updateSettings(updatedLocalSettings)
       setSettings(updatedSettings as AppSettings)
@@ -234,6 +241,120 @@ export function SettingsModal(): React.ReactNode | null {
     } catch (err) {
       console.error('Failed to clear logo:', err)
       setLogoError('Failed to remove logo')
+    }
+  }
+
+  const KALFI_API = 'https://api.srv835792.hstgr.cloud'
+
+  const applyCloudUser = async (payload: {
+    token: string
+    user: {
+      email: string
+      plan: AppSettings['membershipPlan']
+      subStatus: string
+      singleSession?: AppSettings['singleSession']
+      needsPasswordSetup?: boolean
+    }
+  }): Promise<void> => {
+    const statusMap: Record<string, AppSettings['membershipStatus']> = {
+      none: 'inactive',
+      active: 'active',
+      past_due: 'past_due',
+      canceled: 'canceled',
+      expired: 'expired'
+    }
+    const next: Partial<AppSettings> = {
+      accountEmail: payload.user.email,
+      authToken: payload.token,
+      membershipPlan: payload.user.plan || 'free',
+      membershipStatus: statusMap[payload.user.subStatus] || 'inactive',
+      singleSession: payload.user.singleSession || null
+    }
+    const updated = await window.api.updateSettings({ ...localSettings, ...next })
+    setLocalSettings(updated as AppSettings)
+    setSettings(updated as AppSettings)
+  }
+
+  const handleAccountAuth = async (): Promise<void> => {
+    const email = localSettings.accountEmail?.trim()
+    if (!email || accountPassword.length < 8) {
+      setAccountAuthMsg('Email and password (min 8 chars) required.')
+      return
+    }
+    setAccountAuthBusy(true)
+    setAccountAuthMsg(null)
+    try {
+      const path = accountMode === 'claim' ? '/v1/auth/claim' : '/v1/auth/login'
+      const res = await fetch(`${KALFI_API}${path}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password: accountPassword })
+      })
+      const data = (await res.json()) as {
+        error?: string
+        code?: string
+        token?: string
+        user?: {
+          email: string
+          plan: AppSettings['membershipPlan']
+          subStatus: string
+          singleSession?: AppSettings['singleSession']
+        }
+      }
+      if (!res.ok || !data.token || !data.user) {
+        if (data.code === 'NEEDS_PASSWORD_SETUP') {
+          setAccountMode('claim')
+          setAccountAuthMsg('First time after checkout — switch to Set password and create one.')
+        } else {
+          setAccountAuthMsg(data.error || 'Auth failed')
+        }
+        return
+      }
+      await applyCloudUser({ token: data.token, user: data.user })
+      setAccountPassword('')
+      setAccountAuthMsg(
+        accountMode === 'claim'
+          ? 'Password set. Plan synced from your Lemon purchase.'
+          : 'Logged in. Plan synced.'
+      )
+      setAccountMode('login')
+    } catch (err) {
+      setAccountAuthMsg(err instanceof Error ? err.message : 'Network error')
+    } finally {
+      setAccountAuthBusy(false)
+    }
+  }
+
+  const handleSyncPlan = async (): Promise<void> => {
+    if (!localSettings.authToken) {
+      setAccountAuthMsg('Log in first to sync plan.')
+      return
+    }
+    setAccountAuthBusy(true)
+    setAccountAuthMsg(null)
+    try {
+      const res = await fetch(`${KALFI_API}/v1/billing/status`, {
+        headers: { Authorization: `Bearer ${localSettings.authToken}` }
+      })
+      const data = (await res.json()) as {
+        error?: string
+        user?: {
+          email: string
+          plan: AppSettings['membershipPlan']
+          subStatus: string
+          singleSession?: AppSettings['singleSession']
+        }
+      }
+      if (!res.ok || !data.user) {
+        setAccountAuthMsg(data.error || 'Could not sync plan')
+        return
+      }
+      await applyCloudUser({ token: localSettings.authToken, user: data.user })
+      setAccountAuthMsg(`Synced: ${data.user.plan} (${data.user.subStatus})`)
+    } catch (err) {
+      setAccountAuthMsg(err instanceof Error ? err.message : 'Network error')
+    } finally {
+      setAccountAuthBusy(false)
     }
   }
 
@@ -334,50 +455,94 @@ export function SettingsModal(): React.ReactNode | null {
                   Membership
                 </div>
                 <span className="rounded-full border border-dark-600 px-2 py-0.5 text-[10px] uppercase tracking-wider text-dark-400">
-                  {(localSettings.membershipStatus || 'inactive').replace('-', ' ')}
+                  {(localSettings.membershipStatus || 'inactive').replace(/_/g, ' ')}
                 </span>
               </div>
-              <select
-                value={localSettings.membershipPlan || 'free'}
-                onChange={(e) =>
-                  setLocalSettings({
-                    ...localSettings,
-                    membershipPlan: e.target.value as AppSettings['membershipPlan']
-                  })
-                }
-                className="w-full px-3 py-2 bg-dark-800 border border-dark-600 rounded-lg text-sm text-dark-100 focus:outline-none focus:border-blue-500 transition-colors"
-              >
-                <option value="free">Free / local only</option>
-                <option value="byok_monthly">BYOK Monthly — $14/mo</option>
-                <option value="byok_annual">BYOK Annual — $120/yr</option>
-                <option value="hosted_monthly">Hosted Monthly — $19/mo</option>
-                <option value="hosted_annual">Hosted Annual — $180/yr</option>
-                <option value="team">Team — $49/mo (3 seats)</option>
-                <option value="single_session">Single Session Pass — $9</option>
-              </select>
+              <p className="text-sm text-dark-100">
+                {localSettings.membershipPlan === 'free'
+                  ? 'Free / local only'
+                  : String(localSettings.membershipPlan).replace(/_/g, ' ')}
+                {localSettings.authToken ? (
+                  <span className="ml-2 text-[10px] uppercase tracking-wider text-emerald-400">
+                    linked
+                  </span>
+                ) : null}
+              </p>
               {localSettings.membershipPlan === 'single_session' && localSettings.singleSession ? (
                 <p className="text-[11px] text-dark-400 leading-relaxed">
                   Pass status:{' '}
                   <span className="text-dark-200">
                     {localSettings.singleSession.status.replace(/_/g, ' ')}
                   </span>
-                  {localSettings.singleSession.status === 'unused'
-                    ? ` · expires ${new Date(localSettings.singleSession.expiresAt).toLocaleDateString()}`
-                    : null}
                 </p>
               ) : null}
+
+              <div className="flex gap-2 text-[11px]">
+                <button
+                  type="button"
+                  className={`px-2 py-1 rounded border ${
+                    accountMode === 'login'
+                      ? 'border-blue-500 text-blue-300'
+                      : 'border-dark-600 text-dark-400'
+                  }`}
+                  onClick={() => setAccountMode('login')}
+                >
+                  Log in
+                </button>
+                <button
+                  type="button"
+                  className={`px-2 py-1 rounded border ${
+                    accountMode === 'claim'
+                      ? 'border-blue-500 text-blue-300'
+                      : 'border-dark-600 text-dark-400'
+                  }`}
+                  onClick={() => setAccountMode('claim')}
+                >
+                  Set password (after checkout)
+                </button>
+              </div>
+
+              <input
+                type="password"
+                value={accountPassword}
+                onChange={(e) => setAccountPassword(e.target.value)}
+                placeholder={
+                  accountMode === 'claim' ? 'New password (min 8 chars)' : 'Password'
+                }
+                className="w-full px-3 py-2 bg-dark-800 border border-dark-600 rounded-lg text-sm text-dark-100 placeholder-dark-500 focus:outline-none focus:border-blue-500 transition-colors"
+              />
+
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  disabled={accountAuthBusy}
+                  onClick={() => void handleAccountAuth()}
+                  className="px-3 py-2 text-sm rounded-lg border border-dark-600 text-dark-200 hover:border-blue-500 disabled:opacity-50"
+                >
+                  {accountAuthBusy
+                    ? '…'
+                    : accountMode === 'claim'
+                      ? 'Set password'
+                      : 'Log in'}
+                </button>
+                <button
+                  type="button"
+                  disabled={accountAuthBusy || !localSettings.authToken}
+                  onClick={() => void handleSyncPlan()}
+                  className="px-3 py-2 text-sm rounded-lg border border-dark-600 text-dark-200 hover:border-blue-500 disabled:opacity-50"
+                >
+                  Sync plan
+                </button>
+              </div>
+
               <p className="text-[11px] text-dark-500 leading-relaxed">
-                Feature access maps to BYOK / Hosted / Team / Single Session. Annual SKUs unlock the
-                same features as monthly. Checkout syncs from Lemon Squeezy webhooks once connected.
+                No login needed to pay on the website. After Lemon checkout, use the same email here
+                → Set password once → plan unlocks. Hosted AI needs an active Hosted/Team/Session
+                plan; BYOK still uses your own API key.
               </p>
-              <button
-                type="button"
-                disabled
-                className="w-full px-3 py-2 text-sm rounded-lg border border-dark-600 text-dark-500 cursor-not-allowed"
-                title="Coming soon"
-              >
-                Manage billing — coming soon
-              </button>
+              {accountAuthMsg ? (
+                <p className="text-[11px] text-dark-300 leading-relaxed">{accountAuthMsg}</p>
+              ) : null}
             </div>
           </div>
 

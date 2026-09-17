@@ -843,6 +843,15 @@
         </div>
 
         <div class="shell">
+          <div id="checkout-success" class="checkout-success" hidden>
+            <strong>Payment received.</strong>
+            <p data-success-detail>
+              Open the Kalfi app → Settings → Account. Use the same email from checkout to set your
+              password (first time) or log in. Your plan unlocks automatically.
+            </p>
+            <a class="btn btn--accent btn--sm" href="#download">Download Kalfi</a>
+          </div>
+
           <div
             class="billing-toggle"
             role="group"
@@ -1262,20 +1271,27 @@
         proPrice: 19,
         version: '1.0.3',
         githubRepo: 'haikallfikrii/AI-Meeting-Assistant',
-        // Lemon Squeezy checkout links (paste from dashboard after publish).
-        // Subscription product is multi-variant (BYOK/Hosted/Team monthly+annual on one page).
+        // Per-variant Lemon checkout URLs (each opens the correct plan pre-selected).
         lemonCheckout: {
           byokMonthly:
             'https://kalfi.lemonsqueezy.com/checkout/buy/1af8cd44-ee46-4981-9d22-e080041c0054',
           byokAnnual:
-            'https://kalfi.lemonsqueezy.com/checkout/buy/1af8cd44-ee46-4981-9d22-e080041c0054',
+            'https://kalfi.lemonsqueezy.com/checkout/buy/e2efb24a-4198-40f3-be40-e85ddb45bb16',
           hostedMonthly:
-            'https://kalfi.lemonsqueezy.com/checkout/buy/1af8cd44-ee46-4981-9d22-e080041c0054',
+            'https://kalfi.lemonsqueezy.com/checkout/buy/f8fc4f6f-092c-442d-9ca2-0789e643b286',
           hostedAnnual:
-            'https://kalfi.lemonsqueezy.com/checkout/buy/1af8cd44-ee46-4981-9d22-e080041c0054',
-          team: 'https://kalfi.lemonsqueezy.com/checkout/buy/1af8cd44-ee46-4981-9d22-e080041c0054',
+            'https://kalfi.lemonsqueezy.com/checkout/buy/9c4c5bd2-b60e-4338-9ff8-800b86727b6f',
+          team: 'https://kalfi.lemonsqueezy.com/checkout/buy/a33830c0-3f60-448a-98ef-2daf0911f119',
           singleSession:
             'https://kalfi.lemonsqueezy.com/checkout/buy/a139d3bf-e8ab-4d39-8395-fe3ec09f350e'
+        },
+        lemonVariantIds: {
+          byokMonthly: '2137642',
+          byokAnnual: '2137823',
+          hostedMonthly: '2137653',
+          hostedAnnual: '2137832',
+          team: '2137656',
+          singleSession: '2137842'
         },
         // Absolute asset URLs preferred once a GitHub Release exists.
         // Leave empty to auto-resolve from the latest release API (never invent 404 links).
