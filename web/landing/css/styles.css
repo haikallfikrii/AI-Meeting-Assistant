@@ -2242,6 +2242,11 @@ select {
   color: var(--fg-faint);
 }
 
+.plan__billed[hidden],
+.plan__save[hidden] {
+  display: none !important;
+}
+
 .plan__save {
   display: inline-flex;
   align-self: flex-start;
