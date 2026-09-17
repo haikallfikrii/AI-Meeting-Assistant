@@ -1,4 +1,4 @@
-import { BrowserWindow, desktopCapturer } from 'electron'
+import { BrowserWindow, desktopCapturer, systemPreferences } from 'electron'
 
 export interface ScreenshotResult {
   success: boolean
@@ -7,105 +7,140 @@ export interface ScreenshotResult {
 }
 
 /**
- * Service to capture screenshots of the active window
+ * Capture a screenshot of another app window (or the screen as fallback)
+ * for vision analysis. Never captures our own overlay.
  */
 export class ScreenshotService {
-  private appWindowTitle?: string
+  constructor(_appWindow?: BrowserWindow) {
+    // Window reference not stored — titles are read live from BrowserWindow.getAllWindows()
+    // so custom brand names stay excluded after rename.
+  }
 
-  constructor(appWindow?: BrowserWindow) {
-    // Get the app window title to exclude it from capture
-    if (appWindow) {
-      this.appWindowTitle = appWindow.getTitle()
+  private ownWindowTitles(): string[] {
+    const titles = new Set<string>()
+    for (const win of BrowserWindow.getAllWindows()) {
+      if (win.isDestroyed()) continue
+      const title = (win.getTitle() || '').trim()
+      if (title) titles.add(title)
+    }
+    // Defaults even if title was customized via branding
+    titles.add('Kalfi')
+    return Array.from(titles)
+  }
+
+  /** Only exclude OUR windows — never filter by generic words like "interview". */
+  private isOwnWindow(sourceName: string): boolean {
+    const name = sourceName.trim()
+    const lower = name.toLowerCase()
+
+    if (lower.includes('devtools') || lower.includes('dev tools')) return true
+
+    for (const title of this.ownWindowTitles()) {
+      const t = title.toLowerCase()
+      if (!t) continue
+      if (lower === t) return true
+      // Electron often shows "Title — live session" / "Title - live session"
+      if (lower.startsWith(t + ' —') || lower.startsWith(t + ' -') || lower.startsWith(t + ' |')) {
+        return true
+      }
+    }
+    return false
+  }
+
+  private async ensureScreenPermission(): Promise<string | null> {
+    if (process.platform !== 'darwin') return null
+    try {
+      const status = systemPreferences.getMediaAccessStatus('screen')
+      if (status === 'granted') return null
+      if (status === 'denied' || status === 'restricted') {
+        return 'Screen Recording permission is off. Open System Settings → Privacy & Security → Screen Recording, enable Kalfi, then quit and reopen the app.'
+      }
+      // not-determined: macOS will prompt on the next capture attempt
+      return null
+    } catch {
+      return null
     }
   }
 
   /**
-   * Captures the currently active/focused window (excluding the AI assistant app)
-   * @returns Base64 encoded image data URL
+   * Captures the best available window (prefer browser), excluding Kalfi.
+   * Falls back to the full screen if no other windows are listed.
    */
   async captureActiveWindow(): Promise<ScreenshotResult> {
     try {
-      // Get all available sources (windows and screens)
+      const permissionError = await this.ensureScreenPermission()
+
       const sources = await desktopCapturer.getSources({
         types: ['window'],
-        thumbnailSize: { width: 1920, height: 1080 }, // High quality
+        thumbnailSize: { width: 1920, height: 1080 },
         fetchWindowIcons: false
       })
-
-      if (sources.length === 0) {
-        return {
-          success: false,
-          error: 'No windows available to capture'
-        }
-      }
 
       console.log(
         'Available windows:',
         sources.map((s) => s.name)
       )
 
-      // Filter out this overlay (default + any custom brand title)
-      const appWindowPatterns = [
-        'Kalfi',
-        'kalfi',
-        'Interview Copilot',
-        'interview-copilot',
-        'interview',
-        'electron',
-        this.appWindowTitle || '',
-        this.appWindowTitle?.toLowerCase() || ''
-      ].filter(Boolean)
+      const filteredSources = sources.filter((source) => !this.isOwnWindow(source.name))
 
-      const filteredSources = sources.filter((source) => {
-        const sourceNameLower = source.name.toLowerCase()
-        // Exclude if it matches any app window pattern
-        const isAppWindow = appWindowPatterns.some((pattern) => {
-          if (!pattern) return false
-          return sourceNameLower.includes(pattern) || sourceNameLower === pattern
+      if (filteredSources.length > 0) {
+        const browserKeywords = [
+          'chrome',
+          'chromium',
+          'edge',
+          'firefox',
+          'safari',
+          'opera',
+          'brave',
+          'arc',
+          'vivaldi'
+        ]
+        const browserSource = filteredSources.find((source) => {
+          const nameLower = source.name.toLowerCase()
+          return browserKeywords.some((keyword) => nameLower.includes(keyword))
         })
 
-        // Also exclude if it's clearly an Electron dev window
-        const isElectronDev =
-          sourceNameLower.includes('electron') &&
-          (sourceNameLower.includes('devtools') || sourceNameLower.includes('dev tools'))
+        const activeSource = browserSource || filteredSources[0]
+        console.log('Capturing window:', activeSource.name)
 
-        return !isAppWindow && !isElectronDev
-      })
+        if (!activeSource.thumbnail || activeSource.thumbnail.isEmpty()) {
+          return {
+            success: false,
+            error: 'Failed to capture window thumbnail'
+          }
+        }
 
-      if (filteredSources.length === 0) {
         return {
-          success: false,
-          error:
-            'No other windows available to capture. Please open a browser or another application.'
+          success: true,
+          imageData: activeSource.thumbnail.toDataURL()
         }
       }
 
-      // Prioritize browser windows
-      const browserKeywords = ['chrome', 'edge', 'firefox', 'safari', 'opera', 'brave', 'browser']
-      const browserSource = filteredSources.find((source) => {
-        const nameLower = source.name.toLowerCase()
-        return browserKeywords.some((keyword) => nameLower.includes(keyword))
+      // Fallback: capture the primary screen (common when permission lists no windows,
+      // or only Kalfi is open / visible to the capturer).
+      const screens = await desktopCapturer.getSources({
+        types: ['screen'],
+        thumbnailSize: { width: 1920, height: 1080 },
+        fetchWindowIcons: false
       })
 
-      // If we found a browser, use it; otherwise use the first non-app window
-      const activeSource = browserSource || filteredSources[0]
-
-      console.log('Capturing window:', activeSource.name)
-
-      if (!activeSource || !activeSource.thumbnail) {
+      const screen = screens[0]
+      if (screen?.thumbnail && !screen.thumbnail.isEmpty()) {
+        console.log('No other windows listed — falling back to screen capture:', screen.name)
         return {
-          success: false,
-          error: 'Failed to capture window thumbnail'
+          success: true,
+          imageData: screen.thumbnail.toDataURL()
         }
       }
 
-      // Convert native image to base64 data URL
-      const image = activeSource.thumbnail
-      const imageDataUrl = image.toDataURL()
+      if (permissionError) {
+        return { success: false, error: permissionError }
+      }
 
       return {
-        success: true,
-        imageData: imageDataUrl
+        success: false,
+        error:
+          'No other windows available to capture. Open the page you want analyzed (browser, IDE, etc.), grant Screen Recording to Kalfi if prompted, then try again.'
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
@@ -119,8 +154,6 @@ export class ScreenshotService {
 
   /**
    * Captures a specific window by name
-   * @param windowName Name or partial name of the window to capture
-   * @returns Base64 encoded image data URL
    */
   async captureWindowByName(windowName: string): Promise<ScreenshotResult> {
     try {
@@ -134,19 +167,16 @@ export class ScreenshotService {
         source.name.toLowerCase().includes(windowName.toLowerCase())
       )
 
-      if (!matchingSource || !matchingSource.thumbnail) {
+      if (!matchingSource || !matchingSource.thumbnail || matchingSource.thumbnail.isEmpty()) {
         return {
           success: false,
           error: `Window "${windowName}" not found`
         }
       }
 
-      const image = matchingSource.thumbnail
-      const imageDataUrl = image.toDataURL()
-
       return {
         success: true,
-        imageData: imageDataUrl
+        imageData: matchingSource.thumbnail.toDataURL()
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'

@@ -1,4 +1,4 @@
-import { BrowserWindow, app, clipboard, desktopCapturer, ipcMain } from 'electron'
+import { BrowserWindow, app, clipboard, desktopCapturer, globalShortcut, ipcMain } from 'electron'
 import { AnswerEntry } from '../../preload/index'
 import { HistoryManager } from '../services/historyManager'
 import { OpenAIService } from '../services/openaiService'
@@ -14,7 +14,7 @@ import { ScreenshotService } from '../services/screenshotService'
 import { SessionManager } from '../services/sessionManager'
 import { SessionMode } from '../services/promptBuilder'
 import { AppSettings, SettingsManager } from '../services/settingsManager'
-import { consumeSingleSession, startSingleSession } from '../services/entitlement'
+import { hasPaidAccess, consumeSingleSession, startSingleSession } from '../services/entitlement'
 import { WorkSession, whisperLanguageCode } from '../services/sessionTypes'
 import { VisionService } from '../services/visionService'
 import { WhisperService } from '../services/whisperService'
@@ -26,6 +26,9 @@ import {
   pickAndStoreBrandLogo,
   shouldHideFromDock
 } from '../services/branding'
+
+/** Global + in-app Shot hotkey (⌘⇧S / Ctrl+Shift+S) */
+export const SHOT_ACCELERATOR = 'CommandOrControl+Shift+S'
 
 let whisperService: WhisperService | null = null
 let openaiService: OpenAIService | null = null
@@ -41,6 +44,49 @@ let isCapturing = false
 let forceNextTranscriptAsQuestion = false
 /** Current capture mix — used to decide interviewer vs self speech. */
 let captureAudioSource: 'microphone' | 'system' | 'both' = 'both'
+
+function assertEntitled(): void {
+  const s = settingsManager?.getSettings()
+  if (
+    !s ||
+    !hasPaidAccess(s.membershipPlan, s.membershipStatus, s.authToken, s.singleSession)
+  ) {
+    throw new Error(
+      'Sign in with an active Kalfi plan to use the app. Open Account or visit kalfi.app to subscribe.'
+    )
+  }
+}
+
+function emitTriggerShot(): void {
+  if (!mainWindow || mainWindow.isDestroyed()) return
+  mainWindow.webContents.send('trigger-shot')
+}
+
+export function registerShotShortcut(): void {
+  try {
+    globalShortcut.unregister(SHOT_ACCELERATOR)
+  } catch {
+    /* ignore */
+  }
+  try {
+    const ok = globalShortcut.register(SHOT_ACCELERATOR, () => {
+      emitTriggerShot()
+    })
+    if (!ok) {
+      console.warn('Shot shortcut already in use:', SHOT_ACCELERATOR)
+    }
+  } catch (error) {
+    console.error('Failed to register Shot shortcut:', error)
+  }
+}
+
+export function unregisterShotShortcut(): void {
+  try {
+    globalShortcut.unregister(SHOT_ACCELERATOR)
+  } catch {
+    /* ignore */
+  }
+}
 
 async function answerDetectedText(rawText: string, opts?: { force?: boolean }): Promise<void> {
   if (!openaiService || !questionDetector) return
@@ -150,6 +196,12 @@ export function initializeIpcHandlers(window: BrowserWindow): void {
   if (typeof bootSettings.hideFromDock !== 'boolean') {
     settingsManager.updateSettings({ hideFromDock: true })
   }
+
+  registerShotShortcut()
+
+  ipcMain.handle('get-shot-shortcut', () => {
+    return process.platform === 'darwin' ? '⌘⇧S' : 'Ctrl+Shift+S'
+  })
 
   // Settings handlers
   ipcMain.handle('get-settings', () => {
@@ -397,6 +449,7 @@ export function initializeIpcHandlers(window: BrowserWindow): void {
   ipcMain.handle(
     'start-capture',
     async (_event, source?: 'microphone' | 'system' | 'both') => {
+    assertEntitled()
     const settings = settingsManager?.getSettings()
     captureAudioSource =
       source === 'microphone' || source === 'system' || source === 'both' ? source : 'both'
@@ -665,6 +718,7 @@ export function initializeIpcHandlers(window: BrowserWindow): void {
   // Screenshot handlers
   ipcMain.handle('capture-screenshot', async () => {
     try {
+      assertEntitled()
       if (!screenshotService) {
         screenshotService = new ScreenshotService(mainWindow || undefined)
       }
@@ -724,6 +778,15 @@ export function initializeIpcHandlers(window: BrowserWindow): void {
   )
 
   ipcMain.handle('analyze-screenshot', async (_event, imageData: string) => {
+    try {
+      assertEntitled()
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Not entitled'
+      }
+    }
+
     const settings = settingsManager?.getSettings()
 
     if (!settings?.openaiApiKey) {
@@ -875,6 +938,7 @@ export function reapplyDockPreference(): void {
 }
 
 export function cleanupIpcHandlers(): void {
+  unregisterShotShortcut()
   if (whisperService) {
     whisperService.stop()
     whisperService = null

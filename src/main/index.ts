@@ -2,7 +2,13 @@ import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import { Menu, app, BrowserWindow, nativeImage, screen, session, shell } from 'electron'
 import { join } from 'path'
 import icon from '../../resources/icon.png?asset'
-import { cleanupIpcHandlers, initializeIpcHandlers, reapplyDockPreference } from './ipc/handlers'
+import {
+  cleanupIpcHandlers,
+  initializeIpcHandlers,
+  reapplyDockPreference,
+  registerShotShortcut
+} from './ipc/handlers'
+import { applyDockVisibility } from './services/branding'
 import { applyOverlayWindowBehavior } from './windowOverlay'
 
 let mainWindow: BrowserWindow | null = null
@@ -37,6 +43,13 @@ function installZoomShortcuts(win: BrowserWindow): void {
 
     const key = input.key
     const code = input.code
+
+    // Shot: Cmd/Ctrl + Shift + S (also registered globally)
+    if (input.shift && (key === 's' || key === 'S' || code === 'KeyS')) {
+      event.preventDefault()
+      win.webContents.send('trigger-shot')
+      return
+    }
 
     // Zoom in: Cmd/Ctrl + = / + / NumpadAdd
     if (key === '=' || key === '+' || code === 'Equal' || code === 'NumpadAdd') {
@@ -165,11 +178,23 @@ function createWindow(): void {
     mainWindow?.showInactive()
     // Showing a panel window can briefly reveal the Dock — re-apply preference
     reapplyDockPreference()
+    ;[50, 200, 500, 1200].forEach((ms) => {
+      setTimeout(() => reapplyDockPreference(), ms)
+    })
   })
 
   // Re-apply overlay flags if macOS resets them after Space / display changes
   mainWindow.on('show', () => {
     if (mainWindow) applyOverlayWindowBehavior(mainWindow, true)
+    reapplyDockPreference()
+  })
+
+  mainWindow.webContents.on('did-finish-load', () => {
+    reapplyDockPreference()
+    registerShotShortcut()
+  })
+
+  mainWindow.on('focus', () => {
     reapplyDockPreference()
   })
 
@@ -216,10 +241,9 @@ app.whenReady().then(() => {
   // Set app user model id for windows
   electronApp.setAppUserModelId('com.kalfi.app')
 
-  // Dock visibility is applied from settings inside initializeIpcHandlers / branding.
-  // Keep a safe default hide until settings load if createWindow is delayed.
-  if (process.platform === 'darwin' && app.dock) {
-    app.dock.hide()
+  // Hide from Dock before the first window — default stealth until settings load
+  if (process.platform === 'darwin') {
+    applyDockVisibility(true)
   }
 
   setupAppMenu()
@@ -231,9 +255,11 @@ app.whenReady().then(() => {
   })
 
   createWindow()
+  registerShotShortcut()
 
   app.on('activate', function () {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
+    reapplyDockPreference()
   })
 })
 

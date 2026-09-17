@@ -48,6 +48,7 @@ export interface AppSettings {
     expiresAt: number
     sessionStartedAt?: number
   } | null
+  onboardingCompleted: boolean
 }
 
 interface InterviewState {
@@ -137,7 +138,8 @@ const DEFAULT_SETTINGS: AppSettings = {
   membershipPlan: 'free',
   membershipStatus: 'inactive',
   billingInterval: 'none',
-  singleSession: null
+  singleSession: null,
+  onboardingCompleted: false
 }
 
 export type { SessionMode, WorkSession }

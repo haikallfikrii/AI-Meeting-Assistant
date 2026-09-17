@@ -199,7 +199,8 @@ export function SettingsModal(): React.ReactNode | null {
         membershipPlan: localSettings.membershipPlan || 'free',
         membershipStatus: localSettings.membershipStatus || 'inactive',
         billingInterval: localSettings.billingInterval || 'none',
-        singleSession: localSettings.singleSession || null
+        singleSession: localSettings.singleSession || null,
+        onboardingCompleted: localSettings.onboardingCompleted === true
       }
       const updatedSettings = await window.api.updateSettings(updatedLocalSettings)
       setSettings(updatedSettings as AppSettings)
