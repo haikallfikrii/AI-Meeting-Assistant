@@ -145,7 +145,12 @@
                     </li>
                     <li>Paste this line and press Enter:</li>
                   </ol>
-                  <pre class="install-code" tabindex="0"><code>xattr -cr /Applications/Kalfi.app</code></pre>
+                  <pre class="install-code" tabindex="0" data-copy-cmd>
+                    <code>xattr -cr /Applications/Kalfi.app</code>
+                    <button type="button" class="copy-cmd__btn" data-copy-btn aria-label="Copy command">
+                      <span class="copy-cmd__label" data-copy-label>Copy</span>
+                    </button>
+                  </pre>
                   <ol class="install-steps" start="3">
                     <li>No output is normal. Open Kalfi again from Applications.</li>
                   </ol>
@@ -177,7 +182,12 @@
                   </li>
                   <li>
                     Or from a terminal:
-                    <code>chmod +x kalfi-*.AppImage && ./kalfi-*.AppImage</code>
+                    <div class="copy-cmd" data-copy-cmd style="margin-top: 10px">
+                      <code>chmod +x kalfi-*.AppImage &amp;&amp; ./kalfi-*.AppImage</code>
+                      <button type="button" class="copy-cmd__btn" data-copy-btn aria-label="Copy command">
+                        <span class="copy-cmd__label" data-copy-label>Copy</span>
+                      </button>
+                    </div>
                   </li>
                   <li>Launch the app, then continue with first-time setup below.</li>
                 </ol>

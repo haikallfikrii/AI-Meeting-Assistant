@@ -1033,6 +1033,141 @@
       })
   }
 
+  function copyCommands() {
+    document.addEventListener('click', function (e) {
+      var btn = e.target.closest('[data-copy-btn]')
+      if (!btn) return
+      var wrap = btn.closest('[data-copy-cmd]')
+      if (!wrap) return
+      var code = wrap.querySelector('code')
+      var label = btn.querySelector('[data-copy-label]') || btn
+      var text = (code && code.textContent) || ''
+      if (!text) return
+
+      var done = function () {
+        wrap.classList.add('is-flash')
+        btn.classList.add('is-copied')
+        var prev = label.textContent
+        label.textContent = 'Copied'
+        window.setTimeout(function () {
+          wrap.classList.remove('is-flash')
+          btn.classList.remove('is-copied')
+          label.textContent = prev || 'Copy'
+        }, 1400)
+      }
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(function () {
+          fallbackCopy(text, done)
+        })
+      } else {
+        fallbackCopy(text, done)
+      }
+    })
+  }
+
+  function fallbackCopy(text, done) {
+    try {
+      var ta = document.createElement('textarea')
+      ta.value = text
+      ta.setAttribute('readonly', '')
+      ta.style.position = 'fixed'
+      ta.style.opacity = '0'
+      document.body.appendChild(ta)
+      ta.select()
+      document.execCommand('copy')
+      document.body.removeChild(ta)
+      done()
+    } catch (_) {}
+  }
+
+  var INSTALL_GUIDES = {
+    mac: {
+      label: 'macOS',
+      steps: [
+        'Open the downloaded <strong>.dmg</strong> from your Downloads folder.',
+        'Drag <strong>Kalfi</strong> into the <strong>Applications</strong> folder.',
+        'Open Kalfi from Applications. If Gatekeeper blocks it, use System Settings → Privacy &amp; Security → <strong>Open Anyway</strong>.',
+        'Allow microphone / system audio when asked, then paste your API key in Settings (BYOK) or log in (Hosted).'
+      ],
+      cmd: 'xattr -cr /Applications/Kalfi.app'
+    },
+    win: {
+      label: 'Windows',
+      steps: [
+        'Open the downloaded <strong>.exe</strong> installer.',
+        'If SmartScreen appears: click <strong>More info</strong> → <strong>Run anyway</strong>.',
+        'Follow Next → Install, then launch Kalfi from the Start menu.',
+        'Allow microphone access, then add your API key or log in to your plan.'
+      ],
+      cmd: ''
+    },
+    linux: {
+      label: 'Linux',
+      steps: [
+        'Find the downloaded <strong>.AppImage</strong>.',
+        'Make it executable (Properties → Allow executing file as program), or use the command below.',
+        'Double-click the AppImage (or run it from the terminal).',
+        'Grant mic / audio permissions, then finish first-time setup in the app.'
+      ],
+      cmd: 'chmod +x kalfi-*.AppImage && ./kalfi-*.AppImage'
+    }
+  }
+
+  function installModal() {
+    var modal = document.getElementById('install-modal')
+    if (!modal) return
+
+    var stepsEl = modal.querySelector('[data-install-steps]')
+    var osLabel = modal.querySelector('[data-install-os-label]')
+    var cmdWrap = modal.querySelector('[data-install-cmd-wrap]')
+    var cmdEl = modal.querySelector('[data-install-cmd]')
+
+    var open = function (os) {
+      var guide = INSTALL_GUIDES[os] || INSTALL_GUIDES.mac
+      if (osLabel) osLabel.textContent = guide.label
+      if (stepsEl) {
+        stepsEl.innerHTML = guide.steps.map(function (s) {
+          return '<li>' + s + '</li>'
+        }).join('')
+      }
+      if (cmdWrap && cmdEl) {
+        if (guide.cmd) {
+          cmdEl.textContent = guide.cmd
+          cmdWrap.hidden = false
+        } else {
+          cmdWrap.hidden = true
+        }
+      }
+      modal.hidden = false
+      document.body.style.overflow = 'hidden'
+    }
+
+    var close = function () {
+      modal.hidden = true
+      document.body.style.overflow = ''
+    }
+
+    modal.addEventListener('click', function (e) {
+      if (e.target.closest('[data-install-close]')) close()
+    })
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && !modal.hidden) close()
+    })
+
+    document.addEventListener('click', function (e) {
+      var go = e.target.closest('[data-download-primary]')
+      if (!go) return
+      if (go.classList.contains('is-disabled')) return
+      var href = go.getAttribute('href') || ''
+      if (!href || href.charAt(0) === '#' || href.indexOf('docs') === 0) return
+      // Let the browser start the download, then show the guide.
+      window.setTimeout(function () {
+        open(selectedOS || detectClientOS())
+      }, 180)
+    })
+  }
+
   function init() {
     chrome()
     heroMotion()
@@ -1045,6 +1180,8 @@
     bindDownloadWidgets()
     bindDocsOsTabs()
     downloads()
+    copyCommands()
+    installModal()
   }
 
   if (document.readyState === 'loading') {
