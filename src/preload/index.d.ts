@@ -96,6 +96,7 @@ export interface AppSettings {
   hideFromDock: boolean
   accountName: string
   accountEmail: string
+  authToken: string
   membershipPlan:
     | 'free'
     | 'byok_monthly'

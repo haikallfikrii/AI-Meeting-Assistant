@@ -42,6 +42,8 @@ export interface AppSettings {
   /** Local profile scaffold — auth/billing wired later. */
   accountName: string
   accountEmail: string
+  /** JWT from Kalfi API after login/claim */
+  authToken: string
   /** Lemon SKU (6 paid + free). Feature gating uses featureTierOf(membershipPlan). */
   membershipPlan: BillingPlan
   membershipStatus: MembershipStatus
@@ -127,6 +129,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   hideFromDock: true,
   accountName: '',
   accountEmail: '',
+  authToken: '',
   membershipPlan: 'free',
   membershipStatus: 'inactive',
   billingInterval: 'none',
@@ -253,6 +256,10 @@ export class SettingsManager {
             typeof savedSettings.accountEmail === 'string'
               ? savedSettings.accountEmail
               : DEFAULT_SETTINGS.accountEmail,
+          authToken:
+            typeof savedSettings.authToken === 'string'
+              ? savedSettings.authToken
+              : DEFAULT_SETTINGS.authToken,
           membershipPlan: normalizeBillingPlan(savedSettings.membershipPlan),
           membershipStatus: normalizeMembershipStatus(savedSettings.membershipStatus),
           singleSession: normalizeSingleSession(savedSettings.singleSession)

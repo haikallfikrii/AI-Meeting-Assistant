@@ -31,6 +31,7 @@ export interface AppSettings {
   hideFromDock: boolean
   accountName: string
   accountEmail: string
+  authToken: string
   membershipPlan:
     | 'free'
     | 'byok_monthly'
@@ -132,6 +133,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   hideFromDock: true,
   accountName: '',
   accountEmail: '',
+  authToken: '',
   membershipPlan: 'free',
   membershipStatus: 'inactive',
   billingInterval: 'none',

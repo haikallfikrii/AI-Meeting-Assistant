@@ -33,6 +33,8 @@ export interface User {
   lemonOrderId?: string
   lemonVariantId?: string
   singleSession?: SingleSessionState
+  /** True when account was auto-created from Lemon checkout — user must set a password */
+  needsPasswordSetup?: boolean
   usageMonth: string
   tokensUsed: number
   createdAt: number
@@ -121,7 +123,11 @@ export function findUserByLemonSubscription(subscriptionId: string): User | null
   return raw ? hydrateUser(raw) : null
 }
 
-export function createUser(email: string, password: string): User {
+export function createUser(
+  email: string,
+  password: string,
+  options?: { needsPasswordSetup?: boolean }
+): User {
   const db = read()
   const normalized = email.trim().toLowerCase()
   if (db.users.some((u) => u.email === normalized)) {
@@ -134,6 +140,7 @@ export function createUser(email: string, password: string): User {
     passwordHash: hashPassword(password),
     plan: 'free',
     subStatus: 'none',
+    needsPasswordSetup: Boolean(options?.needsPasswordSetup),
     usageMonth: monthKey(),
     tokensUsed: 0,
     createdAt: now,
@@ -142,6 +149,13 @@ export function createUser(email: string, password: string): User {
   db.users.push(user)
   write(db)
   return user
+}
+
+export function setUserPassword(id: string, password: string): User | null {
+  return updateUser(id, {
+    passwordHash: hashPassword(password),
+    needsPasswordSetup: false
+  })
 }
 
 export function updateUser(id: string, patch: Partial<User>): User | null {
@@ -226,6 +240,7 @@ export function publicUser(user: User) {
           sessionStartedAt: singleSession.sessionStartedAt
         }
       : null,
+    needsPasswordSetup: Boolean(user.needsPasswordSetup),
     /** @deprecated use featureTier + subStatus */
     proActive: paid && (featureTier === 'hosted' || featureTier === 'team'),
     paidActive: paid
