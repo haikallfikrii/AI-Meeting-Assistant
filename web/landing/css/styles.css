@@ -2114,8 +2114,10 @@ select {
   position: fixed;
   inset: 0;
   z-index: 80;
-  display: grid;
-  place-items: center;
+  display: grid !important;
+  place-items: center !important;
+  justify-items: center;
+  align-items: center;
   padding: 20px;
   background: rgba(2, 6, 14, 0.72);
   backdrop-filter: blur(6px);
@@ -2123,8 +2125,9 @@ select {
 
 .email-gate__card {
   position: relative;
-  width: min(420px, 100%);
-  padding: 24px 22px 20px;
+  width: min(400px, calc(100vw - 32px));
+  margin: 0 auto;
+  padding: 28px 24px 22px;
   border-radius: 16px;
   border: 1px solid rgba(148, 163, 184, 0.22);
   background: #0b1220;
@@ -2144,16 +2147,29 @@ select {
   cursor: pointer;
 }
 
+.email-gate__eyebrow {
+  margin: 0 0 6px;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #60a5fa;
+}
+
 .email-gate__card h3 {
   margin: 0 0 8px;
-  font-size: 1.15rem;
+  font-size: 1.2rem;
 }
 
 .email-gate__lead {
-  margin: 0 0 16px;
+  margin: 0 0 18px;
   color: #94a3b8;
   font-size: 0.9rem;
   line-height: 1.45;
+}
+
+.email-gate__lead strong {
+  color: #e2e8f0;
+  font-weight: 600;
 }
 
 .email-gate__label {
@@ -2166,7 +2182,7 @@ select {
 
 .email-gate__label input {
   width: 100%;
-  padding: 10px 12px;
+  padding: 12px 14px;
   border-radius: 10px;
   border: 1px solid rgba(148, 163, 184, 0.28);
   background: #111827;
@@ -2174,12 +2190,27 @@ select {
   font: inherit;
 }
 
+.email-gate__label input[data-gate-code],
+.email-gate__label input[inputmode='numeric'] {
+  letter-spacing: 0.28em;
+  font-size: 1.15rem;
+  text-align: center;
+}
+
 .email-gate__otp {
   margin-top: 4px;
 }
 
+.email-gate__sent {
+  margin: 0 0 12px;
+  font-size: 0.85rem;
+  color: #93c5fd;
+  line-height: 1.4;
+}
+
 .email-gate__codebox {
-  margin-top: 12px;
+  margin-top: 8px;
+  margin-bottom: 8px;
   padding: 12px;
   border-radius: 12px;
   border: 1px solid rgba(52, 211, 153, 0.35);
@@ -2204,13 +2235,6 @@ select {
   color: #ecfdf5;
 }
 
-.email-gate__codebox-hint {
-  margin: 8px 0 0;
-  font-size: 0.75rem;
-  color: #94a3b8;
-  line-height: 1.4;
-}
-
 .email-gate__msg {
   margin: 0 0 12px;
   font-size: 0.85rem;
@@ -2221,12 +2245,13 @@ select {
   color: #fbbf24;
 }
 
-.email-gate__actions {
-  display: grid;
-  gap: 8px;
+.email-gate__primary {
+  width: 100%;
+  margin-top: 4px;
 }
 
 .email-gate__resend {
+  display: block;
   margin-top: 10px;
   width: 100%;
   border: 0;
@@ -2234,6 +2259,12 @@ select {
   color: #94a3b8;
   font-size: 0.8rem;
   cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.email-gate__resend:hover {
+  color: #e2e8f0;
 }
 
 .billing-toggle__btn {

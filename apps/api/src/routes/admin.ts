@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { env } from '../lib/config.js'
 import { type BillingPlan, normalizeLegacyPlan } from '../lib/entitlement.js'
 import { listEvents, recordEvent, salesAnalytics } from '../lib/events.js'
+import { listLeads } from '../lib/leads.js'
 import {
   adminOverview,
   createUser,
@@ -210,12 +211,26 @@ adminRoutes.get('/events', async (c) => {
 
 adminRoutes.get('/analytics', async (c) => {
   if (!requireAdmin(c)) return c.json({ error: 'Forbidden' }, 403)
+  const leads = listLeads({ limit: 100 })
   return c.json({
     ok: true,
     overview: adminOverview(),
     sales: salesAnalytics(),
-    events: listEvents({ limit: 30 })
+    events: listEvents({ limit: 30 }),
+    leads: {
+      summary: leads.summary,
+      total: leads.total,
+      recent: leads.leads
+    }
   })
+})
+
+adminRoutes.get('/leads', async (c) => {
+  if (!requireAdmin(c)) return c.json({ error: 'Forbidden' }, 403)
+  const q = c.req.query('q') || ''
+  const status = c.req.query('status') || 'all'
+  const limit = Number(c.req.query('limit') || '100')
+  return c.json({ ok: true, ...listLeads({ q, status, limit }) })
 })
 
 /**

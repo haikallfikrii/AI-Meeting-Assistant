@@ -687,45 +687,56 @@
     if (existing) existing.remove()
 
     var apiBase = String(CONFIG.apiBaseUrl || '').replace(/\/$/, '')
+    var planLabel = opts.plan
+      ? String(opts.plan).replace(/_/g, ' ')
+      : 'your plan'
     var root = document.createElement('div')
     root.id = 'checkout-email-gate'
     root.className = 'email-gate'
     root.innerHTML =
       '<div class="email-gate__card" role="dialog" aria-modal="true" aria-labelledby="email-gate-title">' +
       '<button type="button" class="email-gate__close" data-gate-close aria-label="Close">×</button>' +
-      '<h3 id="email-gate-title">Verify your email first</h3>' +
-      '<p class="email-gate__lead">We send a one-time code so checkout uses the correct inbox — the same email you will claim in the app.</p>' +
+      '<p class="email-gate__eyebrow">Checkout</p>' +
+      '<h3 id="email-gate-title">Confirm email for payment</h3>' +
+      '<p class="email-gate__lead">We lock this inbox to your <strong>' +
+      planLabel +
+      '</strong> checkout — the same email you will use in the Kalfi app.</p>' +
+      '<div data-gate-step="email">' +
       '<label class="email-gate__label">Email' +
       '<input type="email" data-gate-email placeholder="you@email.com" autocomplete="email" /></label>' +
-      '<div class="email-gate__otp" data-gate-otp-wrap hidden>' +
-      '<label class="email-gate__label">6-digit code' +
-      '<input type="text" inputmode="numeric" maxlength="6" data-gate-code placeholder="123456" autocomplete="one-time-code" /></label>' +
+      '</div>' +
+      '<div class="email-gate__otp" data-gate-step="code" hidden>' +
+      '<p class="email-gate__sent" data-gate-sent></p>' +
+      '<label class="email-gate__label">Code from email' +
+      '<input type="text" inputmode="numeric" maxlength="6" data-gate-code placeholder="6-digit code" autocomplete="one-time-code" /></label>' +
       '<div class="email-gate__codebox" data-gate-codebox hidden>' +
-      '<p class="email-gate__codebox-label">Your verification code</p>' +
+      '<p class="email-gate__codebox-label">Test mode code</p>' +
       '<p class="email-gate__codebox-value" data-gate-code-display></p>' +
-      '<p class="email-gate__codebox-hint">Email sending is in test mode — use this code to continue.</p>' +
       '</div>' +
       '</div>' +
       '<p class="email-gate__msg" data-gate-msg hidden></p>' +
-      '<div class="email-gate__actions">' +
-      '<button type="button" class="btn btn--solid" data-gate-send>Email me a code</button>' +
-      '<button type="button" class="btn btn--accent" data-gate-continue hidden>Continue to checkout</button>' +
-      '</div>' +
+      '<button type="button" class="btn btn--accent email-gate__primary" data-gate-primary>Send code</button>' +
       '<button type="button" class="email-gate__resend" data-gate-resend hidden>Resend code</button>' +
       '</div>'
 
     document.body.appendChild(root)
+    // Force paint centering even if older CSS cached
+    root.style.display = 'grid'
+    root.style.placeItems = 'center'
 
     var emailEl = root.querySelector('[data-gate-email]')
     var codeEl = root.querySelector('[data-gate-code]')
     var codeBox = root.querySelector('[data-gate-codebox]')
     var codeDisplay = root.querySelector('[data-gate-code-display]')
-    var otpWrap = root.querySelector('[data-gate-otp-wrap]')
+    var stepEmail = root.querySelector('[data-gate-step="email"]')
+    var stepCode = root.querySelector('[data-gate-step="code"]')
+    var sentEl = root.querySelector('[data-gate-sent]')
     var msgEl = root.querySelector('[data-gate-msg]')
-    var sendBtn = root.querySelector('[data-gate-send]')
-    var continueBtn = root.querySelector('[data-gate-continue]')
+    var primaryBtn = root.querySelector('[data-gate-primary]')
     var resendBtn = root.querySelector('[data-gate-resend]')
-    var emailProof = ''
+    var stage = 'email' // email | code
+    var busy = false
+    var autoPayStarted = false
 
     function setMsg(text, isError) {
       if (!msgEl) return
@@ -747,6 +758,26 @@
       if (ev.target === root || ev.target.closest('[data-gate-close]')) close()
     })
 
+    function showCodeStep(email, devCode) {
+      stage = 'code'
+      if (stepEmail) stepEmail.hidden = true
+      if (stepCode) stepCode.hidden = false
+      if (sentEl) {
+        sentEl.textContent = 'Code sent to ' + email + '. Paste it below to open payment.'
+      }
+      primaryBtn.textContent = 'Continue to payment'
+      resendBtn.hidden = false
+      if (devCode && codeEl) {
+        codeEl.value = devCode
+        if (codeBox) codeBox.hidden = false
+        if (codeDisplay) codeDisplay.textContent = devCode
+        setMsg('Test mode: code filled in — continue to payment.')
+      } else if (codeBox) {
+        codeBox.hidden = true
+      }
+      if (codeEl) codeEl.focus()
+    }
+
     function requestCode() {
       var email = (emailEl && emailEl.value || '').trim()
       if (!email || email.indexOf('@') < 1) {
@@ -757,13 +788,20 @@
         setMsg('Checkout API is not configured.', true)
         return
       }
-      sendBtn.disabled = true
-      sendBtn.textContent = 'Sending…'
+      if (busy) return
+      busy = true
+      primaryBtn.disabled = true
+      primaryBtn.textContent = 'Sending code…'
       setMsg('')
       fetch(apiBase + '/v1/auth/otp/request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email, purpose: 'checkout' })
+        body: JSON.stringify({
+          email: email,
+          purpose: 'checkout',
+          plan: opts.plan || '',
+          sku: opts.sku || ''
+        })
       })
         .then(function (res) {
           return res.json().then(function (data) {
@@ -771,7 +809,6 @@
           })
         })
         .then(function (result) {
-          // Older API without OTP — fall back to direct checkout
           if (result.status === 404) {
             close()
             legacyCheckout(opts, email)
@@ -781,21 +818,9 @@
             setMsg((result.data && result.data.error) || 'Could not send code.', true)
             return
           }
-          otpWrap.hidden = false
-          continueBtn.hidden = false
-          resendBtn.hidden = false
-          sendBtn.hidden = true
-          setMsg(
-            (result.data && result.data.message) ||
-              'Check your inbox for a 6-digit code.'
-          )
-          if (result.data && result.data.devCode && codeEl) {
-            codeEl.value = result.data.devCode
-            if (codeBox) codeBox.hidden = false
-            if (codeDisplay) codeDisplay.textContent = result.data.devCode
-            setMsg('Test mode: use the code below, then continue to checkout.')
-          } else if (codeBox) {
-            codeBox.hidden = true
+          showCodeStep(email, result.data && result.data.devCode)
+          if (!result.data || !result.data.devCode) {
+            setMsg('Check your inbox for the 6-digit code.')
           }
         })
         .catch(function (err) {
@@ -806,8 +831,10 @@
           setMsg('Network error while sending the code. ' + detail, true)
         })
         .finally(function () {
-          sendBtn.disabled = false
-          sendBtn.textContent = 'Email me a code'
+          busy = false
+          primaryBtn.disabled = false
+          if (stage === 'email') primaryBtn.textContent = 'Send code'
+          else primaryBtn.textContent = 'Continue to payment'
         })
     }
 
@@ -857,15 +884,18 @@
         })
     }
 
-    function continueCheckout() {
+    function continueToPayment() {
       var email = (emailEl && emailEl.value || '').trim()
       var code = (codeEl && codeEl.value || '').trim()
-      if (!email || !code) {
-        setMsg('Enter the email and the 6-digit code.', true)
+      if (!email || code.length < 6) {
+        setMsg('Paste the 6-digit code from your email.', true)
         return
       }
-      continueBtn.disabled = true
-      continueBtn.textContent = 'Verifying…'
+      if (busy) return
+      busy = true
+      autoPayStarted = true
+      primaryBtn.disabled = true
+      primaryBtn.textContent = 'Opening payment…'
       setMsg('')
 
       fetch(apiBase + '/v1/auth/otp/verify', {
@@ -883,15 +913,13 @@
             setMsg((result.data && result.data.error) || 'Invalid or expired code.', true)
             return null
           }
-          emailProof = result.data.emailProof
-          continueBtn.textContent = 'Opening checkout…'
           return fetch(apiBase + '/v1/billing/checkout', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               plan: opts.sku,
               email: email,
-              emailProof: emailProof,
+              emailProof: result.data.emailProof,
               successUrl:
                 window.location.origin +
                 '/?checkout=success&plan=' +
@@ -917,7 +945,6 @@
             setMsg('Checkout is not ready for this plan yet.', true)
             return
           }
-          // Prefer Lemon URL with verified email locked when using static buy link
           if (url.indexOf('checkout') !== -1 && url.indexOf('email') === -1) {
             url +=
               (url.indexOf('?') >= 0 ? '&' : '?') +
@@ -927,17 +954,54 @@
           window.location.href = url
         })
         .catch(function () {
-          setMsg('Could not open checkout. Try again.', true)
+          setMsg('Could not open payment. Try again.', true)
         })
         .finally(function () {
-          continueBtn.disabled = false
-          continueBtn.textContent = 'Continue to checkout'
+          busy = false
+          primaryBtn.disabled = false
+          primaryBtn.textContent = 'Continue to payment'
+          autoPayStarted = false
         })
     }
 
-    sendBtn.addEventListener('click', requestCode)
-    resendBtn.addEventListener('click', requestCode)
-    continueBtn.addEventListener('click', continueCheckout)
+    function onPrimary() {
+      if (stage === 'email') requestCode()
+      else continueToPayment()
+    }
+
+    primaryBtn.addEventListener('click', onPrimary)
+    resendBtn.addEventListener('click', function () {
+      stage = 'email'
+      if (stepEmail) stepEmail.hidden = false
+      requestCode()
+    })
+
+    if (emailEl) {
+      emailEl.addEventListener('keydown', function (ev) {
+        if (ev.key === 'Enter') {
+          ev.preventDefault()
+          onPrimary()
+        }
+      })
+    }
+    if (codeEl) {
+      codeEl.addEventListener('input', function () {
+        codeEl.value = String(codeEl.value || '')
+          .replace(/\D/g, '')
+          .slice(0, 6)
+        if (codeEl.value.length === 6 && stage === 'code' && !busy && !autoPayStarted) {
+          continueToPayment()
+        }
+      })
+      codeEl.addEventListener('keydown', function (ev) {
+        if (ev.key === 'Enter') {
+          ev.preventDefault()
+          continueToPayment()
+        }
+      })
+    }
+
+    if (emailEl) emailEl.focus()
   }
 
   /* ---------- multi-OS downloads ---------- */

@@ -19,6 +19,8 @@ import {
   updateUser,
   verifyPassword
 } from '../lib/store.js'
+import { recordEvent } from '../lib/events.js'
+import { upsertLead } from '../lib/leads.js'
 
 const TEST_PLAN_ALLOWLIST = new Set(['muhamadfikrih29@gmail.com'])
 
@@ -43,7 +45,9 @@ const claimSchema = z.object({
 
 const otpRequestSchema = z.object({
   email: emailSchema,
-  purpose: z.enum(['checkout', 'reset', 'register'])
+  purpose: z.enum(['checkout', 'reset', 'register']),
+  plan: z.string().max(64).optional(),
+  sku: z.string().max(64).optional()
 })
 
 const otpVerifySchema = z.object({
@@ -85,6 +89,21 @@ authRoutes.post('/otp/request', async (c) => {
     return c.json({ error: sent.error }, 503)
   }
 
+  if (purpose === 'checkout') {
+    upsertLead(email, {
+      status: 'otp_sent',
+      plan: body.data.plan,
+      sku: body.data.sku,
+      source: 'pricing'
+    })
+    recordEvent('otp_checkout', {
+      email,
+      meta: { plan: body.data.plan, sku: body.data.sku }
+    })
+  } else if (purpose === 'reset') {
+    recordEvent('otp_reset', { email })
+  }
+
   return c.json({
     ok: true,
     message: sent.devCode
@@ -102,6 +121,10 @@ authRoutes.post('/otp/verify', async (c) => {
   const purpose = body.data.purpose as OtpPurpose
   const checked = verifyOtp(email, purpose, body.data.code)
   if (!checked.ok) return c.json({ error: checked.error }, 400)
+
+  if (purpose === 'checkout') {
+    upsertLead(email, { status: 'otp_verified', source: 'pricing' })
+  }
 
   const emailProof = await signEmailProof(email, purpose)
   return c.json({ ok: true, emailProof, email })
