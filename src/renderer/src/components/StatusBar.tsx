@@ -137,8 +137,8 @@ export function StatusBar(): React.JSX.Element {
 
   return (
     <div className="px-3 py-0.5 bg-dark-850 border-b border-dark-700">
-      <div className="flex items-center justify-between gap-3 min-h-[32px]">
-        <div className="flex items-center gap-2 min-w-0 flex-1">
+      <div className="flex items-center gap-2 min-h-[32px] min-w-0 w-full">
+        <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
           {isCapturing && (
             <div className="relative flex-shrink-0 animate-pulse">
               <Volume2 className={`w-4 h-4 ${isSpeaking ? 'text-green-400' : 'text-blue-400'}`} />
@@ -148,7 +148,7 @@ export function StatusBar(): React.JSX.Element {
             </div>
           )}
           {getStatusText() !== '' && (
-            <div className="flex flex-col min-w-0">
+            <div className="flex flex-col min-w-0 overflow-hidden">
               <span className={`text-xs font-medium ${getStatusColor()} truncate`}>
                 {getStatusText()}
               </span>
@@ -157,7 +157,7 @@ export function StatusBar(): React.JSX.Element {
           )}
         </div>
 
-        <div className="flex items-center gap-1.5 flex-shrink-0 max-w-[70%] overflow-x-auto custom-scrollbar">
+        <div className="flex items-center gap-1.5 min-w-0 shrink overflow-x-auto scrollbar-auto">
           {!isCapturing ? (
             <div className="flex items-center rounded-md border border-dark-700 bg-dark-800 p-0.5">
               {SOURCE_OPTIONS.map((opt) => (

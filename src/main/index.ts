@@ -2,7 +2,7 @@ import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import { Menu, app, BrowserWindow, nativeImage, screen, session, shell } from 'electron'
 import { join } from 'path'
 import icon from '../../resources/icon.png?asset'
-import { cleanupIpcHandlers, initializeIpcHandlers } from './ipc/handlers'
+import { cleanupIpcHandlers, initializeIpcHandlers, reapplyDockPreference } from './ipc/handlers'
 import { applyOverlayWindowBehavior } from './windowOverlay'
 
 let mainWindow: BrowserWindow | null = null
@@ -163,11 +163,14 @@ function createWindow(): void {
     }
     // showInactive: don't steal focus from the fullscreen Meet window
     mainWindow?.showInactive()
+    // Showing a panel window can briefly reveal the Dock — re-apply preference
+    reapplyDockPreference()
   })
 
   // Re-apply overlay flags if macOS resets them after Space / display changes
   mainWindow.on('show', () => {
     if (mainWindow) applyOverlayWindowBehavior(mainWindow, true)
+    reapplyDockPreference()
   })
 
   mainWindow.on('blur', () => {

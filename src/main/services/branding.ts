@@ -184,11 +184,19 @@ export function clearStoredBrandLogo(logoPath?: string | null): void {
 export function applyDockVisibility(hideFromDock: boolean): void {
   if (process.platform !== 'darwin' || !app.dock) return
   try {
-    if (hideFromDock) app.dock.hide()
-    else app.dock.show()
+    if (hideFromDock) {
+      app.dock.hide()
+    } else {
+      app.dock.show()
+    }
   } catch (error) {
     console.error('Failed to toggle Dock visibility:', error)
   }
+}
+
+/** Prefer hide when setting is missing/undefined (first launch). */
+export function shouldHideFromDock(value: boolean | undefined | null): boolean {
+  return value !== false
 }
 
 /** Bundled Kalfi mark — used when the customer has not set a custom logo. */
@@ -259,9 +267,8 @@ export function applyRuntimeBranding(
     }
   }
 
-  if (typeof hideFromDock === 'boolean') {
-    applyDockVisibility(hideFromDock)
-  }
+  // Default is hidden; only show Dock when explicitly false
+  applyDockVisibility(shouldHideFromDock(hideFromDock))
 
   // Dock icon only matters when the Dock icon is visible
   if (hideFromDock === false) {

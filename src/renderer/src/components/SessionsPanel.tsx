@@ -303,7 +303,7 @@ export function SessionsPanel({ onClose }: SessionsPanelProps): React.JSX.Elemen
                           : 'hover:bg-dark-900 border border-transparent'
                       }`}
                     >
-                      <div className="flex items-center gap-1 mb-0.5 min-w-0 overflow-x-auto">
+                      <div className="flex items-center gap-1 mb-0.5 min-w-0">
                         <span className="text-[9px] px-1 rounded bg-dark-700 text-dark-300 shrink-0">
                           {TOD_BADGE[s.timeOfDay]}
                         </span>
@@ -316,7 +316,7 @@ export function SessionsPanel({ onClose }: SessionsPanelProps): React.JSX.Elemen
                             Active
                           </span>
                         ) : null}
-                        <span className="text-[9px] text-dark-500 whitespace-nowrap shrink-0">
+                        <span className="text-[9px] text-dark-500 truncate min-w-0">
                           {s.meetingLabel}
                         </span>
                       </div>
@@ -342,18 +342,20 @@ export function SessionsPanel({ onClose }: SessionsPanelProps): React.JSX.Elemen
           {viewing ? (
             <>
               <div className="px-3 py-2 border-b border-dark-800 flex items-start justify-between gap-2">
-                <div className="min-w-0 overflow-x-auto">
-                  <p className="text-sm font-medium text-dark-100 whitespace-nowrap">
+                <div className="min-w-0 overflow-hidden">
+                  <p className="text-sm font-medium text-dark-100 truncate">
                     {viewing.threadTitle}
                   </p>
-                  <p className="text-[10px] text-dark-500 flex items-center gap-1 mt-0.5 whitespace-nowrap">
+                  <p className="text-[10px] text-dark-500 flex items-center gap-1 mt-0.5 min-w-0">
                     <Clock size={10} className="shrink-0" />
-                    {viewing.meetingLabel}
-                    {isLiveListening
-                      ? ' · listening now'
-                      : isActive
-                        ? ' · active workspace'
-                        : ' · browsing only'}
+                    <span className="truncate">
+                      {viewing.meetingLabel}
+                      {isLiveListening
+                        ? ' · listening now'
+                        : isActive
+                          ? ' · active workspace'
+                          : ' · browsing only'}
+                    </span>
                   </p>
                 </div>
                 <div className="flex gap-1 shrink-0">
@@ -447,7 +449,7 @@ export function SessionsPanel({ onClose }: SessionsPanelProps): React.JSX.Elemen
                           <p className="text-xs font-medium text-blue-300 break-words">
                             {entry.question}
                           </p>
-                          <p className="text-[10px] text-dark-500 whitespace-nowrap overflow-x-auto">
+                          <p className="text-[10px] text-dark-500 truncate">
                             {new Date(entry.timestamp).toLocaleString('en-GB', {
                               day: 'numeric',
                               month: 'short',
