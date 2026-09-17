@@ -2677,6 +2677,49 @@ td.row-label {
   margin-bottom: 0;
 }
 
+.faq__anim {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.faq details.is-open .faq__anim,
+.faq details[open].is-open .faq__anim {
+  grid-template-rows: 1fr;
+}
+
+.faq__anim > .faq__body {
+  overflow: hidden;
+  min-height: 0;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition:
+    opacity 0.28s ease 0.02s,
+    transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.faq details.is-open .faq__anim > .faq__body {
+  opacity: 1;
+  transform: none;
+}
+
+.faq details {
+  transition: border-color 0.25s ease, background 0.25s ease;
+}
+
+.faq summary {
+  transition: color 0.2s ease;
+}
+
+.faq summary::after {
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), color 0.2s ease;
+}
+
+.faq details.is-open summary::after {
+  content: "–";
+  color: var(--accent);
+}
+
 /* Copy command chip */
 .copy-cmd,
 .install-code[data-copy-cmd] {
@@ -2840,24 +2883,71 @@ td.row-label {
 
 .install-modal__panel h2 {
   font-size: 1.35rem;
+  margin: 0 0 8px;
+}
+
+.install-modal__lead {
   margin: 0 0 16px;
+  color: var(--fg-dim);
+  font-size: 0.92rem;
 }
 
 .install-modal__steps {
   margin: 0 0 16px;
   padding-left: 1.2rem;
   display: grid;
-  gap: 8px;
+  gap: 10px;
   color: var(--fg-dim);
   font-size: 0.94rem;
+  line-height: 1.55;
 }
 
 .install-modal__steps li::marker {
   color: var(--accent);
 }
 
-.install-modal__cmd {
-  margin-bottom: 18px;
+.install-modal__advanced {
+  margin: 0 0 18px;
+  padding: 14px 14px 12px;
+  border-radius: var(--r-md);
+  border: 1px dashed var(--line-strong);
+  background: rgba(246, 169, 74, 0.06);
+}
+
+.install-modal__advanced-title {
+  margin: 0 0 6px;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--alert);
+}
+
+.install-modal__advanced-help {
+  margin: 0 0 10px;
+  font-size: 0.88rem;
+  color: var(--fg-dim);
+  line-height: 1.5;
+}
+
+.install-modal__advanced-how {
+  margin: 0 0 12px;
+  padding-left: 1.15rem;
+  display: grid;
+  gap: 6px;
+  font-size: 0.88rem;
+  color: var(--fg-dim);
+  line-height: 1.5;
+}
+
+.install-modal__advanced-how kbd,
+.install-modal__steps kbd {
+  font-family: var(--mono);
+  font-size: 0.78em;
+  border: 1px solid var(--line-strong);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  padding: 0.1em 0.4em;
+  background: var(--ink-200);
+  color: var(--fg);
 }
 
 .install-modal__actions {
