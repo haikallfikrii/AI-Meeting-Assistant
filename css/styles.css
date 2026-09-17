@@ -2174,6 +2174,43 @@ select {
   font: inherit;
 }
 
+.email-gate__otp {
+  margin-top: 4px;
+}
+
+.email-gate__codebox {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(52, 211, 153, 0.35);
+  background: rgba(16, 185, 129, 0.1);
+  text-align: center;
+}
+
+.email-gate__codebox-label {
+  margin: 0 0 6px;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6ee7b7;
+}
+
+.email-gate__codebox-value {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: 0.35em;
+  font-variant-numeric: tabular-nums;
+  color: #ecfdf5;
+}
+
+.email-gate__codebox-hint {
+  margin: 8px 0 0;
+  font-size: 0.75rem;
+  color: #94a3b8;
+  line-height: 1.4;
+}
+
 .email-gate__msg {
   margin: 0 0 12px;
   font-size: 0.85rem;
