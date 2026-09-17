@@ -2109,6 +2109,96 @@ select {
   font-size: 0.92rem;
 }
 
+/* Email OTP gate before Lemon checkout */
+.email-gate {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(2, 6, 14, 0.72);
+  backdrop-filter: blur(6px);
+}
+
+.email-gate__card {
+  position: relative;
+  width: min(420px, 100%);
+  padding: 24px 22px 20px;
+  border-radius: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  background: #0b1220;
+  color: #e2e8f0;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+}
+
+.email-gate__close {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  border: 0;
+  background: transparent;
+  color: #94a3b8;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.email-gate__card h3 {
+  margin: 0 0 8px;
+  font-size: 1.15rem;
+}
+
+.email-gate__lead {
+  margin: 0 0 16px;
+  color: #94a3b8;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.email-gate__label {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 12px;
+  font-size: 0.8rem;
+  color: #cbd5e1;
+}
+
+.email-gate__label input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  background: #111827;
+  color: #f8fafc;
+  font: inherit;
+}
+
+.email-gate__msg {
+  margin: 0 0 12px;
+  font-size: 0.85rem;
+  color: #93c5fd;
+}
+
+.email-gate__msg.is-error {
+  color: #fbbf24;
+}
+
+.email-gate__actions {
+  display: grid;
+  gap: 8px;
+}
+
+.email-gate__resend {
+  margin-top: 10px;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: #94a3b8;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
 .billing-toggle__btn {
   appearance: none;
   border: 0;
