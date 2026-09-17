@@ -157,9 +157,10 @@ export function StatusBar(): React.JSX.Element {
           )}
         </div>
 
-        <div className="flex items-center gap-1.5 min-w-0 shrink overflow-x-auto scrollbar-auto">
+        <div className="min-w-0 overflow-x-auto scrollbar-auto">
+          <div className="flex w-max items-center gap-1.5">
           {!isCapturing ? (
-            <div className="flex items-center rounded-md border border-dark-700 bg-dark-800 p-0.5">
+            <div className="flex items-center rounded-md border border-dark-700 bg-dark-800 p-0.5 shrink-0">
               {SOURCE_OPTIONS.map((opt) => (
                 <Tooltip key={opt.id} content={opt.title} side="bottom">
                   <button
@@ -299,6 +300,7 @@ export function StatusBar(): React.JSX.Element {
               </button>
             </Tooltip>
           )}
+          </div>
         </div>
       </div>
 
