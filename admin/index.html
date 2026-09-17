@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>Kalfi Admin</title>
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./admin.css" />
+  </head>
+  <body>
+    <div id="login-view" class="login">
+      <form id="login-form" class="login__card">
+        <p class="login__brand">Kalfi</p>
+        <h1>Master admin</h1>
+        <p class="login__lead">Enter the server admin secret to manage users, plans, and sales.</p>
+        <label>
+          Admin secret
+          <input type="password" id="admin-secret" autocomplete="current-password" required />
+        </label>
+        <button type="submit" class="btn btn--primary">Unlock dashboard</button>
+        <p id="login-error" class="banner banner--error" hidden></p>
+      </form>
+    </div>
+
+    <div id="app-view" class="app" hidden>
+      <header class="top">
+        <div>
+          <p class="top__brand">Kalfi Admin</p>
+          <h1 id="page-title">Overview</h1>
+        </div>
+        <div class="top__actions">
+          <button type="button" class="btn" id="btn-refresh">Refresh</button>
+          <button type="button" class="btn" id="btn-logout">Lock</button>
+        </div>
+      </header>
+
+      <nav class="nav">
+        <button type="button" class="nav__btn is-active" data-tab="overview">Overview</button>
+        <button type="button" class="nav__btn" data-tab="users">Users</button>
+        <button type="button" class="nav__btn" data-tab="create">Add user</button>
+        <button type="button" class="nav__btn" data-tab="analytics">Sales & activity</button>
+      </nav>
+
+      <main>
+        <section id="tab-overview" class="panel">
+          <div class="cards" id="overview-cards"></div>
+          <div class="grid-2">
+            <div class="card">
+              <h2>Plans</h2>
+              <div id="plan-bars" class="bars"></div>
+            </div>
+            <div class="card">
+              <h2>Status</h2>
+              <div id="status-bars" class="bars"></div>
+            </div>
+          </div>
+        </section>
+
+        <section id="tab-users" class="panel" hidden>
+          <div class="toolbar">
+            <input type="search" id="user-q" placeholder="Search email, id, Lemon…" />
+            <select id="user-plan">
+              <option value="all">All plans</option>
+              <option value="free">free</option>
+              <option value="byok_monthly">byok_monthly</option>
+              <option value="byok_annual">byok_annual</option>
+              <option value="hosted_monthly">hosted_monthly</option>
+              <option value="hosted_annual">hosted_annual</option>
+              <option value="team">team</option>
+              <option value="single_session">single_session</option>
+            </select>
+            <select id="user-status">
+              <option value="all">All status</option>
+              <option value="active">active</option>
+              <option value="none">none</option>
+              <option value="suspended">suspended</option>
+              <option value="canceled">canceled</option>
+              <option value="expired">expired</option>
+              <option value="past_due">past_due</option>
+            </select>
+            <button type="button" class="btn btn--primary" id="btn-search-users">Search</button>
+          </div>
+          <p id="users-meta" class="muted"></p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Email</th>
+                  <th>Plan</th>
+                  <th>Status</th>
+                  <th>Updated</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="users-body"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="tab-create" class="panel" hidden>
+          <form id="create-form" class="card form">
+            <h2>Create / grant account</h2>
+            <label>Email <input type="email" id="create-email" required /></label>
+            <label
+              >Password (optional)
+              <input type="text" id="create-password" minlength="8" placeholder="Leave blank → temp password"
+            /></label>
+            <label
+              >Plan
+              <select id="create-plan">
+                <option value="byok_monthly">BYOK Monthly</option>
+                <option value="byok_annual">BYOK Annual</option>
+                <option value="hosted_monthly">Hosted Monthly</option>
+                <option value="hosted_annual">Hosted Annual</option>
+                <option value="team">Team</option>
+                <option value="single_session">Single session</option>
+                <option value="free">Free</option>
+              </select>
+            </label>
+            <label
+              >Status
+              <select id="create-status">
+                <option value="active">active</option>
+                <option value="none">none</option>
+                <option value="suspended">suspended</option>
+              </select>
+            </label>
+            <label>Note <input type="text" id="create-note" maxlength="500" /></label>
+            <button type="submit" class="btn btn--primary">Create user</button>
+            <p id="create-msg" class="banner" hidden></p>
+          </form>
+        </section>
+
+        <section id="tab-analytics" class="panel" hidden>
+          <div class="cards" id="sales-cards"></div>
+          <div class="card">
+            <h2>Recent activity</h2>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>When</th>
+                    <th>Type</th>
+                    <th>Email</th>
+                    <th>Meta</th>
+                  </tr>
+                </thead>
+                <tbody id="events-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <aside id="drawer" class="drawer" hidden>
+      <div class="drawer__panel">
+        <header class="drawer__head">
+          <h2 id="drawer-title">User</h2>
+          <button type="button" class="btn" id="drawer-close">Close</button>
+        </header>
+        <div id="drawer-body" class="drawer__body"></div>
+      </div>
+    </aside>
+
+    <script src="./admin.js"></script>
+  </body>
+</html>
