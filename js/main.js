@@ -596,7 +596,7 @@
 
       if (note) {
         note.textContent = anyLive
-          ? 'Secure checkout by Lemon Squeezy. Cancel any time in the customer portal.'
+          ? 'Secure checkout by Lemon Squeezy. On the subscription page, pick BYOK / Hosted / Team (monthly or annual). Cancel any time from your receipt email.'
           : 'Checkout links go live once Lemon Squeezy variant URLs are pasted into KALFI_CONFIG.'
       }
     }
