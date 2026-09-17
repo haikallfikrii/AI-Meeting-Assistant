@@ -3,6 +3,8 @@
  * Feature gating uses FeatureTier; BillingPlan stores the Lemon SKU.
  */
 
+import { isTestAllowlisted } from './testAllowlist'
+
 export type BillingPlan =
   | 'free'
   | 'byok_monthly'
@@ -159,14 +161,17 @@ export function canUseAppFeatures(
 /**
  * App requires signed-in account + active/trial paid plan (or usable Single Session Pass).
  * Free / inactive / no token → blocked.
+ * Optional email allowlist for Lemon test-mode accounts.
  */
 export function hasPaidAccess(
   plan: BillingPlan,
   status: MembershipStatus,
   authToken?: string | null,
-  singleSession?: SingleSessionState | null
+  singleSession?: SingleSessionState | null,
+  email?: string | null
 ): boolean {
   if (!authToken || !String(authToken).trim()) return false
+  if (isTestAllowlisted(email)) return true
   return canUseAppFeatures(plan, status, singleSession)
 }
 

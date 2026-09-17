@@ -4,6 +4,7 @@ import { cors } from 'hono/cors'
 import { corsOrigins, env } from './lib/config.js'
 import { authRoutes } from './routes/auth.js'
 import { aiRoutes } from './routes/ai.js'
+import { adminRoutes } from './routes/admin.js'
 import { billingRoutes, handleLemonWebhook } from './routes/billing.js'
 
 const app = new Hono()
@@ -12,7 +13,7 @@ app.use(
   '*',
   cors({
     origin: corsOrigins(),
-    allowHeaders: ['Content-Type', 'Authorization', 'X-Signature', 'Stripe-Signature'],
+    allowHeaders: ['Content-Type', 'Authorization', 'X-Signature', 'Stripe-Signature', 'X-Admin-Secret'],
     allowMethods: ['GET', 'POST', 'OPTIONS']
   })
 )
@@ -30,6 +31,7 @@ app.get('/health', (c) =>
 app.route('/v1/auth', authRoutes)
 app.route('/v1/billing', billingRoutes)
 app.route('/v1/ai', aiRoutes)
+app.route('/v1/admin', adminRoutes)
 
 app.post('/v1/billing/webhook', async (c) => {
   const raw = await c.req.text()
