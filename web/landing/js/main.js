@@ -700,6 +700,11 @@
       '<div class="email-gate__otp" data-gate-otp-wrap hidden>' +
       '<label class="email-gate__label">6-digit code' +
       '<input type="text" inputmode="numeric" maxlength="6" data-gate-code placeholder="123456" autocomplete="one-time-code" /></label>' +
+      '<div class="email-gate__codebox" data-gate-codebox hidden>' +
+      '<p class="email-gate__codebox-label">Your verification code</p>' +
+      '<p class="email-gate__codebox-value" data-gate-code-display></p>' +
+      '<p class="email-gate__codebox-hint">Email sending is in test mode — use this code to continue.</p>' +
+      '</div>' +
       '</div>' +
       '<p class="email-gate__msg" data-gate-msg hidden></p>' +
       '<div class="email-gate__actions">' +
@@ -713,6 +718,8 @@
 
     var emailEl = root.querySelector('[data-gate-email]')
     var codeEl = root.querySelector('[data-gate-code]')
+    var codeBox = root.querySelector('[data-gate-codebox]')
+    var codeDisplay = root.querySelector('[data-gate-code-display]')
     var otpWrap = root.querySelector('[data-gate-otp-wrap]')
     var msgEl = root.querySelector('[data-gate-msg]')
     var sendBtn = root.querySelector('[data-gate-send]')
@@ -784,7 +791,11 @@
           )
           if (result.data && result.data.devCode && codeEl) {
             codeEl.value = result.data.devCode
-            setMsg('Test mode code filled in — continue to checkout.')
+            if (codeBox) codeBox.hidden = false
+            if (codeDisplay) codeDisplay.textContent = result.data.devCode
+            setMsg('Test mode: use the code below, then continue to checkout.')
+          } else if (codeBox) {
+            codeBox.hidden = true
           }
         })
         .catch(function (err) {

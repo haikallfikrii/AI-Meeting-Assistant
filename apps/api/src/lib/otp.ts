@@ -198,18 +198,11 @@ export async function sendOtpEmail(
   const from = env('EMAIL_FROM', 'Kalfi <onboarding@resend.dev>')
 
   if (!apiKey) {
-    console.warn(`[otp] RESEND_API_KEY missing — code for ${to} (${purpose}): ${code}`)
-    const allowDev =
-      env('AUTH_DEV_CODES') === '1' ||
-      to.trim().toLowerCase() === 'muhamadfikrih29@gmail.com'
-    if (allowDev) {
-      return { ok: true, devCode: code }
-    }
-    return {
-      ok: false,
-      error:
-        'Email delivery is not configured on the server yet. Ask support, or try again shortly.'
-    }
+    // No inbox provider yet — still issue a code and return it to the client UI
+    // so checkout / reset are not blocked. Once RESEND_API_KEY is set, codes
+    // go to email only and are not returned in JSON.
+    console.warn(`[otp] RESEND_API_KEY missing — inline code for ${to} (${purpose}): ${code}`)
+    return { ok: true, devCode: code }
   }
 
   try {
