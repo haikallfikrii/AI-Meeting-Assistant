@@ -37,6 +37,39 @@ let mainWindow: BrowserWindow | null = null
 let isCapturing = false
 /** When true, the next final transcript is force-answered (manual mic / safety net). */
 let forceNextTranscriptAsQuestion = false
+/** Current capture mix — used to decide interviewer vs self speech. */
+let captureAudioSource: 'microphone' | 'system' | 'both' = 'both'
+
+async function answerDetectedText(rawText: string, opts?: { force?: boolean }): Promise<void> {
+  if (!openaiService || !questionDetector) return
+  const text = rawText.trim()
+  if (!text) return
+
+  let toAnswer = text
+  const isConfirm = questionDetector.isConfirmation(text)
+  const pending = questionDetector.getLastInterviewerQuestion()
+
+  if (isConfirm && pending) {
+    console.log('[Answer] Confirmation detected — answering prior interviewer question')
+    toAnswer = pending
+  } else if (!opts?.force && questionDetector.isLikelySelfSpeech(text) && captureAudioSource !== 'system') {
+    console.log('[Answer] Skipping auto-answer for likely self speech:', text.slice(0, 80))
+    return
+  } else if (!opts?.force && captureAudioSource === 'microphone' && !forceNextTranscriptAsQuestion) {
+    // Mic-only: only answer when Mic Ask armed (handled separately) or manual Ask
+    console.log('[Answer] Mic-only capture — skip auto question detect')
+    return
+  } else if (!isConfirm && !questionDetector.isLikelySelfSpeech(text)) {
+    questionDetector.setLastInterviewerQuestion(text)
+  }
+
+  mainWindow?.webContents.send('question-detected', {
+    text: toAnswer,
+    confidence: 1,
+    questionType: 'direct'
+  })
+  await openaiService.generateAnswer(toAnswer)
+}
 
 function persistExchange(meta: { sessionId: string | null; question: string; answer: string }): void {
   if (!meta.sessionId || !meta.question || !meta.answer) return
@@ -263,12 +296,20 @@ export function initializeIpcHandlers(window: BrowserWindow): void {
     }
     try {
       const service = ensureOpenAIService()
+      // Manual Ask: if user is confirming, answer the stored interviewer question
+      let toAnswer = text
+      if (questionDetector?.isConfirmation(text)) {
+        const pending = questionDetector.getLastInterviewerQuestion()
+        if (pending) toAnswer = pending
+      } else if (!questionDetector?.isLikelySelfSpeech(text)) {
+        questionDetector?.setLastInterviewerQuestion(text)
+      }
       mainWindow?.webContents.send('question-detected', {
-        text,
+        text: toAnswer,
         confidence: 1,
         questionType: 'direct'
       })
-      await service.generateAnswer(text)
+      await service.generateAnswer(toAnswer)
       return { success: true }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to answer'
@@ -347,8 +388,12 @@ export function initializeIpcHandlers(window: BrowserWindow): void {
   )
 
   // Audio capture handlers
-  ipcMain.handle('start-capture', async () => {
+  ipcMain.handle(
+    'start-capture',
+    async (_event, source?: 'microphone' | 'system' | 'both') => {
     const settings = settingsManager?.getSettings()
+    captureAudioSource =
+      source === 'microphone' || source === 'system' || source === 'both' ? source : 'both'
 
     // Debug: Log API key status (not the actual keys)
     console.log('API Keys configured:', {
@@ -424,13 +469,8 @@ export function initializeIpcHandlers(window: BrowserWindow): void {
         if (forceNextTranscriptAsQuestion) {
           forceNextTranscriptAsQuestion = false
           mainWindow?.webContents.send('force-next-question-changed', false)
-          mainWindow?.webContents.send('question-detected', {
-            text: event.text,
-            confidence: 1,
-            questionType: 'direct'
-          })
           try {
-            await openaiService.generateAnswer(event.text)
+            await answerDetectedText(event.text, { force: true })
           } catch (error) {
             mainWindow?.webContents.send('answer-error', (error as Error).message)
           }
@@ -442,9 +482,8 @@ export function initializeIpcHandlers(window: BrowserWindow): void {
           const earlyDetection = questionDetector.checkEarlyDetection(event.text)
           if (earlyDetection) {
             console.log('Early question detection triggered:', earlyDetection.text)
-            mainWindow?.webContents.send('question-detected', earlyDetection)
             try {
-              await openaiService.generateAnswer(earlyDetection.text)
+              await answerDetectedText(earlyDetection.text)
             } catch (error) {
               mainWindow?.webContents.send('answer-error', (error as Error).message)
             }
@@ -471,14 +510,10 @@ export function initializeIpcHandlers(window: BrowserWindow): void {
       // Set up question detector listener ONCE
       questionDetector?.on('questionDetected', async (detection) => {
         console.log('Question detected:', detection.text)
-        mainWindow?.webContents.send('question-detected', detection)
-
-        if (openaiService) {
-          try {
-            await openaiService.generateAnswer(detection.text)
-          } catch (error) {
-            mainWindow?.webContents.send('answer-error', (error as Error).message)
-          }
+        try {
+          await answerDetectedText(detection.text)
+        } catch (error) {
+          mainWindow?.webContents.send('answer-error', (error as Error).message)
         }
       })
 

@@ -129,6 +129,8 @@ Use prior turns in this session as continuity — do not contradict earlier answ
 Prefer aligning skills with the job description. Pull from the answer bank when a question matches.
 ${speakingRules(ctx)}
 7. For conceptual "What is X?" questions: stay proportional to the length setting; no multi-line code unless asked.
+8. SPEAKER AWARENESS: Prefer answering the interviewer's question. If the latest line is the candidate confirming/repeating the question ("so you're asking…", "just to confirm…"), answer the underlying interviewer question — not the confirmation itself.
+9. Do not treat the candidate's own first-person statements as interviewer questions.
 `
 }
 

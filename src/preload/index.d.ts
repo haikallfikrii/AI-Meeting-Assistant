@@ -168,7 +168,7 @@ export interface Api {
     sessionId?: string
   ) => Promise<{ success: boolean; summary?: string; session?: WorkSession; error?: string }>
 
-  startCapture: () => Promise<{ success: boolean }>
+  startCapture: (source?: 'microphone' | 'system' | 'both') => Promise<{ success: boolean }>
   stopCapture: () => Promise<{ success: boolean }>
   getCaptureStatus: () => Promise<boolean>
   sendAudioData: (audioData: ArrayBuffer) => void

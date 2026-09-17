@@ -106,30 +106,24 @@ export function HistoryPanel({ onClose }: HistoryPanelProps): React.JSX.Element 
     const now = new Date()
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
     const entryDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+    const time = date.toLocaleTimeString('en-GB', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    })
 
-    if (entryDate.getTime() === today.getTime()) {
-      return `Today at ${date.toLocaleTimeString('en-US', {
-        hour: '2-digit',
-        minute: '2-digit'
-      })}`
-    }
+    if (entryDate.getTime() === today.getTime()) return `Today ${time}`
 
     const yesterday = new Date(today)
     yesterday.setDate(yesterday.getDate() - 1)
-    if (entryDate.getTime() === yesterday.getTime()) {
-      return `Yesterday at ${date.toLocaleTimeString('en-US', {
-        hour: '2-digit',
-        minute: '2-digit'
-      })}`
-    }
+    if (entryDate.getTime() === yesterday.getTime()) return `Yesterday ${time}`
 
-    return date.toLocaleString('en-US', {
-      month: 'short',
+    const day = date.toLocaleDateString('en-GB', {
       day: 'numeric',
-      year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined,
-      hour: '2-digit',
-      minute: '2-digit'
+      month: 'short',
+      year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
     })
+    return `${day} · ${time}`
   }
 
   return (
@@ -231,9 +225,9 @@ export function HistoryPanel({ onClose }: HistoryPanelProps): React.JSX.Element 
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1">
                     <p className="text-xs text-dark-400 font-medium mb-1">Q: {entry.question}</p>
-                    <div className="flex items-center gap-1 text-xs text-dark-500">
-                      <Clock className="w-3 h-3" />
-                      <span>{formatDate(entry.timestamp)}</span>
+                    <div className="flex items-center gap-1 text-xs text-dark-500 min-w-0 overflow-x-auto">
+                      <Clock className="w-3 h-3 shrink-0" />
+                      <span className="whitespace-nowrap">{formatDate(entry.timestamp)}</span>
                     </div>
                   </div>
                   <button

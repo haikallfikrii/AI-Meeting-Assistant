@@ -40,8 +40,14 @@ interface ThreadGroup {
 }
 
 export function SessionsPanel({ onClose }: SessionsPanelProps): React.JSX.Element {
-  const { activeSession, setActiveSession, setShowSessionEditor, clearAll, setError } =
-    useInterviewStore()
+  const {
+    activeSession,
+    setActiveSession,
+    setShowSessionEditor,
+    clearAll,
+    setError,
+    isCapturing
+  } = useInterviewStore()
   const [sessions, setSessions] = useState<WorkSession[]>([])
   const [loading, setLoading] = useState(true)
   const [copiedId, setCopiedId] = useState<string | null>(null)
@@ -150,6 +156,11 @@ export function SessionsPanel({ onClose }: SessionsPanelProps): React.JSX.Elemen
     }
   }
 
+  /** Already the active meeting — leave history and return to answers */
+  const resumeLive = (): void => {
+    onClose()
+  }
+
   const newMeetingInThread = async (fromId: string): Promise<void> => {
     const session = await window.api.continueThread(fromId)
     if (session) {
@@ -211,7 +222,8 @@ export function SessionsPanel({ onClose }: SessionsPanelProps): React.JSX.Elemen
     ? sessions.find((s) => s.id === viewingId) || null
     : null
 
-  const isLive = Boolean(viewing && activeSession && viewing.id === activeSession.id)
+  const isActive = Boolean(viewing && activeSession && viewing.id === activeSession.id)
+  const isLiveListening = Boolean(isActive && isCapturing)
 
   return (
     <div className="flex flex-col h-full min-h-0 bg-dark-950">
@@ -278,7 +290,8 @@ export function SessionsPanel({ onClose }: SessionsPanelProps): React.JSX.Elemen
                   </Tooltip>
                 </div>
                 {thread.meetings.map((s) => {
-                  const live = activeSession?.id === s.id
+                  const active = activeSession?.id === s.id
+                  const live = active && isCapturing
                   const selected = viewing?.id === s.id
                   return (
                     <button
@@ -290,16 +303,22 @@ export function SessionsPanel({ onClose }: SessionsPanelProps): React.JSX.Elemen
                           : 'hover:bg-dark-900 border border-transparent'
                       }`}
                     >
-                      <div className="flex items-center gap-1 mb-0.5">
-                        <span className="text-[9px] px-1 rounded bg-dark-700 text-dark-300">
+                      <div className="flex items-center gap-1 mb-0.5 min-w-0 overflow-x-auto">
+                        <span className="text-[9px] px-1 rounded bg-dark-700 text-dark-300 shrink-0">
                           {TOD_BADGE[s.timeOfDay]}
                         </span>
                         {live ? (
-                          <span className="text-[9px] px-1 rounded bg-green-500/20 text-green-300">
+                          <span className="text-[9px] px-1 rounded bg-green-500/20 text-green-300 shrink-0">
                             Live
                           </span>
+                        ) : active ? (
+                          <span className="text-[9px] px-1 rounded bg-blue-500/20 text-blue-300 shrink-0">
+                            Active
+                          </span>
                         ) : null}
-                        <span className="text-[9px] text-dark-500 truncate">{s.meetingLabel}</span>
+                        <span className="text-[9px] text-dark-500 whitespace-nowrap shrink-0">
+                          {s.meetingLabel}
+                        </span>
                       </div>
                       <p className="text-[10px] text-dark-400">{s.answers.length} replies</p>
                     </button>
@@ -323,16 +342,32 @@ export function SessionsPanel({ onClose }: SessionsPanelProps): React.JSX.Elemen
           {viewing ? (
             <>
               <div className="px-3 py-2 border-b border-dark-800 flex items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-dark-100 truncate">{viewing.threadTitle}</p>
-                  <p className="text-[10px] text-dark-500 flex items-center gap-1 mt-0.5">
-                    <Clock size={10} />
+                <div className="min-w-0 overflow-x-auto">
+                  <p className="text-sm font-medium text-dark-100 whitespace-nowrap">
+                    {viewing.threadTitle}
+                  </p>
+                  <p className="text-[10px] text-dark-500 flex items-center gap-1 mt-0.5 whitespace-nowrap">
+                    <Clock size={10} className="shrink-0" />
                     {viewing.meetingLabel}
-                    {isLive ? ' · currently live' : ' · browsing only'}
+                    {isLiveListening
+                      ? ' · listening now'
+                      : isActive
+                        ? ' · active workspace'
+                        : ' · browsing only'}
                   </p>
                 </div>
                 <div className="flex gap-1 shrink-0">
-                  {!isLive ? (
+                  {isActive ? (
+                    <Tooltip content="Back to live answers / Start listening" side="bottom">
+                      <button
+                        onClick={resumeLive}
+                        className="flex items-center gap-1 px-2 py-1 rounded text-[11px] bg-blue-600 hover:bg-blue-500 text-white"
+                      >
+                        <Play size={11} />
+                        Resume
+                      </button>
+                    </Tooltip>
+                  ) : (
                     <Tooltip content="Switch live workspace to this meeting" side="bottom">
                       <button
                         onClick={() => useSession(viewing.id)}
@@ -342,7 +377,7 @@ export function SessionsPanel({ onClose }: SessionsPanelProps): React.JSX.Elemen
                         Use
                       </button>
                     </Tooltip>
-                  ) : null}
+                  )}
                   <Tooltip content="New meeting today (same project/thread)" side="bottom">
                     <button
                       onClick={() => newMeetingInThread(viewing.id)}
@@ -408,10 +443,24 @@ export function SessionsPanel({ onClose }: SessionsPanelProps): React.JSX.Elemen
                       className="rounded-lg border border-dark-800 bg-dark-900/60 p-3 space-y-2"
                     >
                       <div className="flex items-start justify-between gap-2">
-                        <p className="text-xs font-medium text-blue-300">{entry.question}</p>
+                        <div className="min-w-0 space-y-1">
+                          <p className="text-xs font-medium text-blue-300 break-words">
+                            {entry.question}
+                          </p>
+                          <p className="text-[10px] text-dark-500 whitespace-nowrap overflow-x-auto">
+                            {new Date(entry.timestamp).toLocaleString('en-GB', {
+                              day: 'numeric',
+                              month: 'short',
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                              hour12: false
+                            })}
+                          </p>
+                        </div>
                         <button
                           onClick={() => copy(entry.answer, entry.id)}
-                          className="p-1 text-dark-500 hover:text-dark-200"
+                          className="p-1 text-dark-500 hover:text-dark-200 shrink-0"
                         >
                           {copiedId === entry.id ? <Check size={12} /> : <Copy size={12} />}
                         </button>
