@@ -221,9 +221,14 @@ button {
   background: var(--ink-200);
   display: grid;
   place-items: center;
-  font-family: var(--mono);
-  font-size: 0.68rem;
   color: var(--accent);
+  flex: none;
+}
+
+.wordmark__mark svg {
+  display: block;
+  width: 15px;
+  height: 15px;
 }
 
 .topnav {
