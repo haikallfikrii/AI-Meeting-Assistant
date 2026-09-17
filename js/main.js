@@ -574,6 +574,14 @@
             (emailParam ? ' (' + emailParam + ')' : '') +
             '. Open the Kalfi app → Settings → Account: set password (first time) or log in with that email. Your plan syncs automatically.'
         }
+        // Funnel ping — marks lead payment_returned (subscribed still needs Lemon webhook)
+        if (emailParam && CONFIG.apiBaseUrl) {
+          fetch(String(CONFIG.apiBaseUrl).replace(/\/$/, '') + '/v1/billing/checkout-return', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: emailParam, plan: planParam })
+          }).catch(function () {})
+        }
       }
     } catch (_) {}
 
