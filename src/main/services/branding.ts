@@ -191,18 +191,34 @@ export function applyDockVisibility(hideFromDock: boolean): void {
   }
 }
 
+/** Bundled Kalfi mark — used when the customer has not set a custom logo. */
+function resolveDefaultAppIconPath(): string {
+  const candidates = [
+    path.join(process.resourcesPath, 'icon.png'),
+    path.join(process.resourcesPath, 'app.asar.unpacked', 'resources', 'icon.png'),
+    path.join(app.getAppPath(), 'resources', 'icon.png'),
+    path.join(__dirname, '../../resources/icon.png')
+  ]
+  for (const candidate of candidates) {
+    if (candidate && fs.existsSync(candidate)) return candidate
+  }
+  return ''
+}
+
+function resolveActiveLogoImage(brandLogoPath?: string | null): Electron.NativeImage {
+  if (brandLogoPath && fs.existsSync(brandLogoPath)) {
+    const custom = loadNativeImage(brandLogoPath)
+    if (!custom.isEmpty()) return custom
+  }
+  const fallback = resolveDefaultAppIconPath()
+  return fallback ? loadNativeImage(fallback) : nativeImage.createEmpty()
+}
+
 export function applyDockIcon(brandLogoPath?: string | null): void {
   if (process.platform !== 'darwin' || !app.dock) return
   try {
-    if (brandLogoPath && fs.existsSync(brandLogoPath)) {
-      const img = loadNativeImage(brandLogoPath)
-      if (!img.isEmpty()) {
-        app.dock.setIcon(img)
-        return
-      }
-    }
-    // Clear custom icon → fall back to Electron/app default by re-showing dock
-    // (setIcon with empty is a no-op on some Electron versions)
+    const img = resolveActiveLogoImage(brandLogoPath)
+    if (!img.isEmpty()) app.dock.setIcon(img)
   } catch (error) {
     console.error('Failed to set Dock icon:', error)
   }
@@ -210,6 +226,7 @@ export function applyDockIcon(brandLogoPath?: string | null): void {
 
 /**
  * Apply display name + window title + optional Dock icon.
+ * Custom name/logo remain customer-controlled; empty logo falls back to the Kalfi mark.
  * Note: macOS Dock *label* comes from the .app bundle name and cannot be renamed at runtime.
  */
 export function applyRuntimeBranding(
@@ -232,14 +249,12 @@ export function applyRuntimeBranding(
 
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.setTitle(name)
-    if (brandLogoPath && fs.existsSync(brandLogoPath)) {
-      const img = loadNativeImage(brandLogoPath)
-      if (!img.isEmpty()) {
-        try {
-          mainWindow.setIcon(img)
-        } catch {
-          /* ignore — setIcon is best-effort on macOS */
-        }
+    const img = resolveActiveLogoImage(brandLogoPath)
+    if (!img.isEmpty()) {
+      try {
+        mainWindow.setIcon(img)
+      } catch {
+        /* ignore — setIcon is best-effort on macOS */
       }
     }
   }

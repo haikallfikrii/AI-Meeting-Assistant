@@ -18,9 +18,12 @@ Minimal geometric **K** with a short middle **answer bar** — the live reply li
 | `kalfi-mark-color.svg` | Same mark locked to `#5B8CFF` |
 | `kalfi-icon.svg` | Squircle app / favicon tile |
 | `kalfi-wordmark.svg` | Mark + “Kalfi” for headers / decks |
-| `kalfi-logo-mark.png` | Raster mark (transparent) |
-| `kalfi-app-icon.png` | Raster app icon |
+| `kalfi-app-icon.png` | Raster app icon (1024-ready source) |
+| `kalfi-app-icon.ico` | Windows installer / shortcut icon |
+| `favicon-16.png` / `favicon-32.png` | Browser favicons |
+| `apple-touch-icon.png` | iOS / Apple touch |
+| `og-icon.png` | Open Graph / Twitter share image |
 
-## Clear space
+Ship targets: `resources/icon.png`, `build/icon.png`, `build/icon.icns`, `build/icon.ico`.
 
-Keep empty margin ≥ 1/4 of the mark height on all sides. Don’t stretch; scale uniformly. Don’t drop the answer bar — that’s the recognizer.
+Custom customer branding (display name + logo) and hide-from-Dock stay independent — empty logo falls back to this mark.
