@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { SignJWT, jwtVerify } from 'jose'
+import nodemailer from 'nodemailer'
 import { env } from './config.js'
 
 export type OtpPurpose = 'checkout' | 'reset' | 'register'
@@ -103,7 +104,9 @@ export function storeOtp(email: string, purpose: OtpPurpose, code: string): void
     attempts: 0,
     createdAt: now
   })
-  db.sends[normalized] = [...(db.sends[normalized] || []), now]
+  const sends = db.sends[normalized] || []
+  sends.push(now)
+  db.sends[normalized] = sends
   write(db)
 }
 
@@ -113,41 +116,39 @@ export function verifyOtp(
   code: string
 ): { ok: true } | { ok: false; error: string } {
   const normalized = email.trim().toLowerCase()
-  const trimmed = String(code || '').trim()
-  if (!/^\d{6}$/.test(trimmed)) {
-    return { ok: false, error: 'Enter the 6-digit code from your email.' }
-  }
   const now = Date.now()
   const db = prune(read(), now)
   const idx = db.records.findIndex((r) => r.email === normalized && r.purpose === purpose)
-  if (idx < 0) {
-    return { ok: false, error: 'Code expired or not found. Request a new one.' }
-  }
-  const record = db.records[idx]
-  if (record.attempts >= MAX_ATTEMPTS) {
+  if (idx < 0) return { ok: false, error: 'Code expired or not found. Request a new one.' }
+  const rec = db.records[idx]
+  if (rec.expiresAt < now) {
     db.records.splice(idx, 1)
     write(db)
-    return { ok: false, error: 'Too many wrong attempts. Request a new code.' }
+    return { ok: false, error: 'Code expired. Request a new one.' }
   }
-  if (record.codeHash !== hashCode(trimmed)) {
-    db.records[idx] = { ...record, attempts: record.attempts + 1 }
+  if (rec.attempts >= MAX_ATTEMPTS) {
+    return { ok: false, error: 'Too many attempts. Request a new code.' }
+  }
+  const match = rec.codeHash === hashCode(code.trim())
+  if (!match) {
+    rec.attempts += 1
     write(db)
-    return { ok: false, error: 'Incorrect code. Check the email and try again.' }
+    return { ok: false, error: 'Invalid code. Check and try again.' }
   }
   db.records.splice(idx, 1)
   write(db)
   return { ok: true }
 }
 
-export async function signEmailProof(
-  email: string,
-  purpose: OtpPurpose,
-  ttl = '30m'
-): Promise<string> {
-  return new SignJWT({ email: email.trim().toLowerCase(), purpose, kind: 'email_proof' })
+export async function signEmailProof(email: string, purpose: OtpPurpose): Promise<string> {
+  return new SignJWT({
+    kind: 'email_proof',
+    email: email.trim().toLowerCase(),
+    purpose
+  })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
-    .setExpirationTime(ttl)
+    .setExpirationTime('30m')
     .sign(secret())
 }
 
@@ -164,6 +165,77 @@ export async function verifyEmailProof(
     throw new Error('Invalid email proof')
   }
   return { email: payload.email }
+}
+
+function smtpConfigured(): boolean {
+  return Boolean(env('SMTP_HOST') && env('SMTP_USER') && env('SMTP_PASS'))
+}
+
+async function sendViaSmtp(opts: {
+  from: string
+  to: string
+  subject: string
+  html: string
+}): Promise<{ ok: true } | { ok: false; error: string }> {
+  const port = Number(env('SMTP_PORT', '465'))
+  const secure =
+    env('SMTP_SECURE', port === 465 ? '1' : '0') === '1' ||
+    env('SMTP_SECURE') === 'true'
+  try {
+    const transporter = nodemailer.createTransport({
+      host: env('SMTP_HOST'),
+      port,
+      secure,
+      auth: {
+        user: env('SMTP_USER'),
+        pass: env('SMTP_PASS')
+      }
+    })
+    await transporter.sendMail({
+      from: opts.from,
+      to: opts.to,
+      subject: opts.subject,
+      html: opts.html,
+      text: opts.html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+    })
+    return { ok: true }
+  } catch (err) {
+    console.error('[otp] SMTP send failed', err)
+    return { ok: false, error: 'Could not send email via mail server. Try again shortly.' }
+  }
+}
+
+async function sendViaResend(opts: {
+  apiKey: string
+  from: string
+  to: string
+  subject: string
+  html: string
+}): Promise<{ ok: true } | { ok: false; error: string }> {
+  try {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${opts.apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        from: opts.from,
+        to: [opts.to],
+        subject: opts.subject,
+        html: opts.html
+      })
+    })
+    if (!res.ok) {
+      const text = await res.text()
+      console.error('[otp] Resend failed', res.status, text)
+      return { ok: false, error: 'Could not send email. Check the address and try again.' }
+    }
+    return { ok: true }
+  } catch (err) {
+    console.error('[otp] Resend send failed', err)
+    return { ok: false, error: 'Could not send email. Try again in a moment.' }
+  }
 }
 
 export async function sendOtpEmail(
@@ -194,39 +266,21 @@ export async function sendOtpEmail(
     </div>
   `
 
-  const apiKey = env('RESEND_API_KEY')
-  const from = env('EMAIL_FROM', 'Kalfi <onboarding@resend.dev>')
+  const toAddr = to.trim().toLowerCase()
+  const from = env('EMAIL_FROM', 'Kalfi <hello@kalfi.app>')
+  const resendKey = env('RESEND_API_KEY')
 
-  if (!apiKey) {
-    // No inbox provider yet — still issue a code and return it to the client UI
-    // so checkout / reset are not blocked. Once RESEND_API_KEY is set, codes
-    // go to email only and are not returned in JSON.
-    console.warn(`[otp] RESEND_API_KEY missing — inline code for ${to} (${purpose}): ${code}`)
-    return { ok: true, devCode: code }
+  // Prefer Hostinger / custom SMTP (hello@kalfi.app), then Resend, else inline test code.
+  if (smtpConfigured()) {
+    const sent = await sendViaSmtp({ from, to: toAddr, subject, html })
+    if (sent.ok) return { ok: true }
+    return sent
   }
 
-  try {
-    const res = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        from,
-        to: [to.trim().toLowerCase()],
-        subject,
-        html
-      })
-    })
-    if (!res.ok) {
-      const text = await res.text()
-      console.error('[otp] Resend failed', res.status, text)
-      return { ok: false, error: 'Could not send email. Check the address and try again.' }
-    }
-    return { ok: true }
-  } catch (err) {
-    console.error('[otp] send failed', err)
-    return { ok: false, error: 'Could not send email. Try again in a moment.' }
+  if (resendKey) {
+    return sendViaResend({ apiKey: resendKey, from, to: toAddr, subject, html })
   }
+
+  console.warn(`[otp] No SMTP/Resend configured — inline code for ${toAddr} (${purpose}): ${code}`)
+  return { ok: true, devCode: code }
 }
