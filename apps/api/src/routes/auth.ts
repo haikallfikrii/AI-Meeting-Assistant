@@ -169,6 +169,10 @@ authRoutes.post('/login', async (c) => {
   let user = findUserByEmail(body.data.email)
   if (!user) return c.json({ error: 'Invalid email or password' }, 401)
 
+  if (user.suspended || user.subStatus === 'suspended') {
+    return c.json({ error: 'This account is suspended. Contact support.', code: 'SUSPENDED' }, 403)
+  }
+
   if (user.needsPasswordSetup) {
     return c.json(
       {

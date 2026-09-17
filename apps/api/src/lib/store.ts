@@ -35,6 +35,10 @@ export interface User {
   singleSession?: SingleSessionState
   /** True when account was auto-created from Lemon checkout — user must set a password */
   needsPasswordSetup?: boolean
+  /** Admin note / internal label */
+  adminNote?: string
+  /** Soft-delete / suspend flag (also mirrored in subStatus when suspended) */
+  suspended?: boolean
   usageMonth: string
   tokensUsed: number
   createdAt: number
@@ -241,9 +245,95 @@ export function publicUser(user: User) {
         }
       : null,
     needsPasswordSetup: Boolean(user.needsPasswordSetup),
+    suspended: Boolean(user.suspended) || user.subStatus === 'suspended',
+    adminNote: user.adminNote || '',
+    lemonCustomerId: user.lemonCustomerId || null,
+    lemonSubscriptionId: user.lemonSubscriptionId || null,
+    lemonOrderId: user.lemonOrderId || null,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
     /** @deprecated use featureTier + subStatus */
     proActive: paid && (featureTier === 'hosted' || featureTier === 'team'),
     paidActive: paid
+  }
+}
+
+export function listUsers(opts?: {
+  q?: string
+  plan?: string
+  status?: string
+  limit?: number
+  offset?: number
+}): { users: User[]; total: number } {
+  let users = read().users.map(hydrateUser)
+  const q = opts?.q?.trim().toLowerCase()
+  if (q) {
+    users = users.filter(
+      (u) =>
+        u.email.includes(q) ||
+        u.id.includes(q) ||
+        (u.lemonCustomerId || '').includes(q) ||
+        (u.lemonOrderId || '').includes(q)
+    )
+  }
+  if (opts?.plan && opts.plan !== 'all') {
+    users = users.filter((u) => normalizeLegacyPlan(u.plan) === opts.plan)
+  }
+  if (opts?.status && opts.status !== 'all') {
+    if (opts.status === 'suspended') {
+      users = users.filter((u) => u.suspended || u.subStatus === 'suspended')
+    } else {
+      users = users.filter((u) => u.subStatus === opts.status)
+    }
+  }
+  users.sort((a, b) => b.updatedAt - a.updatedAt)
+  const total = users.length
+  const offset = Math.max(0, opts?.offset || 0)
+  const limit = Math.min(200, Math.max(1, opts?.limit || 50))
+  return { users: users.slice(offset, offset + limit), total }
+}
+
+export function deleteUser(id: string): boolean {
+  const db = read()
+  const before = db.users.length
+  db.users = db.users.filter((u) => u.id !== id)
+  if (db.users.length === before) return false
+  write(db)
+  return true
+}
+
+export function adminOverview() {
+  const users = read().users.map(hydrateUser)
+  const now = Date.now()
+  const weekAgo = now - 7 * 24 * 60 * 60 * 1000
+  const byPlan: Record<string, number> = {}
+  const byStatus: Record<string, number> = {}
+  let paidActive = 0
+  let suspended = 0
+  let lemonLinked = 0
+  let needsPassword = 0
+  let newThisWeek = 0
+
+  for (const u of users) {
+    const plan = normalizeLegacyPlan(u.plan)
+    byPlan[plan] = (byPlan[plan] || 0) + 1
+    byStatus[u.subStatus] = (byStatus[u.subStatus] || 0) + 1
+    if (hasPaidLicense(plan, u.subStatus, u.singleSession)) paidActive += 1
+    if (u.suspended || u.subStatus === 'suspended') suspended += 1
+    if (u.lemonCustomerId || u.lemonSubscriptionId || u.lemonOrderId) lemonLinked += 1
+    if (u.needsPasswordSetup) needsPassword += 1
+    if (u.createdAt >= weekAgo) newThisWeek += 1
+  }
+
+  return {
+    totalUsers: users.length,
+    paidActive,
+    suspended,
+    lemonLinked,
+    needsPassword,
+    newThisWeek,
+    byPlan,
+    byStatus
   }
 }
 

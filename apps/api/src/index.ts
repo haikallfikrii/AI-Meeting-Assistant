@@ -13,8 +13,14 @@ app.use(
   '*',
   cors({
     origin: corsOrigins(),
-    allowHeaders: ['Content-Type', 'Authorization', 'X-Signature', 'Stripe-Signature', 'X-Admin-Secret'],
-    allowMethods: ['GET', 'POST', 'OPTIONS']
+    allowHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-Signature',
+      'Stripe-Signature',
+      'X-Admin-Secret'
+    ],
+    allowMethods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS']
   })
 )
 
