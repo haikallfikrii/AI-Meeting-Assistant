@@ -2133,6 +2133,7 @@ select {
   background: #0b1220;
   color: #e2e8f0;
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+  text-align: center;
 }
 
 .email-gate__close {
@@ -2153,18 +2154,22 @@ select {
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: #60a5fa;
+  text-align: center;
 }
 
 .email-gate__card h3 {
   margin: 0 0 8px;
   font-size: 1.2rem;
+  text-align: center;
 }
 
 .email-gate__lead {
-  margin: 0 0 18px;
+  margin: 0 auto 18px;
+  max-width: 34ch;
   color: #94a3b8;
   font-size: 0.9rem;
   line-height: 1.45;
+  text-align: center;
 }
 
 .email-gate__lead strong {
@@ -2178,6 +2183,8 @@ select {
   margin-bottom: 12px;
   font-size: 0.8rem;
   color: #cbd5e1;
+  text-align: center;
+  justify-items: center;
 }
 
 .email-gate__label input {
@@ -2188,6 +2195,7 @@ select {
   background: #111827;
   color: #f8fafc;
   font: inherit;
+  text-align: center;
 }
 
 .email-gate__label input[data-gate-code],
@@ -2199,13 +2207,16 @@ select {
 
 .email-gate__otp {
   margin-top: 4px;
+  text-align: center;
 }
 
 .email-gate__sent {
-  margin: 0 0 12px;
+  margin: 0 auto 12px;
+  max-width: 34ch;
   font-size: 0.85rem;
   color: #93c5fd;
   line-height: 1.4;
+  text-align: center;
 }
 
 .email-gate__codebox {
@@ -2236,9 +2247,11 @@ select {
 }
 
 .email-gate__msg {
-  margin: 0 0 12px;
+  margin: 0 auto 12px;
+  max-width: 34ch;
   font-size: 0.85rem;
   color: #93c5fd;
+  text-align: center;
 }
 
 .email-gate__msg.is-error {
@@ -2248,6 +2261,7 @@ select {
 .email-gate__primary {
   width: 100%;
   margin-top: 4px;
+  text-align: center;
 }
 
 .email-gate__resend {
@@ -2261,6 +2275,7 @@ select {
   cursor: pointer;
   text-decoration: underline;
   text-underline-offset: 3px;
+  text-align: center;
 }
 
 .email-gate__resend:hover {
