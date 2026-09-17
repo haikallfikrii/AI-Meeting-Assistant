@@ -2031,6 +2031,35 @@ select {
 
 /* ---------- pricing ---------- */
 
+.billing-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  margin: 0 0 22px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--ink-100);
+}
+
+.billing-toggle__btn {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--fg-dim);
+  font-size: 0.88rem;
+  font-weight: 500;
+  padding: 8px 16px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.billing-toggle__btn.is-on {
+  background: rgba(91, 140, 255, 0.18);
+  color: var(--fg);
+}
+
 .plans {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -2049,6 +2078,24 @@ select {
 .plan--hi {
   border-color: rgba(91, 140, 255, 0.4);
   background: linear-gradient(180deg, rgba(91, 140, 255, 0.07), var(--ink-100) 42%);
+}
+
+.plan--session {
+  margin-top: 18px;
+  border-style: dashed;
+  border-color: var(--line-strong);
+}
+
+.plan__session-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.plan__session-row .btn {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .plan__top {
@@ -2086,11 +2133,32 @@ select {
   margin: 10px 0 4px;
 }
 
-.plan__price span {
+.plan__price [data-price-suffix],
+.plan__price > span:not([data-price-main]) {
   font-family: var(--sans);
   font-size: 0.92rem;
   color: var(--fg-faint);
   letter-spacing: 0;
+}
+
+.plan__billed {
+  margin: 0 0 6px;
+  font-size: 0.82rem;
+  color: var(--fg-faint);
+}
+
+.plan__save {
+  display: inline-flex;
+  align-self: flex-start;
+  margin: 0 0 10px;
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--signal);
+  border: 1px solid rgba(74, 222, 128, 0.35);
+  border-radius: 999px;
+  padding: 3px 9px;
 }
 
 .plan__desc {
@@ -3592,6 +3660,11 @@ details p {
 
   .plans {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .plan__session-row {
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .closer,

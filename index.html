@@ -92,7 +92,7 @@
                 </a>
                 <a href="#pricing" role="menuitem">
                   <strong>Plans</strong>
-                  <span>$14 BYOK · $19 Hosted · $49 Team</span>
+                  <span>$14 BYOK · $19 Hosted · $9 Pass</span>
                 </a>
                 <a href="#compare" role="menuitem">
                   <strong>Compare</strong>
@@ -835,21 +835,47 @@
       <section class="band" id="pricing">
         <div class="shell band__head" data-reveal>
           <span class="tagline">Pricing</span>
-          <h2>Three clear packs. Still a fraction of $150 tools.</h2>
+          <h2>Clear packs. Still a fraction of $150 tools.</h2>
           <p>
-            Bring your own key for $14, let us host models for $19, or run a small team on one bill.
-            Cancel any time in Stripe.
+            BYOK or Hosted — monthly or annual. Team for 3 seats. Need one call only? Grab a Single
+            Session Pass. Cancel any time.
           </p>
         </div>
 
         <div class="shell">
-          <div class="plans" data-reveal data-reveal-stagger>
-            <article class="plan">
+          <div
+            class="billing-toggle"
+            role="group"
+            aria-label="Billing period"
+            data-reveal
+            id="billing-toggle"
+          >
+            <button type="button" class="billing-toggle__btn is-on" data-billing="monthly">
+              Monthly
+            </button>
+            <button type="button" class="billing-toggle__btn" data-billing="annual">
+              Annual
+            </button>
+          </div>
+
+          <div class="plans" data-reveal data-reveal-stagger data-billing="monthly" id="plans">
+            <article
+              class="plan"
+              data-plan-card="byok"
+              data-price-monthly="14"
+              data-price-annual-mo="10"
+              data-price-annual="120"
+              data-save-annual="~29%"
+            >
               <div class="plan__top">
                 <h3>BYOK</h3>
                 <span class="chip chip--signal">Your key</span>
               </div>
-              <div class="plan__price">$14<span> / month</span></div>
+              <div class="plan__price">
+                $<span data-price-main>14</span><span data-price-suffix> / month</span>
+              </div>
+              <p class="plan__billed" data-price-billed hidden>Billed $120 / year</p>
+              <span class="plan__save" data-price-save hidden>Save ~29%</span>
               <p class="plan__desc">
                 Full desktop app. You pay OpenAI or OpenRouter directly for usage on top.
               </p>
@@ -861,17 +887,32 @@
                 <li>OpenAI, OpenRouter or compatible base URL</li>
                 <li>Key encrypted on device</li>
               </ul>
-              <button class="btn btn--line" type="button" data-subscribe data-plan="byok">
-                Start BYOK
-              </button>
+              <a
+                class="btn btn--line"
+                href="#"
+                data-lemon-checkout="byok"
+                data-interval="monthly"
+                >Start BYOK</a
+              >
             </article>
 
-            <article class="plan plan--hi">
+            <article
+              class="plan plan--hi"
+              data-plan-card="hosted"
+              data-price-monthly="19"
+              data-price-annual-mo="15"
+              data-price-annual="180"
+              data-save-annual="~21%"
+            >
               <div class="plan__top">
                 <h3>Hosted</h3>
                 <span class="chip">Our AI</span>
               </div>
-              <div class="plan__price">$19<span> / month</span></div>
+              <div class="plan__price">
+                $<span data-price-main>19</span><span data-price-suffix> / month</span>
+              </div>
+              <p class="plan__billed" data-price-billed hidden>Billed $180 / year</p>
+              <span class="plan__save" data-price-save hidden>Save ~21%</span>
               <p class="plan__desc">
                 No provider account. We carry chat + transcription with a fair monthly quota.
               </p>
@@ -880,15 +921,19 @@
                 <li>Hosted models through our API</li>
                 <li>Login on any Mac you own</li>
                 <li>Quota shown in-app</li>
-                <li>Stripe customer portal</li>
+                <li>Customer portal (Lemon Squeezy)</li>
               </ul>
-              <button class="btn btn--accent" type="button" data-subscribe data-plan="hosted">
-                Subscribe Hosted
-              </button>
+              <a
+                class="btn btn--accent"
+                href="#"
+                data-lemon-checkout="hosted"
+                data-interval="monthly"
+                >Subscribe Hosted</a
+              >
               <p class="note" id="pro-note" style="margin-top: 12px"></p>
             </article>
 
-            <article class="plan">
+            <article class="plan" data-plan-card="team">
               <div class="plan__top">
                 <h3>Team</h3>
                 <span class="chip">3 seats</span>
@@ -902,13 +947,33 @@
                 <li>Shared billing portal</li>
                 <li>Stealth branding per seat</li>
                 <li>Priority setup help</li>
-                <li>Need more seats? Contact us</li>
+                <li>Need more seats? Contact hello@kalfi.app</li>
               </ul>
-              <a class="btn btn--line" href="mailto:hello@chatlm.tech?subject=Kalfi%20Team%20plan"
-                >Talk to us</a
-              >
+              <a class="btn btn--line" href="#" data-lemon-checkout="team">Start Team</a>
             </article>
           </div>
+
+          <article class="plan plan--session" data-reveal data-plan-card="single_session">
+            <div class="plan__session-row">
+              <div>
+                <div class="plan__top">
+                  <h3>Single Session Pass</h3>
+                  <span class="chip">One call</span>
+                </div>
+                <div class="plan__price">$9<span> one-time</span></div>
+                <p class="plan__desc" style="margin-bottom: 0">
+                  Only need it for one call? No subscription. Access for 2 hours / 1 session —
+                  expires in 30 days if unused.
+                </p>
+              </div>
+              <a
+                class="btn btn--accent"
+                href="#"
+                data-lemon-checkout="singleSession"
+                >Get Session Pass</a
+              >
+            </div>
+          </article>
         </div>
       </section>
 
@@ -1191,13 +1256,21 @@
     <script>
       window.KALFI_CONFIG = {
         apiBaseUrl: 'https://api.srv835792.hstgr.cloud',
-        stripePriceId: '',
         byokPrice: 14,
         hostedPrice: 19,
         teamPrice: 49,
         proPrice: 19,
         version: '1.0.3',
         githubRepo: 'haikallfikrii/AI-Meeting-Assistant',
+        // Paste real Lemon Squeezy checkout URLs after you publish each variant.
+        lemonCheckout: {
+          byokMonthly: 'LEMON_SQUEEZY_CHECKOUT_URL_BYOK_MONTHLY',
+          byokAnnual: 'LEMON_SQUEEZY_CHECKOUT_URL_BYOK_ANNUAL',
+          hostedMonthly: 'LEMON_SQUEEZY_CHECKOUT_URL_HOSTED_MONTHLY',
+          hostedAnnual: 'LEMON_SQUEEZY_CHECKOUT_URL_HOSTED_ANNUAL',
+          team: 'LEMON_SQUEEZY_CHECKOUT_URL_TEAM',
+          singleSession: 'LEMON_SQUEEZY_CHECKOUT_URL_SINGLE_SESSION'
+        },
         // Absolute asset URLs preferred once a GitHub Release exists.
         // Leave empty to auto-resolve from the latest release API (never invent 404 links).
         downloads: {
