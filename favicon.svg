@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Kalfi">
+  <rect width="64" height="64" rx="14" fill="#080A0F"/>
+  <g fill="#5B8CFF">
+    <rect x="12" y="10" width="11" height="44" rx="5.5"/>
+    <path d="M24.5 28.5V16c0-1 1.15-1.55 1.9-.95l20.6 15.7c1 .75.4 2.3-.85 2.3H32.5c-.65 0-1.25-.3-1.65-.8L24.5 28.5Z"/>
+    <path d="M24.5 35.5V48c0 1 1.15 1.55 1.9.95l20.6-15.7c1-.75.4-2.3-.85-2.3H32.5c-.65 0-1.25.3-1.65.8L24.5 35.5Z"/>
+    <rect x="24.5" y="27.5" width="20" height="9" rx="4.5"/>
+  </g>
+</svg>
