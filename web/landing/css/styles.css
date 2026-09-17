@@ -639,10 +639,11 @@ a.btn.is-disabled {
 
 .hero__cta-row {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 12px;
   align-items: center;
   justify-content: center;
+  max-width: 100%;
 }
 
 .hero-copy .dl--hero {
@@ -3843,13 +3844,36 @@ details p {
 }
 
 @media (max-width: 780px) {
-  .dl,
-  .dl--hero {
+  .download-panel .dl {
     width: 100%;
   }
 
   .docs-nav {
     border-radius: var(--r-md);
+  }
+
+  /* Keep hero CTAs side-by-side on tablet; shrink slightly so they fit */
+  .hero-copy .dl--hero {
+    width: min(100%, 260px);
+  }
+
+  .hero-copy .btn--hero-side {
+    height: 48px;
+    min-height: 48px;
+    padding: 0 14px;
+    font-size: 0.9rem;
+  }
+
+  .hero-copy .btn--hero-side .kbd {
+    margin-left: 6px;
+    font-size: 0.7rem;
+    padding: 2px 6px;
+  }
+
+  .hero-copy .dl--hero .dl__shell,
+  .hero-copy .dl--hero .dl__go {
+    height: 48px;
+    min-height: 48px;
   }
 }
 
@@ -4142,18 +4166,27 @@ details p {
   }
 
   .hero-copy .hero__cta-row {
-    flex-direction: column;
+    flex-wrap: nowrap;
     align-items: center;
-    width: 100%;
+    justify-content: center;
+    width: auto;
+    max-width: 100%;
     gap: 10px;
   }
 
   .hero-copy .dl,
-  .hero-copy .dl--hero,
+  .hero-copy .dl--hero {
+    width: min(100%, 260px);
+    max-width: 260px;
+    margin-inline: 0;
+    flex: 0 1 auto;
+  }
+
   .hero-copy .btn--hero-side {
-    width: min(100%, 320px);
-    max-width: 320px;
-    margin-inline: auto;
+    width: auto;
+    max-width: none;
+    margin-inline: 0;
+    flex: 0 0 auto;
   }
 
   .hero-copy .download-meta--hero {
@@ -4260,6 +4293,37 @@ details p {
     display: block;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (max-width: 560px) {
+  /* Phone: stack so the pair doesn't clip */
+  .hero-copy .hero__cta-row {
+    flex-direction: column;
+    flex-wrap: wrap;
+    width: 100%;
+    gap: 10px;
+  }
+
+  .hero-copy .dl,
+  .hero-copy .dl--hero,
+  .hero-copy .btn--hero-side {
+    width: min(100%, 320px);
+    max-width: 320px;
+    margin-inline: auto;
+  }
+
+  .hero-copy .dl--hero .dl__shell,
+  .hero-copy .dl--hero .dl__go {
+    height: 52px;
+    min-height: 52px;
+  }
+
+  .hero-copy .btn--hero-side {
+    height: 52px;
+    min-height: 52px;
+    padding: 0 18px;
+    font-size: 0.92rem;
   }
 }
 
