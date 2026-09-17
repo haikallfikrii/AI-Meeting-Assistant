@@ -1195,10 +1195,8 @@
     }
 
     modal.addEventListener('click', function (e) {
+      // Only Got it / Full docs may dismiss — not backdrop or outside click.
       if (e.target.closest('[data-install-close]')) close()
-    })
-    document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape' && !modal.hidden) close()
     })
 
     document.addEventListener('click', function (e) {
