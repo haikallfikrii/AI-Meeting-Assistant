@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { env } from '../lib/config.js'
 import { type BillingPlan, planFromVariantId } from '../lib/entitlement.js'
 import { checkoutUrlForPlan, lemonStoreId, lemonVariantMap } from '../lib/lemon-variants.js'
+import { verifyEmailProof } from '../lib/otp.js'
 import { requireAuth, type AppVars } from '../middleware/auth.js'
 import {
   createUser,
@@ -32,14 +33,30 @@ const checkoutSchema = z.object({
     'team',
     'single_session'
   ]),
-  email: z.string().email().optional(),
+  email: z.string().email(),
+  emailProof: z.string().min(20),
   successUrl: z.string().url().optional(),
   cancelUrl: z.string().url().optional()
 })
 
 billingRoutes.post('/checkout', async (c) => {
   const body = checkoutSchema.safeParse(await c.req.json())
-  if (!body.success) return c.json({ error: 'Invalid payload' }, 400)
+  if (!body.success) {
+    return c.json(
+      { error: 'Verify your email first, then continue to checkout.' },
+      400
+    )
+  }
+
+  let verifiedEmail: string
+  try {
+    ;({ email: verifiedEmail } = await verifyEmailProof(body.data.emailProof, 'checkout'))
+  } catch {
+    return c.json({ error: 'Email verification expired. Request a new code.' }, 400)
+  }
+  if (verifiedEmail !== body.data.email.trim().toLowerCase()) {
+    return c.json({ error: 'Email does not match the verified address.' }, 400)
+  }
 
   const plan = body.data.plan
   const variantId = lemonVariantMap()[plan]
@@ -48,9 +65,7 @@ billingRoutes.post('/checkout', async (c) => {
   const appUrl = env('APP_URL', 'https://kalfi.app')
   const successUrl =
     body.data.successUrl ||
-    `${appUrl}/?checkout=success&plan=${encodeURIComponent(plan)}${
-      body.data.email ? `&email=${encodeURIComponent(body.data.email)}` : ''
-    }`
+    `${appUrl}/?checkout=success&plan=${encodeURIComponent(plan)}&email=${encodeURIComponent(verifiedEmail)}`
 
   if (lemonConfigured()) {
     const storeId = lemonStoreId()
@@ -62,7 +77,7 @@ billingRoutes.post('/checkout', async (c) => {
         type: 'checkouts',
         attributes: {
           checkout_data: {
-            email: body.data.email,
+            email: verifiedEmail,
             custom: { plan }
           },
           product_options: {

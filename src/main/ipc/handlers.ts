@@ -209,6 +209,63 @@ export function initializeIpcHandlers(window: BrowserWindow): void {
     return process.platform === 'darwin' ? '⌘⇧S' : 'Ctrl+Shift+S'
   })
 
+  /**
+   * Proxy Kalfi cloud API from main process — avoids Chromium CORS
+   * ("Failed to fetch") from the Electron renderer.
+   */
+  ipcMain.handle(
+    'kalfi-api',
+    async (
+      _event,
+      opts: {
+        path: string
+        method?: string
+        body?: unknown
+        token?: string
+      }
+    ) => {
+      const base = (
+        process.env.KALFI_API_URL ||
+        process.env.API_PUBLIC_URL ||
+        'https://api.srv835792.hstgr.cloud'
+      ).replace(/\/$/, '')
+      const path = opts.path.startsWith('/') ? opts.path : `/${opts.path}`
+      const method = (opts.method || 'GET').toUpperCase()
+      try {
+        const res = await fetch(`${base}${path}`, {
+          method,
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+            ...(opts.token ? { Authorization: `Bearer ${opts.token}` } : {})
+          },
+          body:
+            opts.body !== undefined && method !== 'GET' && method !== 'HEAD'
+              ? JSON.stringify(opts.body)
+              : undefined
+        })
+        const text = await res.text()
+        let data: unknown = null
+        try {
+          data = text ? JSON.parse(text) : null
+        } catch {
+          data = { error: text || `HTTP ${res.status}` }
+        }
+        return { ok: res.ok, status: res.status, data }
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : 'Could not reach Kalfi servers'
+        return {
+          ok: false,
+          status: 0,
+          data: {
+            error: `${message}. Check your internet connection and try again.`
+          }
+        }
+      }
+    }
+  )
+
   // Settings handlers
   ipcMain.handle('get-settings', () => {
     return settingsManager?.getSettings()
