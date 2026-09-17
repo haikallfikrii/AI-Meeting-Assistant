@@ -13,7 +13,7 @@ import {
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { AppSettings, useInterviewStore } from '../store/interviewStore'
-import { testEntitlementPatch } from '../lib/access'
+import { planLabel, statusLabel, testEntitlementPatch } from '../lib/access'
 
 interface ModelOption {
   id: string
@@ -81,7 +81,11 @@ export function SettingsModal(): React.ReactNode | null {
   const [accountPassword, setAccountPassword] = useState('')
   const [accountAuthBusy, setAccountAuthBusy] = useState(false)
   const [accountAuthMsg, setAccountAuthMsg] = useState<string | null>(null)
-  const [accountMode, setAccountMode] = useState<'login' | 'claim'>('login')
+  const [accountAuthOk, setAccountAuthOk] = useState(false)
+  const [accountMode, setAccountMode] = useState<'login' | 'claim' | 'reset'>('login')
+  const [resetOtp, setResetOtp] = useState('')
+  const [resetOtpSent, setResetOtpSent] = useState(false)
+  const [resetDevCode, setResetDevCode] = useState<string | null>(null)
   const fetchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   const [prevSettings, setPrevSettings] = useState(settings)
@@ -279,6 +283,7 @@ export function SettingsModal(): React.ReactNode | null {
   const handleAccountAuth = async (): Promise<void> => {
     const email = localSettings.accountEmail?.trim()
     if (!email || accountPassword.length < 8) {
+      setAccountAuthOk(false)
       setAccountAuthMsg('Email and password (min 8 chars) required.')
       return
     }
@@ -303,9 +308,13 @@ export function SettingsModal(): React.ReactNode | null {
         }
       }
       if (!res.ok || !data.token || !data.user) {
+        setAccountAuthOk(false)
         if (data.code === 'NEEDS_PASSWORD_SETUP') {
           setAccountMode('claim')
-          setAccountAuthMsg('First time after checkout — switch to Set password and create one.')
+          setAccountAuthOk(true)
+          setAccountAuthMsg('First time after checkout — use Set password and create one.')
+        } else if (res.status === 401) {
+          setAccountAuthMsg('Wrong email or password. Try again or use Forgot password.')
         } else {
           setAccountAuthMsg(
             data.error ||
@@ -318,14 +327,106 @@ export function SettingsModal(): React.ReactNode | null {
       }
       await applyCloudUser({ token: data.token, user: data.user })
       setAccountPassword('')
+      setAccountAuthOk(true)
       setAccountAuthMsg(
         accountMode === 'claim'
-          ? 'Password set. Plan synced from your Lemon purchase.'
-          : 'Logged in. Plan synced.'
+          ? `Password set. Plan: ${planLabel(data.user.plan)} (${statusLabel(data.user.subStatus)})`
+          : `Signed in. Plan: ${planLabel(data.user.plan)} (${statusLabel(data.user.subStatus)})`
       )
-      setAccountMode('login')
     } catch (err) {
-      setAccountAuthMsg(err instanceof Error ? err.message : 'Network error')
+      setAccountAuthOk(false)
+      setAccountAuthMsg(err instanceof Error ? err.message : 'Auth failed')
+    } finally {
+      setAccountAuthBusy(false)
+    }
+  }
+
+  const handleSendResetCode = async (): Promise<void> => {
+    const email = localSettings.accountEmail?.trim()
+    if (!email) {
+      setAccountAuthOk(false)
+      setAccountAuthMsg('Enter your account email first.')
+      return
+    }
+    setAccountAuthBusy(true)
+    setAccountAuthMsg(null)
+    setResetDevCode(null)
+    try {
+      const res = await window.api.kalfiApi({
+        path: '/v1/auth/otp/request',
+        method: 'POST',
+        body: { email, purpose: 'reset' }
+      })
+      const data = (res.data || {}) as {
+        error?: string
+        message?: string
+        devCode?: string
+      }
+      if (!res.ok) {
+        setAccountAuthOk(false)
+        setAccountAuthMsg(data.error || 'Could not send reset code.')
+        return
+      }
+      setResetOtpSent(true)
+      setAccountAuthOk(true)
+      if (data.devCode) {
+        setResetDevCode(data.devCode)
+        setResetOtp(data.devCode)
+        setAccountAuthMsg('Test mode: use the code below, then set a new password.')
+      } else {
+        setAccountAuthMsg(data.message || 'If that email has an account, a code is on the way.')
+      }
+    } catch (err) {
+      setAccountAuthOk(false)
+      setAccountAuthMsg(err instanceof Error ? err.message : 'Could not send code.')
+    } finally {
+      setAccountAuthBusy(false)
+    }
+  }
+
+  const handleResetPassword = async (): Promise<void> => {
+    const email = localSettings.accountEmail?.trim()
+    if (!email || !resetOtp.trim() || accountPassword.length < 8) {
+      setAccountAuthOk(false)
+      setAccountAuthMsg('Email, 6-digit code, and new password (min 8) are required.')
+      return
+    }
+    setAccountAuthBusy(true)
+    setAccountAuthMsg(null)
+    try {
+      const res = await window.api.kalfiApi({
+        path: '/v1/auth/password/reset',
+        method: 'POST',
+        body: { email, code: resetOtp.trim(), password: accountPassword }
+      })
+      const data = (res.data || {}) as {
+        error?: string
+        token?: string
+        user?: {
+          email: string
+          plan: AppSettings['membershipPlan']
+          subStatus: string
+          singleSession?: AppSettings['singleSession']
+        }
+      }
+      if (!res.ok || !data.token || !data.user) {
+        setAccountAuthOk(false)
+        setAccountAuthMsg(data.error || 'Could not reset password. Request a new code.')
+        return
+      }
+      await applyCloudUser({ token: data.token, user: data.user })
+      setAccountPassword('')
+      setResetOtp('')
+      setResetOtpSent(false)
+      setResetDevCode(null)
+      setAccountMode('login')
+      setAccountAuthOk(true)
+      setAccountAuthMsg(
+        `Password updated. Plan: ${planLabel(data.user.plan)} (${statusLabel(data.user.subStatus)})`
+      )
+    } catch (err) {
+      setAccountAuthOk(false)
+      setAccountAuthMsg(err instanceof Error ? err.message : 'Could not reset password.')
     } finally {
       setAccountAuthBusy(false)
     }
@@ -333,6 +434,7 @@ export function SettingsModal(): React.ReactNode | null {
 
   const handleSyncPlan = async (): Promise<void> => {
     if (!localSettings.authToken) {
+      setAccountAuthOk(false)
       setAccountAuthMsg('Log in first to sync plan.')
       return
     }
@@ -354,13 +456,18 @@ export function SettingsModal(): React.ReactNode | null {
         }
       }
       if (!res.ok || !data.user) {
+        setAccountAuthOk(false)
         setAccountAuthMsg(data.error || 'Could not sync plan')
         return
       }
       await applyCloudUser({ token: localSettings.authToken, user: data.user })
-      setAccountAuthMsg(`Synced: ${data.user.plan} (${data.user.subStatus})`)
+      setAccountAuthOk(true)
+      setAccountAuthMsg(
+        `Synced: ${planLabel(data.user.plan)} · ${statusLabel(data.user.subStatus)}`
+      )
     } catch (err) {
-      setAccountAuthMsg(err instanceof Error ? err.message : 'Network error')
+      setAccountAuthOk(false)
+      setAccountAuthMsg(err instanceof Error ? err.message : 'Could not sync plan')
     } finally {
       setAccountAuthBusy(false)
     }
@@ -414,15 +521,15 @@ export function SettingsModal(): React.ReactNode | null {
             <span className="text-dark-300">Session</span> (New Session from the header).
           </p>
 
-          {/* Account & membership (scaffold for billing) */}
+          {/* Account & membership */}
           <div className="space-y-3 rounded-lg border border-dark-700 bg-dark-800/50 p-3">
             <div className="flex items-start gap-2">
               <User size={16} className="mt-0.5 text-dark-400 shrink-0" />
               <div>
-                <label className="block text-sm font-medium text-dark-200">Account</label>
+                <label className="block text-sm font-medium text-dark-200">Account & plan</label>
                 <p className="text-xs text-dark-500 mt-1">
-                  Profile for future sign-in, receipts, and plan upgrades. Saved on this Mac for now —
-                  cloud sync ships with Pro billing.
+                  See your active plan here. After checkout on kalfi.app, claim once with the same
+                  email, then log in anytime.
                 </p>
               </div>
             </div>
@@ -460,22 +567,27 @@ export function SettingsModal(): React.ReactNode | null {
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2 text-sm text-dark-200">
                   <CreditCard size={14} className="text-dark-400" />
-                  Membership
+                  Your plan
                 </div>
-                <span className="rounded-full border border-dark-600 px-2 py-0.5 text-[10px] uppercase tracking-wider text-dark-400">
-                  {(localSettings.membershipStatus || 'inactive').replace(/_/g, ' ')}
+                <span
+                  className={`rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-wider ${
+                    localSettings.membershipStatus === 'active' ||
+                    localSettings.membershipStatus === 'trial'
+                      ? 'border-emerald-500/40 text-emerald-300'
+                      : 'border-dark-600 text-dark-400'
+                  }`}
+                >
+                  {statusLabel(localSettings.membershipStatus)}
                 </span>
               </div>
-              <p className="text-sm text-dark-100">
-                {localSettings.membershipPlan === 'free'
-                  ? 'Free / local only'
-                  : String(localSettings.membershipPlan).replace(/_/g, ' ')}
-                {localSettings.authToken ? (
-                  <span className="ml-2 text-[10px] uppercase tracking-wider text-emerald-400">
-                    linked
-                  </span>
-                ) : null}
+              <p className="text-base font-semibold text-dark-50">
+                {planLabel(localSettings.membershipPlan)}
               </p>
+              {localSettings.authToken ? (
+                <p className="text-[11px] text-emerald-400/90">Signed in · cloud account linked</p>
+              ) : (
+                <p className="text-[11px] text-dark-500">Not signed in</p>
+              )}
               {localSettings.membershipPlan === 'single_session' && localSettings.singleSession ? (
                 <p className="text-[11px] text-dark-400 leading-relaxed">
                   Pass status:{' '}
@@ -485,7 +597,7 @@ export function SettingsModal(): React.ReactNode | null {
                 </p>
               ) : null}
 
-              <div className="flex gap-2 text-[11px]">
+              <div className="flex flex-wrap gap-2 text-[11px]">
                 <button
                   type="button"
                   className={`px-2 py-1 rounded border ${
@@ -493,7 +605,12 @@ export function SettingsModal(): React.ReactNode | null {
                       ? 'border-blue-500 text-blue-300'
                       : 'border-dark-600 text-dark-400'
                   }`}
-                  onClick={() => setAccountMode('login')}
+                  onClick={() => {
+                    setAccountMode('login')
+                    setResetOtpSent(false)
+                    setResetDevCode(null)
+                    setAccountAuthMsg(null)
+                  }}
                 >
                   Log in
                 </button>
@@ -504,35 +621,101 @@ export function SettingsModal(): React.ReactNode | null {
                       ? 'border-blue-500 text-blue-300'
                       : 'border-dark-600 text-dark-400'
                   }`}
-                  onClick={() => setAccountMode('claim')}
+                  onClick={() => {
+                    setAccountMode('claim')
+                    setResetOtpSent(false)
+                    setResetDevCode(null)
+                    setAccountAuthMsg(null)
+                  }}
                 >
                   Set password (after checkout)
                 </button>
-              </div>
-
-              <input
-                type="password"
-                value={accountPassword}
-                onChange={(e) => setAccountPassword(e.target.value)}
-                placeholder={
-                  accountMode === 'claim' ? 'New password (min 8 chars)' : 'Password'
-                }
-                className="w-full px-3 py-2 bg-dark-800 border border-dark-600 rounded-lg text-sm text-dark-100 placeholder-dark-500 focus:outline-none focus:border-blue-500 transition-colors"
-              />
-
-              <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
-                  disabled={accountAuthBusy}
-                  onClick={() => void handleAccountAuth()}
-                  className="px-3 py-2 text-sm rounded-lg border border-dark-600 text-dark-200 hover:border-blue-500 disabled:opacity-50"
+                  className={`px-2 py-1 rounded border ${
+                    accountMode === 'reset'
+                      ? 'border-blue-500 text-blue-300'
+                      : 'border-dark-600 text-dark-400'
+                  }`}
+                  onClick={() => {
+                    setAccountMode('reset')
+                    setResetOtpSent(false)
+                    setResetDevCode(null)
+                    setAccountAuthMsg(null)
+                  }}
                 >
-                  {accountAuthBusy
-                    ? '…'
-                    : accountMode === 'claim'
-                      ? 'Set password'
-                      : 'Log in'}
+                  Forgot password
                 </button>
+              </div>
+
+              {accountMode === 'reset' && resetOtpSent ? (
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={resetOtp}
+                  onChange={(e) => setResetOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  placeholder="6-digit code"
+                  className="w-full px-3 py-2 bg-dark-800 border border-dark-600 rounded-lg text-sm text-dark-100 placeholder-dark-500 focus:outline-none focus:border-blue-500 tracking-widest"
+                />
+              ) : null}
+
+              {accountMode !== 'reset' || resetOtpSent ? (
+                <input
+                  type="password"
+                  value={accountPassword}
+                  onChange={(e) => setAccountPassword(e.target.value)}
+                  placeholder={
+                    accountMode === 'reset'
+                      ? 'New password (min 8 chars)'
+                      : accountMode === 'claim'
+                        ? 'New password (min 8 chars)'
+                        : 'Password'
+                  }
+                  className="w-full px-3 py-2 bg-dark-800 border border-dark-600 rounded-lg text-sm text-dark-100 placeholder-dark-500 focus:outline-none focus:border-blue-500 transition-colors"
+                />
+              ) : null}
+
+              {resetDevCode ? (
+                <div className="rounded-md border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-center">
+                  <p className="text-[10px] uppercase tracking-wider text-emerald-400/80">
+                    Reset code
+                  </p>
+                  <p className="text-xl font-mono font-semibold tracking-[0.3em] text-emerald-200">
+                    {resetDevCode}
+                  </p>
+                </div>
+              ) : null}
+
+              <div className="grid grid-cols-2 gap-2">
+                {accountMode === 'reset' ? (
+                  <button
+                    type="button"
+                    disabled={accountAuthBusy}
+                    onClick={() =>
+                      void (resetOtpSent ? handleResetPassword() : handleSendResetCode())
+                    }
+                    className="px-3 py-2 text-sm rounded-lg border border-blue-500/50 text-blue-200 hover:border-blue-400 disabled:opacity-50"
+                  >
+                    {accountAuthBusy
+                      ? '…'
+                      : resetOtpSent
+                        ? 'Set new password'
+                        : 'Email me a code'}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    disabled={accountAuthBusy}
+                    onClick={() => void handleAccountAuth()}
+                    className="px-3 py-2 text-sm rounded-lg border border-dark-600 text-dark-200 hover:border-blue-500 disabled:opacity-50"
+                  >
+                    {accountAuthBusy
+                      ? '…'
+                      : accountMode === 'claim'
+                        ? 'Set password'
+                        : 'Log in'}
+                  </button>
+                )}
                 <button
                   type="button"
                   disabled={accountAuthBusy || !localSettings.authToken}
@@ -544,12 +727,25 @@ export function SettingsModal(): React.ReactNode | null {
               </div>
 
               <p className="text-[11px] text-dark-500 leading-relaxed">
-                No login needed to pay on the website. After Lemon checkout, use the same email here
-                → Set password once → plan unlocks. Hosted AI needs an active Hosted/Team/Session
-                plan; BYOK still uses your own API key.
+                Flow: verify email on website → Lemon checkout → open app → Claim once → Log in.
+                Hosted AI needs Hosted/Team/Session; BYOK uses your own API key.
               </p>
               {accountAuthMsg ? (
-                <p className="text-[11px] text-dark-300 leading-relaxed">{accountAuthMsg}</p>
+                <div
+                  role={accountAuthOk ? 'status' : 'alert'}
+                  className={`flex items-start gap-2 rounded-md border px-2.5 py-2 text-xs leading-relaxed ${
+                    accountAuthOk
+                      ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-200'
+                      : 'border-red-500/40 bg-red-500/10 text-red-200'
+                  }`}
+                >
+                  {accountAuthOk ? (
+                    <CheckCircle size={14} className="mt-0.5 shrink-0" />
+                  ) : (
+                    <AlertCircle size={14} className="mt-0.5 shrink-0" />
+                  )}
+                  <span>{accountAuthMsg}</span>
+                </div>
               ) : null}
             </div>
           </div>

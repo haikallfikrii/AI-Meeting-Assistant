@@ -48,3 +48,23 @@ export function testEntitlementPatch(email: string): Partial<AppSettings> | null
     billingInterval: 'month'
   }
 }
+
+const PLAN_LABELS: Record<string, string> = {
+  free: 'Free / local only',
+  byok_monthly: 'BYOK Monthly',
+  byok_annual: 'BYOK Annual',
+  hosted_monthly: 'Hosted Monthly',
+  hosted_annual: 'Hosted Annual',
+  team: 'Team',
+  single_session: 'Single session pass'
+}
+
+export function planLabel(plan?: string | null): string {
+  if (!plan) return 'Unknown'
+  return PLAN_LABELS[plan] || plan.replace(/_/g, ' ')
+}
+
+export function statusLabel(status?: string | null): string {
+  if (!status) return 'inactive'
+  return status.replace(/_/g, ' ')
+}
