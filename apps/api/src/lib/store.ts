@@ -2,18 +2,37 @@ import { createHash, randomBytes, scryptSync, timingSafeEqual } from 'node:crypt
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import {
+  type BillingPlan,
+  type SingleSessionState,
+  type SubStatus,
+  billingIntervalOf,
+  createUnusedSingleSession,
+  evaluateSingleSession,
+  featureTierOf,
+  hasPaidLicense,
+  normalizeLegacyPlan,
+  startSingleSession,
+  consumeSingleSession
+} from './entitlement.js'
 
-export type Plan = 'free' | 'pro'
-export type SubStatus = 'none' | 'active' | 'past_due' | 'canceled'
+export type { BillingPlan, SubStatus, SingleSessionState }
+export type Plan = BillingPlan
 
 export interface User {
   id: string
   email: string
   passwordHash: string
-  plan: Plan
+  plan: BillingPlan
   subStatus: SubStatus
+  /** @deprecated prefer lemonCustomerId */
   stripeCustomerId?: string
   stripeSubscriptionId?: string
+  lemonCustomerId?: string
+  lemonSubscriptionId?: string
+  lemonOrderId?: string
+  lemonVariantId?: string
+  singleSession?: SingleSessionState
   usageMonth: string
   tokensUsed: number
   createdAt: number
@@ -45,6 +64,15 @@ function write(db: DbFile): void {
   writeFileSync(dbPath, JSON.stringify(db, null, 2))
 }
 
+function hydrateUser(raw: User): User {
+  const plan = normalizeLegacyPlan(raw.plan as string)
+  let singleSession = raw.singleSession
+  if (singleSession) {
+    singleSession = evaluateSingleSession(singleSession)
+  }
+  return { ...raw, plan, singleSession }
+}
+
 export function hashPassword(password: string): string {
   const salt = randomBytes(16).toString('hex')
   const hash = scryptSync(password, salt, 64).toString('hex')
@@ -56,7 +84,7 @@ export function verifyPassword(password: string, stored: string): boolean {
   if (!salt || !hash) return false
   const next = scryptSync(password, salt, 64)
   const prev = Buffer.from(hash, 'hex')
-  return prev.length === next.length && timingSafeEqual(prev, next)
+  return prev.length === next.length && timingSafeEqual(next, prev)
 }
 
 export function createId(prefix: string): string {
@@ -69,15 +97,28 @@ function monthKey(d = new Date()): string {
 
 export function findUserByEmail(email: string): User | null {
   const normalized = email.trim().toLowerCase()
-  return read().users.find((u) => u.email === normalized) || null
+  const raw = read().users.find((u) => u.email === normalized)
+  return raw ? hydrateUser(raw) : null
 }
 
 export function findUserById(id: string): User | null {
-  return read().users.find((u) => u.id === id) || null
+  const raw = read().users.find((u) => u.id === id)
+  return raw ? hydrateUser(raw) : null
 }
 
 export function findUserByStripeCustomer(customerId: string): User | null {
-  return read().users.find((u) => u.stripeCustomerId === customerId) || null
+  const raw = read().users.find((u) => u.stripeCustomerId === customerId)
+  return raw ? hydrateUser(raw) : null
+}
+
+export function findUserByLemonCustomer(customerId: string): User | null {
+  const raw = read().users.find((u) => u.lemonCustomerId === customerId)
+  return raw ? hydrateUser(raw) : null
+}
+
+export function findUserByLemonSubscription(subscriptionId: string): User | null {
+  const raw = read().users.find((u) => u.lemonSubscriptionId === subscriptionId)
+  return raw ? hydrateUser(raw) : null
 }
 
 export function createUser(email: string, password: string): User {
@@ -109,7 +150,7 @@ export function updateUser(id: string, patch: Partial<User>): User | null {
   if (idx < 0) return null
   db.users[idx] = { ...db.users[idx], ...patch, updatedAt: Date.now() }
   write(db)
-  return db.users[idx]
+  return hydrateUser(db.users[idx])
 }
 
 export function bumpUsage(id: string, tokens: number): User | null {
@@ -120,15 +161,74 @@ export function bumpUsage(id: string, tokens: number): User | null {
   return updateUser(id, { usageMonth: month, tokensUsed })
 }
 
+export function grantSingleSessionPass(
+  userId: string,
+  lemonOrderId?: string,
+  purchasedAt = Date.now()
+): User | null {
+  return updateUser(userId, {
+    plan: 'single_session',
+    subStatus: 'active',
+    lemonOrderId,
+    singleSession: createUnusedSingleSession(purchasedAt, lemonOrderId)
+  })
+}
+
+export function beginSingleSession(userId: string): {
+  ok: boolean
+  reason?: string
+  user: User | null
+} {
+  const user = findUserById(userId)
+  if (!user?.singleSession) {
+    return { ok: false, reason: 'No Single Session Pass on this account', user }
+  }
+  const result = startSingleSession(user.singleSession)
+  const next = updateUser(userId, {
+    singleSession: result.state,
+    subStatus: result.state.status === 'expired' ? 'expired' : user.subStatus
+  })
+  return { ok: result.ok, reason: result.ok ? undefined : result.reason, user: next }
+}
+
+export function endSingleSession(userId: string): User | null {
+  const user = findUserById(userId)
+  if (!user?.singleSession) return user
+  const next = consumeSingleSession(user.singleSession)
+  return updateUser(userId, {
+    singleSession: next,
+    subStatus: next.status === 'consumed' || next.status === 'expired' ? 'expired' : user.subStatus,
+    plan: next.status === 'consumed' || next.status === 'expired' ? 'free' : user.plan
+  })
+}
+
 export function publicUser(user: User) {
+  const singleSession = user.singleSession
+    ? evaluateSingleSession(user.singleSession)
+    : undefined
+  const plan = normalizeLegacyPlan(user.plan)
+  const featureTier = featureTierOf(plan)
+  const paid = hasPaidLicense(plan, user.subStatus, singleSession)
   return {
     id: user.id,
     email: user.email,
-    plan: user.plan,
+    plan,
+    featureTier,
+    billingInterval: billingIntervalOf(plan),
     subStatus: user.subStatus,
     usageMonth: user.usageMonth,
     tokensUsed: user.tokensUsed,
-    proActive: user.plan === 'pro' && user.subStatus === 'active'
+    singleSession: singleSession
+      ? {
+          status: singleSession.status,
+          purchasedAt: singleSession.purchasedAt,
+          expiresAt: singleSession.expiresAt,
+          sessionStartedAt: singleSession.sessionStartedAt
+        }
+      : null,
+    /** @deprecated use featureTier + subStatus */
+    proActive: paid && (featureTier === 'hosted' || featureTier === 'team'),
+    paidActive: paid
   }
 }
 

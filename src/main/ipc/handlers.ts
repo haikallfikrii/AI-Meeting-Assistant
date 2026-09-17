@@ -14,6 +14,7 @@ import { ScreenshotService } from '../services/screenshotService'
 import { SessionManager } from '../services/sessionManager'
 import { SessionMode } from '../services/promptBuilder'
 import { AppSettings, SettingsManager } from '../services/settingsManager'
+import { consumeSingleSession, startSingleSession } from '../services/entitlement'
 import { WorkSession, whisperLanguageCode } from '../services/sessionTypes'
 import { VisionService } from '../services/visionService'
 import { WhisperService } from '../services/whisperService'
@@ -360,6 +361,22 @@ export function initializeIpcHandlers(window: BrowserWindow): void {
       throw new Error('API key not configured. Please add it in Settings.')
     }
 
+    if (settings.membershipPlan === 'single_session') {
+      const pass = settings.singleSession
+      if (!pass) {
+        throw new Error('Single Session Pass missing. Purchase a pass or upgrade.')
+      }
+      const started = startSingleSession(pass)
+      settingsManager?.updateSettings({
+        singleSession: started.state,
+        membershipStatus: started.ok ? 'active' : 'expired',
+        membershipPlan: started.state.status === 'expired' || started.state.status === 'consumed' ? 'free' : 'single_session'
+      })
+      if (!started.ok) {
+        throw new Error(started.reason)
+      }
+    }
+
     try {
       // IMPORTANT: Clean up any existing services/listeners first to prevent duplicates
       if (whisperService) {
@@ -495,6 +512,20 @@ export function initializeIpcHandlers(window: BrowserWindow): void {
     questionDetector?.removeAllListeners()
     questionDetector?.clearBuffer()
     console.log('Audio capture stopped')
+
+    const settings = settingsManager?.getSettings()
+    if (
+      settings?.membershipPlan === 'single_session' &&
+      settings.singleSession?.status === 'active_in_session'
+    ) {
+      const consumed = consumeSingleSession(settings.singleSession)
+      settingsManager?.updateSettings({
+        singleSession: consumed,
+        membershipPlan: 'free',
+        membershipStatus: 'expired',
+        billingInterval: 'none'
+      })
+    }
 
     return { success: true }
   })

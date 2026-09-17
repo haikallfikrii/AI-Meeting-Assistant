@@ -96,8 +96,22 @@ export interface AppSettings {
   hideFromDock: boolean
   accountName: string
   accountEmail: string
-  membershipPlan: 'free' | 'byok' | 'hosted' | 'team'
-  membershipStatus: 'inactive' | 'active' | 'trial'
+  membershipPlan:
+    | 'free'
+    | 'byok_monthly'
+    | 'byok_annual'
+    | 'hosted_monthly'
+    | 'hosted_annual'
+    | 'team'
+    | 'single_session'
+  membershipStatus: 'inactive' | 'active' | 'trial' | 'past_due' | 'canceled' | 'expired'
+  billingInterval?: 'none' | 'month' | 'year' | 'one_time'
+  singleSession?: {
+    status: 'unused' | 'active_in_session' | 'consumed' | 'expired'
+    purchasedAt: number
+    expiresAt: number
+    sessionStartedAt?: number
+  } | null
 }
 
 export interface AudioSource {

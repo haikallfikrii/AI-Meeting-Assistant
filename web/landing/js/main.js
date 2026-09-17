@@ -1,4 +1,4 @@
-/* Kalfi landing — chrome, stealth toggle, BYOK cost model, Stripe handoff */
+/* Kalfi landing — chrome, stealth toggle, BYOK cost model, Lemon checkout */
 
 (function () {
   'use strict'
@@ -524,57 +524,112 @@
     update()
   }
 
-  /* ---------- Stripe handoff ---------- */
+  /* ---------- Lemon Squeezy billing (pricing toggle + checkout links) ---------- */
+
+  function isPlaceholderCheckout(url) {
+    return !url || /LEMON_SQUEEZY_CHECKOUT_URL_/.test(url)
+  }
+
+  function resolveLemonUrl(plan, interval) {
+    var lemon = CONFIG.lemonCheckout || {}
+    if (plan === 'byok') {
+      return interval === 'annual' ? lemon.byokAnnual : lemon.byokMonthly
+    }
+    if (plan === 'hosted') {
+      return interval === 'annual' ? lemon.hostedAnnual : lemon.hostedMonthly
+    }
+    if (plan === 'team') return lemon.team
+    if (plan === 'singleSession') return lemon.singleSession
+    return ''
+  }
 
   function billing() {
-    var buttons = document.querySelectorAll('[data-subscribe]')
     var note = document.getElementById('pro-note')
-    var ready = Boolean(CONFIG.apiBaseUrl && CONFIG.stripePriceId)
+    var toggle = document.getElementById('billing-toggle')
+    var plans = document.getElementById('plans')
+    var interval = 'monthly'
 
-    if (note) {
-      note.textContent = ready
-        ? 'Secure checkout by Stripe. Cancel any time in the customer portal.'
-        : 'Checkout opens once Stripe price IDs are set. Until then, download the app and use BYOK when billing is live.'
+    var paintInterval = function () {
+      if (plans) plans.setAttribute('data-billing', interval)
+      if (toggle) {
+        Array.prototype.forEach.call(toggle.querySelectorAll('[data-billing]'), function (btn) {
+          btn.classList.toggle('is-on', btn.getAttribute('data-billing') === interval)
+        })
+      }
+
+      Array.prototype.forEach.call(document.querySelectorAll('[data-plan-card="byok"], [data-plan-card="hosted"]'), function (card) {
+        var main = card.querySelector('[data-price-main]')
+        var suffix = card.querySelector('[data-price-suffix]')
+        var billed = card.querySelector('[data-price-billed]')
+        var save = card.querySelector('[data-price-save]')
+        var cta = card.querySelector('[data-lemon-checkout]')
+        var monthly = card.getAttribute('data-price-monthly')
+        var annualMo = card.getAttribute('data-price-annual-mo')
+        var annual = card.getAttribute('data-price-annual')
+        var saveLabel = card.getAttribute('data-save-annual')
+
+        if (interval === 'annual') {
+          if (main) main.textContent = annualMo
+          if (suffix) suffix.textContent = ' / month'
+          if (billed) {
+            billed.hidden = false
+            billed.textContent = 'Billed $' + annual + ' / year'
+          }
+          if (save) {
+            save.hidden = false
+            save.textContent = 'Save ' + saveLabel
+          }
+        } else {
+          if (main) main.textContent = monthly
+          if (suffix) suffix.textContent = ' / month'
+          if (billed) billed.hidden = true
+          if (save) save.hidden = true
+        }
+        if (cta) cta.setAttribute('data-interval', interval)
+      })
+
+      var anyLive = false
+      ;['byok', 'hosted', 'team', 'singleSession'].forEach(function (plan) {
+        var url = resolveLemonUrl(plan, interval)
+        if (!isPlaceholderCheckout(url)) anyLive = true
+      })
+
+      if (note) {
+        note.textContent = anyLive
+          ? 'Secure checkout by Lemon Squeezy. Cancel any time in the customer portal.'
+          : 'Checkout links go live once Lemon Squeezy variant URLs are pasted into KALFI_CONFIG.'
+      }
     }
 
-    Array.prototype.forEach.call(buttons, function (btn) {
-      btn.addEventListener('click', function () {
-        if (!ready) {
-          var target = document.getElementById('pricing')
-          if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' })
-          if (note) {
-            note.textContent =
-              'Billing is not live yet on this domain. Plans are $14 BYOK, $19 Hosted, $49 Team — see above.'
-          }
-          return
-        }
-
-        var original = btn.textContent
-        btn.disabled = true
-        btn.textContent = 'Opening Stripe…'
-
-        fetch(CONFIG.apiBaseUrl.replace(/\/$/, '') + '/billing/checkout', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ priceId: CONFIG.stripePriceId })
-        })
-          .then(function (res) {
-            return res.json()
-          })
-          .then(function (data) {
-            if (data && data.url) {
-              window.location.href = data.url
-              return
-            }
-            throw new Error('no checkout url')
-          })
-          .catch(function () {
-            btn.disabled = false
-            btn.textContent = original
-            if (note) note.textContent = 'Could not reach checkout. Try again in a moment.'
-          })
+    if (toggle) {
+      toggle.addEventListener('click', function (e) {
+        var btn = e.target.closest('[data-billing]')
+        if (!btn) return
+        interval = btn.getAttribute('data-billing') || 'monthly'
+        paintInterval()
       })
+    }
+
+    document.addEventListener('click', function (e) {
+      var link = e.target.closest('[data-lemon-checkout]')
+      if (!link) return
+      e.preventDefault()
+      var plan = link.getAttribute('data-lemon-checkout')
+      var linkInterval = link.getAttribute('data-interval') || interval
+      var url = resolveLemonUrl(plan, linkInterval)
+      if (isPlaceholderCheckout(url)) {
+        var target = document.getElementById('pricing')
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        if (note) {
+          note.textContent =
+            'Lemon checkout URL for this plan is still a placeholder. Paste the real link in KALFI_CONFIG after publishing on Lemon Squeezy.'
+        }
+        return
+      }
+      window.location.href = url
     })
+
+    paintInterval()
   }
 
   /* ---------- multi-OS downloads ---------- */

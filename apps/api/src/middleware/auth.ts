@@ -1,5 +1,6 @@
 import { createMiddleware } from 'hono/factory'
 import { verifyAccessToken } from '../lib/auth-token.js'
+import { canUseHostedAi } from '../lib/entitlement.js'
 import { findUserById, publicUser, type User } from '../lib/store.js'
 
 export type AppVars = {
@@ -21,13 +22,14 @@ export const requireAuth = createMiddleware<{ Variables: AppVars }>(async (c, ne
   }
 })
 
+/** Hosted AI routes — Hosted / Team / active Single Session Pass */
 export const requirePro = createMiddleware<{ Variables: AppVars }>(async (c, next) => {
   const user = c.get('user')
-  if (!(user.plan === 'pro' && user.subStatus === 'active')) {
+  if (!canUseHostedAi(user.plan, user.subStatus, user.singleSession)) {
     return c.json(
       {
-        error: 'Pro subscription required',
-        code: 'PRO_REQUIRED',
+        error: 'Hosted plan or active Single Session Pass required',
+        code: 'HOSTED_REQUIRED',
         user: publicUser(user)
       },
       402

@@ -4,10 +4,22 @@ import * as fs from 'fs'
 import * as path from 'path'
 import { DEFAULT_CHAT_MODELS, LlmProvider } from './providerConfig'
 import { readBrandLogoDataUrl } from './branding'
+import {
+  type BillingPlan,
+  type BillingInterval,
+  type MembershipStatus,
+  type SingleSessionState,
+  billingIntervalOf,
+  evaluateSingleSession,
+  featureTierOf,
+  normalizeBillingPlan,
+  planLabel
+} from './entitlement'
 
 config()
 
-export type { LlmProvider }
+export type { LlmProvider, BillingPlan, BillingInterval, MembershipStatus, SingleSessionState }
+export { featureTierOf, billingIntervalOf, planLabel }
 
 /** Global app settings only — per-company/client context lives in SessionManager. */
 export interface AppSettings {
@@ -30,8 +42,12 @@ export interface AppSettings {
   /** Local profile scaffold — auth/billing wired later. */
   accountName: string
   accountEmail: string
-  membershipPlan: 'free' | 'byok' | 'hosted' | 'team'
-  membershipStatus: 'inactive' | 'active' | 'trial'
+  /** Lemon SKU (6 paid + free). Feature gating uses featureTierOf(membershipPlan). */
+  membershipPlan: BillingPlan
+  membershipStatus: MembershipStatus
+  /** Derived for display — not authoritative */
+  billingInterval?: BillingInterval
+  singleSession?: SingleSessionState | null
 }
 
 type PersistedSettings = Omit<AppSettings, 'openaiApiKey' | 'brandLogoDataUrl'> & {
@@ -62,6 +78,41 @@ const normalizeProvider = (value: unknown): LlmProvider => {
   return 'openai'
 }
 
+const normalizeMembershipStatus = (value: unknown): MembershipStatus => {
+  if (
+    value === 'active' ||
+    value === 'trial' ||
+    value === 'inactive' ||
+    value === 'past_due' ||
+    value === 'canceled' ||
+    value === 'expired'
+  ) {
+    return value
+  }
+  return 'inactive'
+}
+
+const normalizeSingleSession = (value: unknown): SingleSessionState | null => {
+  if (!value || typeof value !== 'object') return null
+  const raw = value as Partial<SingleSessionState>
+  if (
+    raw.status !== 'unused' &&
+    raw.status !== 'active_in_session' &&
+    raw.status !== 'consumed' &&
+    raw.status !== 'expired'
+  ) {
+    return null
+  }
+  if (typeof raw.purchasedAt !== 'number' || typeof raw.expiresAt !== 'number') return null
+  return evaluateSingleSession({
+    status: raw.status,
+    purchasedAt: raw.purchasedAt,
+    expiresAt: raw.expiresAt,
+    sessionStartedAt:
+      typeof raw.sessionStartedAt === 'number' ? raw.sessionStartedAt : undefined
+  })
+}
+
 const DEFAULT_SETTINGS: AppSettings = {
   llmProvider: normalizeProvider(process.env.LLM_PROVIDER),
   openaiApiKey: getEnvApiKey(),
@@ -77,7 +128,9 @@ const DEFAULT_SETTINGS: AppSettings = {
   accountName: '',
   accountEmail: '',
   membershipPlan: 'free',
-  membershipStatus: 'inactive'
+  membershipStatus: 'inactive',
+  billingInterval: 'none',
+  singleSession: null
 }
 
 export class SettingsManager {
@@ -200,19 +253,23 @@ export class SettingsManager {
             typeof savedSettings.accountEmail === 'string'
               ? savedSettings.accountEmail
               : DEFAULT_SETTINGS.accountEmail,
-          membershipPlan:
-            savedSettings.membershipPlan === 'byok' ||
-            savedSettings.membershipPlan === 'hosted' ||
-            savedSettings.membershipPlan === 'team' ||
-            savedSettings.membershipPlan === 'free'
-              ? savedSettings.membershipPlan
-              : DEFAULT_SETTINGS.membershipPlan,
-          membershipStatus:
-            savedSettings.membershipStatus === 'active' ||
-            savedSettings.membershipStatus === 'trial' ||
-            savedSettings.membershipStatus === 'inactive'
-              ? savedSettings.membershipStatus
-              : DEFAULT_SETTINGS.membershipStatus
+          membershipPlan: normalizeBillingPlan(savedSettings.membershipPlan),
+          membershipStatus: normalizeMembershipStatus(savedSettings.membershipStatus),
+          singleSession: normalizeSingleSession(savedSettings.singleSession)
+        }
+
+        merged.billingInterval = billingIntervalOf(merged.membershipPlan)
+        if (merged.singleSession) {
+          merged.singleSession = evaluateSingleSession(merged.singleSession)
+          if (
+            merged.membershipPlan === 'single_session' &&
+            (merged.singleSession.status === 'consumed' ||
+              merged.singleSession.status === 'expired')
+          ) {
+            merged.membershipPlan = 'free'
+            merged.membershipStatus = 'expired'
+            merged.billingInterval = 'none'
+          }
         }
 
         if (
@@ -259,8 +316,29 @@ export class SettingsManager {
   }
 
   getSettings(): AppSettings {
+    let singleSession = this.settings.singleSession
+      ? evaluateSingleSession(this.settings.singleSession)
+      : null
+
+    if (
+      this.settings.membershipPlan === 'single_session' &&
+      singleSession &&
+      (singleSession.status === 'consumed' || singleSession.status === 'expired')
+    ) {
+      this.settings = {
+        ...this.settings,
+        membershipPlan: 'free',
+        membershipStatus: 'expired',
+        billingInterval: 'none',
+        singleSession
+      }
+      this.saveSettings()
+    }
+
     return {
       ...this.settings,
+      billingInterval: billingIntervalOf(this.settings.membershipPlan),
+      singleSession,
       brandLogoDataUrl: readBrandLogoDataUrl(this.settings.brandLogoPath)
     }
   }
@@ -271,9 +349,14 @@ export class SettingsManager {
 
   updateSettings(updates: Partial<AppSettings>): void {
     const { brandLogoDataUrl: _drop, ...safeUpdates } = updates
+    const nextPlan = safeUpdates.membershipPlan
+      ? normalizeBillingPlan(safeUpdates.membershipPlan)
+      : this.settings.membershipPlan
     this.settings = {
       ...this.settings,
       ...safeUpdates,
+      membershipPlan: nextPlan,
+      billingInterval: billingIntervalOf(nextPlan),
       llmProvider: normalizeProvider(safeUpdates.llmProvider ?? this.settings.llmProvider),
       brandLogoDataUrl: undefined
     }

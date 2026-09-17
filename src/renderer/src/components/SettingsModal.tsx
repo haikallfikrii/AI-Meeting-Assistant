@@ -348,13 +348,27 @@ export function SettingsModal(): React.ReactNode | null {
                 className="w-full px-3 py-2 bg-dark-800 border border-dark-600 rounded-lg text-sm text-dark-100 focus:outline-none focus:border-blue-500 transition-colors"
               >
                 <option value="free">Free / local only</option>
-                <option value="byok">BYOK — $14/mo (your key)</option>
-                <option value="hosted">Hosted — $19/mo</option>
-                <option value="team">Team — $49/mo</option>
+                <option value="byok_monthly">BYOK Monthly — $14/mo</option>
+                <option value="byok_annual">BYOK Annual — $120/yr</option>
+                <option value="hosted_monthly">Hosted Monthly — $19/mo</option>
+                <option value="hosted_annual">Hosted Annual — $180/yr</option>
+                <option value="team">Team — $49/mo (3 seats)</option>
+                <option value="single_session">Single Session Pass — $9</option>
               </select>
+              {localSettings.membershipPlan === 'single_session' && localSettings.singleSession ? (
+                <p className="text-[11px] text-dark-400 leading-relaxed">
+                  Pass status:{' '}
+                  <span className="text-dark-200">
+                    {localSettings.singleSession.status.replace(/_/g, ' ')}
+                  </span>
+                  {localSettings.singleSession.status === 'unused'
+                    ? ` · expires ${new Date(localSettings.singleSession.expiresAt).toLocaleDateString()}`
+                    : null}
+                </p>
+              ) : null}
               <p className="text-[11px] text-dark-500 leading-relaxed">
-                Checkout and license sync are next. Choosing a plan here only marks your preferred
-                tier until Stripe is connected.
+                Feature access maps to BYOK / Hosted / Team / Single Session. Annual SKUs unlock the
+                same features as monthly. Checkout syncs from Lemon Squeezy webhooks once connected.
               </p>
               <button
                 type="button"
