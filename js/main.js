@@ -1,4 +1,4 @@
-/* Kalfi landing — chrome, stealth toggle, BYOK cost model, Lemon checkout */
+/* Kalfi landing — chrome, stealth toggle, BYOK cost model, Polar checkout */
 
 (function () {
   'use strict'
@@ -524,10 +524,15 @@
     update()
   }
 
-  /* ---------- Lemon Squeezy billing (pricing toggle + per-variant checkout) ---------- */
+  /* ---------- Polar billing (OTP gate → API checkout session; Lemon fallback) ---------- */
 
   function isPlaceholderCheckout(url) {
-    return !url || /LEMON_SQUEEZY_CHECKOUT_URL_/.test(url)
+    return (
+      !url ||
+      /LEMON_SQUEEZY_CHECKOUT_URL_/.test(url) ||
+      /POLAR_CHECKOUT_URL_/.test(url) ||
+      String(url).trim() === ''
+    )
   }
 
   function planSku(plan, interval) {
@@ -538,17 +543,40 @@
     return ''
   }
 
-  function resolveLemonUrl(plan, interval) {
+  function resolveCheckoutUrl(plan, interval) {
+    var polar = CONFIG.polarCheckout || {}
     var lemon = CONFIG.lemonCheckout || {}
-    if (plan === 'byok') {
-      return interval === 'annual' ? lemon.byokAnnual : lemon.byokMonthly
-    }
-    if (plan === 'hosted') {
-      return interval === 'annual' ? lemon.hostedAnnual : lemon.hostedMonthly
-    }
-    if (plan === 'team') return lemon.team
-    if (plan === 'singleSession') return lemon.singleSession
-    return ''
+    var key =
+      plan === 'byok'
+        ? interval === 'annual'
+          ? 'byokAnnual'
+          : 'byokMonthly'
+        : plan === 'hosted'
+          ? interval === 'annual'
+            ? 'hostedAnnual'
+            : 'hostedMonthly'
+          : plan === 'team'
+            ? 'team'
+            : plan === 'singleSession'
+              ? 'singleSession'
+              : ''
+    if (!key) return ''
+    var polarUrl = polar[key]
+    if (polarUrl && !isPlaceholderCheckout(polarUrl)) return polarUrl
+    return lemon[key] || ''
+  }
+
+  // Back-compat alias used by older helpers
+  function resolveLemonUrl(plan, interval) {
+    return resolveCheckoutUrl(plan, interval)
+  }
+
+  function checkoutSelector() {
+    return '[data-polar-checkout], [data-lemon-checkout]'
+  }
+
+  function checkoutPlanAttr(el) {
+    return el.getAttribute('data-polar-checkout') || el.getAttribute('data-lemon-checkout') || ''
   }
 
   function billing() {
@@ -557,8 +585,9 @@
     var plans = document.getElementById('plans')
     var banner = document.getElementById('checkout-success')
     var interval = 'monthly'
+    var apiReady = Boolean(CONFIG.apiBaseUrl)
 
-    // After Lemon redirect: ?checkout=success&plan=...&email=...
+    // After Polar/Lemon redirect: ?checkout=success&plan=...&email=...
     try {
       var params = new URLSearchParams(window.location.search)
       if (params.get('checkout') === 'success' && banner) {
@@ -574,7 +603,7 @@
             (emailParam ? ' (' + emailParam + ')' : '') +
             '. Open the Kalfi app → Settings → Account: set password (first time) or log in with that email. Your plan syncs automatically.'
         }
-        // Funnel ping — marks lead payment_returned (subscribed still needs Lemon webhook)
+        // Funnel ping — marks lead payment_returned (subscribed still needs Polar webhook)
         if (emailParam && CONFIG.apiBaseUrl) {
           fetch(String(CONFIG.apiBaseUrl).replace(/\/$/, '') + '/v1/billing/checkout-return', {
             method: 'POST',
@@ -600,7 +629,7 @@
           var suffix = card.querySelector('[data-price-suffix]')
           var billed = card.querySelector('[data-price-billed]')
           var save = card.querySelector('[data-price-save]')
-          var cta = card.querySelector('[data-lemon-checkout]')
+          var cta = card.querySelector(checkoutSelector())
           var monthly = card.getAttribute('data-price-monthly')
           var annualMo = card.getAttribute('data-price-annual-mo')
           var annual = card.getAttribute('data-price-annual')
@@ -625,29 +654,22 @@
           }
           if (cta) {
             cta.setAttribute('data-interval', interval)
-            var href = resolveLemonUrl(cta.getAttribute('data-lemon-checkout'), interval)
+            var href = resolveCheckoutUrl(checkoutPlanAttr(cta), interval)
             if (href && !isPlaceholderCheckout(href)) cta.setAttribute('href', href)
           }
         }
       )
 
-      // Keep static hrefs fresh for team / session too
-      Array.prototype.forEach.call(document.querySelectorAll('[data-lemon-checkout]'), function (cta) {
-        var p = cta.getAttribute('data-lemon-checkout')
-        var href = resolveLemonUrl(p, cta.getAttribute('data-interval') || interval)
+      Array.prototype.forEach.call(document.querySelectorAll(checkoutSelector()), function (cta) {
+        var p = checkoutPlanAttr(cta)
+        var href = resolveCheckoutUrl(p, cta.getAttribute('data-interval') || interval)
         if (href && !isPlaceholderCheckout(href)) cta.setAttribute('href', href)
       })
 
-      var anyLive = false
-      ;['byok', 'hosted', 'team', 'singleSession'].forEach(function (plan) {
-        var url = resolveLemonUrl(plan, interval)
-        if (!isPlaceholderCheckout(url)) anyLive = true
-      })
-
       if (note) {
-        note.textContent = anyLive
-          ? 'Before checkout we verify your email with a one-time code, then open Lemon with that address locked. Use the same email later in the app to claim your account.'
-          : 'Checkout links go live once Lemon Squeezy variant URLs are pasted into KALFI_CONFIG.'
+        note.textContent = apiReady
+          ? 'Before checkout we verify your email with a one-time code, then open Polar with that address locked. Use the same email later in the app to claim your account.'
+          : 'Checkout opens once the API is configured (Polar product IDs + access token).'
       }
     }
 
@@ -661,20 +683,20 @@
     }
 
     document.addEventListener('click', function (e) {
-      var link = e.target.closest('[data-lemon-checkout]')
+      var link = e.target.closest(checkoutSelector())
       if (!link) return
       e.preventDefault()
-      var plan = link.getAttribute('data-lemon-checkout')
+      var plan = checkoutPlanAttr(link)
       var linkInterval = link.getAttribute('data-interval') || interval
       var sku = planSku(plan, linkInterval)
-      var fallback = resolveLemonUrl(plan, linkInterval)
+      var fallback = resolveCheckoutUrl(plan, linkInterval)
 
       if (!sku && isPlaceholderCheckout(fallback)) {
         var target = document.getElementById('pricing')
         if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' })
         if (note) {
           note.textContent =
-            'Checkout URL missing for this plan. Check KALFI_CONFIG.lemonCheckout.'
+            'Checkout not ready for this plan yet. Add Polar product IDs on the API, or paste a Checkout Link into KALFI_CONFIG.polarCheckout.'
         }
         return
       }
@@ -683,7 +705,8 @@
         plan: plan,
         sku: sku,
         interval: linkInterval,
-        fallback: fallback
+        fallback: fallback,
+        embed: CONFIG.polarCheckoutMode === 'embed'
       })
     })
 
@@ -928,6 +951,7 @@
               plan: opts.sku,
               email: email,
               emailProof: result.data.emailProof,
+              embed: Boolean(opts.embed),
               successUrl:
                 window.location.origin +
                 '/?checkout=success&plan=' +
