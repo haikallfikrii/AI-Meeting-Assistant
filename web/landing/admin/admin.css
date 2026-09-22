@@ -123,6 +123,11 @@ textarea {
   color: var(--bad);
 }
 
+.btn--sm {
+  padding: 6px 10px;
+  font-size: 0.78rem;
+}
+
 .btn--ok {
   border-color: #065f46;
   color: var(--ok);

@@ -1362,8 +1362,10 @@
         proPrice: 19,
         version: '1.0.8',
         githubRepo: 'haikallfikrii/AI-Meeting-Assistant',
-        // Polar product IDs (optional mirror of API env — checkout uses /v1/billing/checkout).
-        // Leave empty until dashboard products exist; API POLAR_PRODUCT_* is source of truth.
+        // Payment: "wise" (manual USD via Wise — default while Polar/Lemon MoR blocked)
+        // or "polar" when Polar payments are approved.
+        paymentProvider: 'wise',
+        // Polar product IDs (used when paymentProvider === 'polar')
         polarProducts: {
           byokMonthly: 'b3362eda-3a8e-4983-9a67-946da235877b',
           byokAnnual: 'f3d03286-b7b5-49aa-a6dc-6e78e11b265d',

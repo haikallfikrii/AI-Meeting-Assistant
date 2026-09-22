@@ -3,18 +3,25 @@ import { z } from 'zod'
 import { env } from '../lib/config.js'
 import { type BillingPlan, normalizeLegacyPlan } from '../lib/entitlement.js'
 import { listEvents, recordEvent, salesAnalytics } from '../lib/events.js'
-import { listLeads } from '../lib/leads.js'
+import { listLeads, markLeadSubscribed } from '../lib/leads.js'
 import {
   adminOverview,
   createUser,
   deleteUser,
   findUserByEmail,
   findUserById,
+  grantSingleSessionPass,
   listUsers,
   publicUser,
   setUserPassword,
   updateUser
 } from '../lib/store.js'
+import { sendAppEmail } from '../lib/mail.js'
+import {
+  findManualOrder,
+  listManualOrders,
+  updateManualOrder
+} from '../lib/manual-orders.js'
 
 const PLAN_ENUM = z.enum([
   'free',
@@ -276,4 +283,77 @@ adminRoutes.post('/grant', async (c) => {
     meta: { plan }
   })
   return c.json({ ok: true, user: publicUser(updated) })
+})
+
+adminRoutes.get('/manual-orders', async (c) => {
+  if (!requireAdmin(c)) return c.json({ error: 'Forbidden' }, 403)
+  const status = c.req.query('status') || 'all'
+  const limit = Number(c.req.query('limit') || '50')
+  return c.json({ ok: true, orders: listManualOrders({ status, limit }) })
+})
+
+adminRoutes.post('/manual-orders/:id/activate', async (c) => {
+  if (!requireAdmin(c)) return c.json({ error: 'Forbidden' }, 403)
+  const order = findManualOrder(c.req.param('id'))
+  if (!order) return c.json({ error: 'Order not found' }, 404)
+  if (order.status === 'activated') {
+    const existing = findUserByEmail(order.email)
+    return c.json({ ok: true, already: true, user: existing ? publicUser(existing) : null })
+  }
+
+  let user = findUserByEmail(order.email)
+  if (!user) {
+    user = createUser(order.email, `Tmp_${Date.now().toString(36)}!`, {
+      needsPasswordSetup: true
+    })
+  }
+
+  if (order.plan === 'single_session') {
+    grantSingleSessionPass(user.id, {
+      purchasedAt: Date.now(),
+      polarOrderId: order.ref
+    })
+  } else {
+    updateUser(user.id, {
+      plan: order.plan,
+      subStatus: 'active',
+      suspended: false,
+      singleSession: undefined
+    })
+  }
+
+  updateManualOrder(order.id, {
+    status: 'activated',
+    activatedAt: Date.now(),
+    activatedBy: 'admin'
+  })
+
+  const refreshed = findUserByEmail(order.email)
+  markLeadSubscribed(order.email, order.plan)
+  recordEvent('manual_order_activated', {
+    email: order.email,
+    userId: refreshed?.id,
+    meta: { orderId: order.id, ref: order.ref, plan: order.plan }
+  })
+
+  const appUrl = env('APP_URL', 'https://kalfi.app')
+  void sendAppEmail({
+    to: order.email,
+    subject: 'Your Kalfi plan is active',
+    text:
+      `Payment received — your ${order.plan.replace(/_/g, ' ')} plan is active.\n\n` +
+      `1. Download Kalfi: ${appUrl}/#download\n` +
+      `2. Open Settings → Account\n` +
+      `3. Claim / Log in with ${order.email} (set a password the first time)\n` +
+      `4. Tap Sync plan\n\n` +
+      `No license key needed.\n\n` +
+      `Ref: ${order.ref}\n` +
+      `Help: hello@kalfi.app\n`
+  })
+
+  return c.json({
+    ok: true,
+    user: refreshed ? publicUser(refreshed) : null,
+    order: findManualOrder(order.id)
+  })
 })
