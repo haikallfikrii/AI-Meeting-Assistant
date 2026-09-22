@@ -38,6 +38,7 @@ mac:
   extendInfo:
     NSCameraUsageDescription: Kalfi needs camera access for optional screenshot features.
     NSMicrophoneUsageDescription: Kalfi needs microphone access to hear your voice for live answers and Mic Ask.
+    NSScreenCaptureUsageDescription: Kalfi needs Screen Recording access to capture meeting/system audio and analyze on-screen content.
     NSDocumentsFolderUsageDescription: Application requests access to the user's Documents folder.
     NSDownloadsFolderUsageDescription: Application requests access to the user's Downloads folder.
   notarize: false

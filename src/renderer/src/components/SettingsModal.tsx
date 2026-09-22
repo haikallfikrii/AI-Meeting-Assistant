@@ -473,6 +473,42 @@ export function SettingsModal(): React.ReactNode | null {
     }
   }
 
+  const handleOpenBillingPortal = async (): Promise<void> => {
+    if (!localSettings.authToken) {
+      setAccountAuthOk(false)
+      setAccountAuthMsg('Log in first to manage billing.')
+      return
+    }
+    setAccountAuthBusy(true)
+    setAccountAuthMsg(null)
+    try {
+      const res = await window.api.kalfiApi({
+        path: '/v1/billing/portal',
+        method: 'POST',
+        token: localSettings.authToken
+      })
+      const data = (res.data || {}) as { error?: string; url?: string; message?: string }
+      if (!res.ok) {
+        setAccountAuthOk(false)
+        setAccountAuthMsg(data.error || data.message || 'Could not open billing portal')
+        return
+      }
+      if (data.url) {
+        window.open(data.url, '_blank', 'noopener,noreferrer')
+        setAccountAuthOk(true)
+        setAccountAuthMsg('Opened Polar customer portal in your browser.')
+      } else {
+        setAccountAuthOk(true)
+        setAccountAuthMsg(data.message || 'Check your Polar receipt email to manage billing.')
+      }
+    } catch (err) {
+      setAccountAuthOk(false)
+      setAccountAuthMsg(err instanceof Error ? err.message : 'Could not open billing portal')
+    } finally {
+      setAccountAuthBusy(false)
+    }
+  }
+
   const handleOpacityChange = async (value: number): Promise<void> => {
     setLocalSettings({ ...localSettings, windowOpacity: value })
     await window.api.setWindowOpacity(value)
@@ -724,11 +760,19 @@ export function SettingsModal(): React.ReactNode | null {
                 >
                   Sync plan
                 </button>
+                <button
+                  type="button"
+                  disabled={accountAuthBusy || !localSettings.authToken}
+                  onClick={() => void handleOpenBillingPortal()}
+                  className="px-3 py-2 text-sm rounded-lg border border-dark-600 text-dark-200 hover:border-blue-500 disabled:opacity-50"
+                >
+                  Manage billing
+                </button>
               </div>
 
               <p className="text-[11px] text-dark-500 leading-relaxed">
-                Flow: verify email on website → Lemon checkout → open app → Claim once → Log in.
-                Hosted AI needs Hosted/Team/Session; BYOK uses your own API key.
+                Flow: verify email on website → Polar checkout → open app → Claim once → Log in →
+                Sync plan. Hosted AI needs Hosted/Team/Session; BYOK uses your own API key.
               </p>
               {accountAuthMsg ? (
                 <div

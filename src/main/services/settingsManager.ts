@@ -43,8 +43,9 @@ export interface AppSettings {
   accountName: string
   accountEmail: string
   /** JWT from Kalfi API after login/claim */
+  /** Auth JWT from Kalfi API (Polar checkout → account). */
   authToken: string
-  /** Lemon SKU (6 paid + free). Feature gating uses featureTierOf(membershipPlan). */
+  /** Billing SKU (6 paid + free). Feature gating uses featureTierOf(membershipPlan). */
   membershipPlan: BillingPlan
   membershipStatus: MembershipStatus
   /** Derived for display — not authoritative */

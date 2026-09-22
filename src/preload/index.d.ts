@@ -174,6 +174,9 @@ export interface Api {
   getCaptureStatus: () => Promise<boolean>
   sendAudioData: (audioData: ArrayBuffer) => void
   getAudioSources: () => Promise<AudioSource[]>
+  getDemoRecordMode: () => Promise<boolean>
+  getScreenRecordingStatus: () => Promise<{ status: string }>
+  openScreenRecordingSettings: () => Promise<{ ok: boolean }>
   setAlwaysOnTop: (value: boolean) => Promise<boolean>
   setWindowOpacity: (value: number) => Promise<number>
   minimizeWindow: () => Promise<void>

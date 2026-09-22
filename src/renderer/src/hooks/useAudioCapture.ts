@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { AudioCaptureService } from '../services/audioCapture'
 
 export type AudioSource = 'microphone' | 'system' | 'both'
@@ -15,15 +15,36 @@ interface UseAudioCaptureReturn {
 export function useAudioCapture(): UseAudioCaptureReturn {
   const [isCapturing, setIsCapturing] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  // Default: system (Meet) + own mic so Mic Ask / your voice are heard
+  // Default Both; demo-record / denied screen switches to Mic
   const [audioSource, setAudioSource] = useState<AudioSource>('both')
   const audioServiceRef = useRef<AudioCaptureService | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    void (async () => {
+      try {
+        const demo = await window.api.getDemoRecordMode?.()
+        const screen = await window.api.getScreenRecordingStatus?.()
+        if (cancelled) return
+        if (demo || screen?.status === 'denied' || screen?.status === 'restricted') {
+          setAudioSource('microphone')
+        }
+      } catch {
+        /* ignore */
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const resolveSystemSourceId = async (sourceId?: string): Promise<string> => {
     const sources = await window.api.getAudioSources()
 
     if (sources.length === 0) {
-      throw new Error('No screen/audio sources available. Grant screen recording access for Kalfi.')
+      throw new Error(
+        'No screen/audio sources. Enable Screen Recording for "Electron" in System Settings, then reopen.'
+      )
     }
 
     if (sourceId) return sourceId
@@ -54,13 +75,23 @@ export function useAudioCapture(): UseAudioCaptureReturn {
           console.log('Starting microphone capture')
           await audioServiceRef.current.startMicrophoneCapture()
         } else if (source === 'system') {
-          const targetSourceId = await resolveSystemSourceId(sourceId)
-          console.log('Starting system audio capture with source:', targetSourceId)
-          await audioServiceRef.current.startSystemAudioCapture(targetSourceId)
+          try {
+            const targetSourceId = await resolveSystemSourceId(sourceId)
+            console.log('Starting system audio capture with source:', targetSourceId)
+            await audioServiceRef.current.startSystemAudioCapture(targetSourceId)
+          } catch (screenErr) {
+            console.warn('System audio unavailable, falling back to microphone:', screenErr)
+            await audioServiceRef.current.startMicrophoneCapture()
+          }
         } else {
-          const targetSourceId = await resolveSystemSourceId(sourceId)
-          console.log('Starting mixed mic + system capture:', targetSourceId)
-          await audioServiceRef.current.startMixedCapture(targetSourceId)
+          try {
+            const targetSourceId = await resolveSystemSourceId(sourceId)
+            console.log('Starting mixed mic + system capture:', targetSourceId)
+            await audioServiceRef.current.startMixedCapture(targetSourceId)
+          } catch (screenErr) {
+            console.warn('System audio unavailable, falling back to microphone:', screenErr)
+            await audioServiceRef.current.startMicrophoneCapture()
+          }
         }
 
         setIsCapturing(true)

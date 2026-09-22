@@ -1,6 +1,7 @@
 /**
  * Desktop entitlement helpers — mirrors apps/api/src/lib/entitlement.ts
- * Feature gating uses FeatureTier; BillingPlan stores the Lemon SKU.
+ * Feature gating uses FeatureTier; BillingPlan stores the Polar (or legacy Lemon) SKU.
+ * Source of truth: API user record after Polar webhooks; desktop syncs via /v1/billing/status.
  */
 
 import { isTestAllowlisted } from './testAllowlist'
@@ -161,7 +162,7 @@ export function canUseAppFeatures(
 /**
  * App requires signed-in account + active/trial paid plan (or usable Single Session Pass).
  * Free / inactive / no token → blocked.
- * Optional email allowlist for Lemon test-mode accounts.
+ * Optional email allowlist for Polar/Lemon test-mode accounts.
  */
 export function hasPaidAccess(
   plan: BillingPlan,

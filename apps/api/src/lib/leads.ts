@@ -112,7 +112,7 @@ export function upsertLead(
 
 export function markLeadSubscribed(email: string, plan?: string): Lead | null {
   if (!email) return null
-  return upsertLead(email, { status: 'subscribed', plan, source: 'lemon' })
+  return upsertLead(email, { status: 'subscribed', plan, source: 'polar' })
 }
 
 export function listLeads(opts?: {

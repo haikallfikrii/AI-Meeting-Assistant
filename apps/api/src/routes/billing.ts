@@ -7,6 +7,8 @@ import { checkoutUrlForPlan, lemonStoreId, lemonVariantMap } from '../lib/lemon-
 import { verifyEmailProof } from '../lib/otp.js'
 import { recordEvent } from '../lib/events.js'
 import { markLeadSubscribed, upsertLead } from '../lib/leads.js'
+import { createPolarCheckout, getPolar, polarConfigured } from '../lib/polarService.js'
+import { polarProductIdForPlan } from '../lib/polar-products.js'
 import { requireAuth, type AppVars } from '../middleware/auth.js'
 import {
   createUser,
@@ -26,6 +28,12 @@ function lemonConfigured(): boolean {
   return Boolean(env('LEMONSQUEEZY_API_KEY') && lemonStoreId())
 }
 
+function clientIp(c: { req: { header: (name: string) => string | undefined } }): string | undefined {
+  const forwarded = c.req.header('cf-connecting-ip') || c.req.header('x-forwarded-for')
+  if (!forwarded) return undefined
+  return forwarded.split(',')[0]?.trim() || undefined
+}
+
 const checkoutSchema = z.object({
   plan: z.enum([
     'byok_monthly',
@@ -38,7 +46,9 @@ const checkoutSchema = z.object({
   email: z.string().email(),
   emailProof: z.string().min(20),
   successUrl: z.string().url().optional(),
-  cancelUrl: z.string().url().optional()
+  cancelUrl: z.string().url().optional(),
+  /** When true, Polar checkout is created with embed_origin for modal checkout. */
+  embed: z.boolean().optional()
 })
 
 billingRoutes.post('/checkout', async (c) => {
@@ -61,13 +71,46 @@ billingRoutes.post('/checkout', async (c) => {
   }
 
   const plan = body.data.plan
-  const variantId = lemonVariantMap()[plan]
-  if (!variantId) return c.json({ error: `Missing variant id for ${plan}` }, 400)
-
   const appUrl = env('APP_URL', 'https://kalfi.app')
   const successUrl =
     body.data.successUrl ||
     `${appUrl}/?checkout=success&plan=${encodeURIComponent(plan)}&email=${encodeURIComponent(verifiedEmail)}`
+
+  // Prefer Polar when token + product id are configured
+  if (polarConfigured() && polarProductIdForPlan(plan)) {
+    try {
+      const embedOrigin =
+        body.data.embed === true
+          ? env('POLAR_EMBED_ORIGIN', appUrl).replace(/\/$/, '') || appUrl
+          : undefined
+      const session = await createPolarCheckout({
+        plan,
+        email: verifiedEmail,
+        successUrl,
+        embedOrigin,
+        customerIpAddress: clientIp(c)
+      })
+      upsertLead(verifiedEmail, {
+        status: 'checkout_opened',
+        plan,
+        sku: plan,
+        source: 'pricing'
+      })
+      return c.json({
+        url: session.url,
+        id: session.id,
+        plan,
+        locked: true,
+        via: 'polar',
+        embed: Boolean(embedOrigin)
+      })
+    } catch (err) {
+      console.warn('Polar checkout failed, falling back to Lemon if available', err)
+    }
+  }
+
+  const variantId = lemonVariantMap()[plan]
+  if (!variantId) return c.json({ error: `Missing checkout product for ${plan}` }, 400)
 
   if (lemonConfigured()) {
     const storeId = lemonStoreId()
@@ -124,7 +167,13 @@ billingRoutes.post('/checkout', async (c) => {
         sku: plan,
         source: 'pricing'
       })
-      return c.json({ url: data.data.attributes.url, id: data.data.id, plan, locked: true })
+      return c.json({
+        url: data.data.attributes.url,
+        id: data.data.id,
+        plan,
+        locked: true,
+        via: 'lemon'
+      })
     }
     console.warn('Lemon checkout API failed, falling back to buy link', data.errors)
   }
@@ -188,12 +237,39 @@ billingRoutes.post('/single-session/end', requireAuth, async (c) => {
 })
 
 billingRoutes.post('/portal', requireAuth, async (c) => {
-  const customerId = c.get('user').lemonCustomerId
-  if (!customerId) return c.json({ error: 'No Lemon customer on this account' }, 400)
-  return c.json({
-    message: 'Manage billing from your Lemon Squeezy receipt email, or contact hello@kalfi.app',
-    lemonCustomerId: customerId
-  })
+  const user = c.get('user')
+  const appUrl = env('APP_URL', 'https://kalfi.app')
+
+  if (polarConfigured() && (user.polarCustomerId || user.email)) {
+    try {
+      const polar = getPolar()
+      const session = user.polarCustomerId
+        ? await polar.customerSessions.create({
+            customer_id: user.polarCustomerId,
+            return_url: `${appUrl}/`
+          })
+        : await polar.customerSessions.create({
+            external_customer_id: user.email,
+            return_url: `${appUrl}/`
+          })
+      return c.json({
+        url: session.customer_portal_url,
+        via: 'polar'
+      })
+    } catch (err) {
+      console.warn('Polar customer portal session failed', err)
+    }
+  }
+
+  if (user.lemonCustomerId) {
+    return c.json({
+      message: 'Manage billing from your Lemon Squeezy receipt email, or contact hello@kalfi.app',
+      lemonCustomerId: user.lemonCustomerId,
+      via: 'lemon'
+    })
+  }
+
+  return c.json({ error: 'No billing customer on this account yet' }, 400)
 })
 
 function verifyLemonSignature(rawBody: string, signature: string | undefined): boolean {
