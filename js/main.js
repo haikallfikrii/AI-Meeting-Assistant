@@ -742,7 +742,7 @@
         email +
         '</strong>. No license key.</p>' +
         '<p class="email-gate__lead">Open Kalfi → Settings → Claim / Log in with that email (set a password first time), then Sync plan.</p>' +
-        '<p style="text-align:center;margin-top:14px"><a class="btn btn--accent" href="#download">Download Kalfi</a></p>'
+        '<p style="text-align:center;margin-top:14px"><a class="btn btn--accent" href="https://kalfi.app/#download">Download Kalfi</a></p>'
       var closeReady = card.querySelector('[data-gate-close]')
       if (closeReady) {
         closeReady.addEventListener('click', function () {
