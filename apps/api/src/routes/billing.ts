@@ -370,16 +370,37 @@ billingRoutes.post('/manual/mark-paid', async (c) => {
 
 billingRoutes.get('/manual/status', async (c) => {
   const orderId = c.req.query('orderId') || ''
+  const ref = c.req.query('ref') || ''
   const email = (c.req.query('email') || '').trim().toLowerCase()
-  if (!orderId || !email) return c.json({ error: 'orderId and email required' }, 400)
-  const order = findManualOrder(orderId)
+  if ((!orderId && !ref) || !email) {
+    return c.json({ error: 'email and orderId (or ref) required' }, 400)
+  }
+  const order = findManualOrder(orderId || ref)
   if (!order || order.email !== email) return c.json({ error: 'Order not found' }, 404)
+
+  const labels: Record<string, string> = {
+    awaiting_payment: 'Awaiting payment',
+    reported_paid: 'Under review',
+    activated: 'Active',
+    canceled: 'Canceled'
+  }
+  const hints: Record<string, string> = {
+    awaiting_payment: 'Send the Wise transfer with your reference, then tap I’ve paid.',
+    reported_paid: 'We received your notice. Your plan is queued for activation — usually within a few hours.',
+    activated: 'Plan is live. Open the app → Claim / Log in with this email → Sync plan.',
+    canceled: 'This order was canceled. Start a new checkout if you still need a plan.'
+  }
+
   return c.json({
     ok: true,
     status: order.status,
+    statusLabel: labels[order.status] || order.status,
+    statusHint: hints[order.status] || '',
     plan: order.plan,
     ref: order.ref,
-    amountUsd: order.amountUsd
+    amountUsd: order.amountUsd,
+    orderId: order.id,
+    updatedAt: order.updatedAt
   })
 })
 

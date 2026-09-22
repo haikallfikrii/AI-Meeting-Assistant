@@ -108,7 +108,11 @@ export function renderEmail(opts: {
   return { subject: opts.title, text, html }
 }
 
-export function otpEmail(purpose: 'checkout' | 'reset' | 'register', code: string) {
+export function otpEmail(
+  purpose: 'checkout' | 'reset' | 'register',
+  code: string,
+  opts?: { email?: string }
+) {
   const action =
     purpose === 'reset'
       ? 'reset your password'
@@ -122,17 +126,29 @@ export function otpEmail(purpose: 'checkout' | 'reset' | 'register', code: strin
         ? 'Your Kalfi checkout code'
         : 'Verify your email for Kalfi'
 
+  const email = (opts?.email || '').trim().toLowerCase()
+  const verifyUrl =
+    purpose === 'checkout' && email
+      ? `${SITE}/#otp=${encodeURIComponent(code)}&email=${encodeURIComponent(email)}`
+      : ''
+
   const bodyHtml = `
     <p style="margin:0 0 18px;color:${FG_DIM}">Use this code to ${action}. It expires in <strong style="color:${FG}">10 minutes</strong>.</p>
     <div style="margin:0 0 12px;text-align:center">
-      <a href="${SITE}/#otp=${encodeURIComponent(code)}" style="display:inline-block;background:${INK};border:1px solid ${LINE};border-radius:14px;padding:18px 24px;font-size:36px;font-weight:700;letter-spacing:0.32em;color:${FG};text-decoration:none;font-variant-numeric:tabular-nums;-webkit-user-select:all;user-select:all">${code}</a>
+      <div style="display:inline-block;background:${INK};border:1px solid ${LINE};border-radius:14px;padding:18px 24px;font-size:36px;font-weight:700;letter-spacing:0.32em;color:${FG};font-variant-numeric:tabular-nums;-webkit-user-select:all;user-select:all">${code}</div>
     </div>
-    <p style="margin:0;text-align:center;font-size:13px;color:#6c7688">Tap or click the code to select it, then copy.</p>
+    <p style="margin:0 0 ${verifyUrl ? '16' : '0'}px;text-align:center;font-size:13px;color:#6c7688">Select the code above, then copy${verifyUrl ? ' — or tap Verify below to confirm on the site' : ''}.</p>
+    ${
+      verifyUrl
+        ? `<p style="margin:0;text-align:center;font-size:12px;color:#6c7688">The button opens kalfi.app and confirms this code automatically.</p>`
+        : ''
+    }
   `
   return renderEmail({
     title,
     preview: `Your code is ${code}`,
     bodyHtml,
+    cta: verifyUrl ? { label: 'Verify & continue', url: verifyUrl } : undefined,
     footerNote: `If you didn’t ask for this, you can ignore this email. Support: <a href="mailto:${SUPPORT}" style="color:${ACCENT};text-decoration:none">${SUPPORT}</a>.`
   })
 }
