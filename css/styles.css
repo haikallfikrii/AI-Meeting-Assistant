@@ -2109,7 +2109,7 @@ select {
   font-size: 0.92rem;
 }
 
-/* Email OTP gate before Lemon checkout */
+/* Email OTP gate before Polar checkout */
 .email-gate {
   position: fixed;
   inset: 0;
