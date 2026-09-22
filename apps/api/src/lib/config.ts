@@ -2,6 +2,13 @@ export function env(name: string, fallback = ''): string {
   return process.env[name] || fallback
 }
 
+/** Customer-facing site — always kalfi.app (never legacy chatlm marketing URLs). */
+export function publicSiteUrl(): string {
+  const raw = env('APP_URL', 'https://kalfi.app').trim().replace(/\/$/, '')
+  if (!raw || /chatlm\.tech/i.test(raw)) return 'https://kalfi.app'
+  return raw
+}
+
 export function requireEnv(name: string): string {
   const value = process.env[name]
   if (!value) throw new Error(`Missing env ${name}`)
