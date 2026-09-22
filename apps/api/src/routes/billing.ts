@@ -1,7 +1,7 @@
 import { createHmac, timingSafeEqual } from 'node:crypto'
 import { Hono } from 'hono'
 import { z } from 'zod'
-import { env } from '../lib/config.js'
+import { env, publicSiteUrl } from '../lib/config.js'
 import { type BillingPlan, planFromVariantId } from '../lib/entitlement.js'
 import { checkoutUrlForPlan, lemonStoreId, lemonVariantMap } from '../lib/lemon-variants.js'
 import { verifyEmailProof } from '../lib/otp.js'
@@ -88,7 +88,7 @@ billingRoutes.post('/checkout', async (c) => {
   }
 
   const plan = body.data.plan
-  const appUrl = env('APP_URL', 'https://kalfi.app')
+  const appUrl = publicSiteUrl()
   const successUrl =
     body.data.successUrl ||
     `${appUrl}/?checkout=success&plan=${encodeURIComponent(plan)}&email=${encodeURIComponent(verifiedEmail)}`
@@ -272,7 +272,7 @@ billingRoutes.post('/manual/checkout', async (c) => {
     meta: { orderId: order.id, ref: order.ref, plan, amountUsd: order.amountUsd }
   })
 
-  const appUrl = env('APP_URL', 'https://kalfi.app')
+  const appUrl = publicSiteUrl()
   const userPayMail = wisePaymentInstructionsEmail({
     email: verifiedEmail,
     plan,
@@ -349,7 +349,7 @@ billingRoutes.post('/manual/mark-paid', async (c) => {
     text: userAck.text,
     html: userAck.html
   })
-  const appUrl = env('APP_URL', 'https://kalfi.app')
+  const appUrl = publicSiteUrl()
   void sendAppEmail({
     to: wise.notifyEmail,
     subject: `[Kalfi] ACTIVATE NOW — ${order.ref} $${order.amountUsd}`,
@@ -406,7 +406,7 @@ billingRoutes.post('/single-session/end', requireAuth, async (c) => {
 
 billingRoutes.post('/portal', requireAuth, async (c) => {
   const user = c.get('user')
-  const appUrl = env('APP_URL', 'https://kalfi.app')
+  const appUrl = publicSiteUrl()
 
   if (polarConfigured() && (user.polarCustomerId || user.email)) {
     try {
