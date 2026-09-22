@@ -45,7 +45,9 @@
         <button type="button" class="nav__btn is-active" data-tab="overview">Overview</button>
         <button type="button" class="nav__btn" data-tab="users">Users</button>
         <button type="button" class="nav__btn" data-tab="leads">Leads</button>
-        <button type="button" class="nav__btn" data-tab="payments">Wise payments</button>
+        <button type="button" class="nav__btn" data-tab="payments">
+          Wise payments <span id="nav-pay-badge" class="nav__badge" hidden>0</span>
+        </button>
         <button type="button" class="nav__btn" data-tab="create">Add user</button>
         <button type="button" class="nav__btn" data-tab="analytics">Sales & activity</button>
       </nav>
@@ -53,6 +55,26 @@
       <main>
         <section id="tab-overview" class="panel">
           <div class="cards" id="overview-cards"></div>
+          <div class="card" id="pending-payments" style="margin-top:16px">
+            <h2>Activate Wise payments</h2>
+            <p id="pending-payments-meta" class="muted">Loading…</p>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Ref</th>
+                    <th>Email</th>
+                    <th>Plan</th>
+                    <th>USD</th>
+                    <th>Status</th>
+                    <th>Updated</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="pending-payments-body"></tbody>
+              </table>
+            </div>
+          </div>
           <div class="grid-2">
             <div class="card">
               <h2>Plans</h2>
@@ -116,6 +138,7 @@
               <option value="otp_verified">otp_verified</option>
               <option value="checkout_opened">checkout_opened</option>
               <option value="payment_returned">payment_returned (back from Lemon)</option>
+              <option value="reported_paid">reported_paid (Wise — activate these)</option>
               <option value="subscribed">subscribed (webhook confirmed)</option>
             </select>
             <button type="button" class="btn btn--primary" id="btn-search-leads">Search</button>
@@ -231,6 +254,6 @@
       </div>
     </aside>
 
-    <script src="./admin.js"></script>
+    <script src="./admin.js?v=wise2"></script>
   </body>
 </html>

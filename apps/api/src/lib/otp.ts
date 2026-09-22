@@ -243,28 +243,8 @@ export async function sendOtpEmail(
   purpose: OtpPurpose,
   code: string
 ): Promise<{ ok: true; devCode?: string } | { ok: false; error: string }> {
-  const subject =
-    purpose === 'reset'
-      ? 'Reset your Kalfi password'
-      : purpose === 'checkout'
-        ? 'Verify your email for Kalfi checkout'
-        : 'Verify your email for Kalfi'
-
-  const action =
-    purpose === 'reset'
-      ? 'reset your password'
-      : purpose === 'checkout'
-        ? 'continue to checkout'
-        : 'create your account'
-
-  const html = `
-    <div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#0f172a">
-      <h1 style="font-size:20px;margin:0 0 12px">Your Kalfi code</h1>
-      <p style="margin:0 0 16px;color:#475569">Use this code to ${action}. It expires in 10 minutes.</p>
-      <p style="font-size:32px;letter-spacing:8px;font-weight:700;margin:24px 0">${code}</p>
-      <p style="margin:0;color:#94a3b8;font-size:13px">If you didn’t ask for this, you can ignore this email.</p>
-    </div>
-  `
+  const { otpEmail } = await import('./email-templates.js')
+  const tpl = otpEmail(purpose, code)
 
   const toAddr = to.trim().toLowerCase()
   const from = env('EMAIL_FROM', 'Kalfi <hello@kalfi.app>')
@@ -272,13 +252,13 @@ export async function sendOtpEmail(
 
   // Prefer Hostinger / custom SMTP (hello@kalfi.app), then Resend, else inline test code.
   if (smtpConfigured()) {
-    const sent = await sendViaSmtp({ from, to: toAddr, subject, html })
+    const sent = await sendViaSmtp({ from, to: toAddr, subject: tpl.subject, html: tpl.html })
     if (sent.ok) return { ok: true }
     return sent
   }
 
   if (resendKey) {
-    return sendViaResend({ apiKey: resendKey, from, to: toAddr, subject, html })
+    return sendViaResend({ apiKey: resendKey, from, to: toAddr, subject: tpl.subject, html: tpl.html })
   }
 
   console.warn(`[otp] No SMTP/Resend configured — inline code for ${toAddr} (${purpose}): ${code}`)

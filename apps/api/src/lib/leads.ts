@@ -9,6 +9,7 @@ export type LeadStatus =
   | 'otp_verified'
   | 'checkout_opened'
   | 'payment_returned'
+  | 'reported_paid'
   | 'subscribed'
 
 export interface Lead {
@@ -62,7 +63,8 @@ const STATUS_RANK: Record<LeadStatus, number> = {
   otp_verified: 3,
   checkout_opened: 4,
   payment_returned: 5,
-  subscribed: 6
+  reported_paid: 6,
+  subscribed: 7
 }
 
 export function upsertLead(
