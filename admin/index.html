@@ -45,6 +45,7 @@
         <button type="button" class="nav__btn is-active" data-tab="overview">Overview</button>
         <button type="button" class="nav__btn" data-tab="users">Users</button>
         <button type="button" class="nav__btn" data-tab="leads">Leads</button>
+        <button type="button" class="nav__btn" data-tab="payments">Wise payments</button>
         <button type="button" class="nav__btn" data-tab="create">Add user</button>
         <button type="button" class="nav__btn" data-tab="analytics">Sales & activity</button>
       </nav>
@@ -131,6 +132,35 @@
                 </tr>
               </thead>
               <tbody id="leads-body"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="tab-payments" class="panel" hidden>
+          <div class="toolbar">
+            <select id="pay-status">
+              <option value="reported_paid">Reported paid (activate these)</option>
+              <option value="awaiting_payment">Awaiting payment</option>
+              <option value="activated">Activated</option>
+              <option value="all">All</option>
+            </select>
+            <button type="button" class="btn btn--primary" id="btn-search-payments">Refresh</button>
+          </div>
+          <p id="payments-meta" class="muted"></p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Ref</th>
+                  <th>Email</th>
+                  <th>Plan</th>
+                  <th>USD</th>
+                  <th>Status</th>
+                  <th>Updated</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="payments-body"></tbody>
             </table>
           </div>
         </section>

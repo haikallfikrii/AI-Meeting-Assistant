@@ -77,24 +77,26 @@
   }
 
   function switchTab(name) {
-    ;['overview', 'users', 'leads', 'create', 'analytics'].forEach(function (tab) {
-      var el = document.getElementById('tab-' + tab)
-      if (el) el.hidden = tab !== name
+    ;['overview', 'users', 'leads', 'payments', 'create', 'analytics'].forEach(function (tab) {
+      var panel = document.getElementById('tab-' + tab)
+      if (panel) panel.hidden = tab !== name
     })
-    document.querySelectorAll('.nav__btn').forEach(function (btn) {
+    Array.prototype.forEach.call(document.querySelectorAll('.nav__btn'), function (btn) {
       btn.classList.toggle('is-active', btn.getAttribute('data-tab') === name)
     })
     var titles = {
       overview: 'Overview',
       users: 'Users',
       leads: 'Checkout leads',
+      payments: 'Wise payments',
       create: 'Add user',
       analytics: 'Sales & activity'
     }
-    pageTitle.textContent = titles[name] || 'Admin'
+    pageTitle.textContent = titles[name] || name
     if (name === 'overview') loadOverview()
     if (name === 'users') loadUsers()
     if (name === 'leads') loadLeads()
+    if (name === 'payments') loadPayments()
     if (name === 'analytics') loadAnalytics()
   }
 
@@ -256,6 +258,47 @@
             escapeHtml(l.plan || l.sku || '—') +
             '</td><td>' +
             fmtDate(l.updatedAt) +
+            '</td></tr>'
+          )
+        })
+        .join('')
+    })
+  }
+
+  function loadPayments() {
+    var status = document.getElementById('pay-status').value || 'reported_paid'
+    api('/v1/admin/manual-orders?limit=100&status=' + encodeURIComponent(status)).then(function (
+      res
+    ) {
+      if (!res.ok) {
+        document.getElementById('payments-meta').textContent =
+          (res.data && res.data.error) || 'Failed to load payments'
+        return
+      }
+      var orders = res.data.orders || []
+      document.getElementById('payments-meta').textContent = orders.length + ' orders'
+      document.getElementById('payments-body').innerHTML = orders
+        .map(function (o) {
+          var canAct = o.status === 'reported_paid' || o.status === 'awaiting_payment'
+          return (
+            '<tr><td><code>' +
+            escapeHtml(o.ref) +
+            '</code></td><td>' +
+            escapeHtml(o.email) +
+            '</td><td>' +
+            escapeHtml(o.plan) +
+            '</td><td>$' +
+            o.amountUsd +
+            '</td><td><span class="pill">' +
+            escapeHtml(o.status) +
+            '</span></td><td>' +
+            fmtDate(o.updatedAt) +
+            '</td><td>' +
+            (canAct
+              ? '<button type="button" class="btn btn--primary btn--sm" data-activate="' +
+                escapeHtml(o.id) +
+                '">Activate</button>'
+              : '—') +
             '</td></tr>'
           )
         })
@@ -455,6 +498,27 @@
     if (ev.key === 'Enter') loadUsers()
   })
   document.getElementById('btn-search-leads').addEventListener('click', loadLeads)
+  document.getElementById('btn-search-payments').addEventListener('click', loadPayments)
+  document.getElementById('payments-body').addEventListener('click', function (ev) {
+    var btn = ev.target.closest('[data-activate]')
+    if (!btn) return
+    var id = btn.getAttribute('data-activate')
+    btn.disabled = true
+    btn.textContent = '…'
+    api('/v1/admin/manual-orders/' + encodeURIComponent(id) + '/activate', {
+      method: 'POST',
+      body: {}
+    }).then(function (res) {
+      if (!res.ok) {
+        btn.disabled = false
+        btn.textContent = 'Activate'
+        alert((res.data && res.data.error) || 'Activate failed')
+        return
+      }
+      loadPayments()
+      loadUsers()
+    })
+  })
   document.getElementById('lead-q').addEventListener('keydown', function (ev) {
     if (ev.key === 'Enter') loadLeads()
   })
