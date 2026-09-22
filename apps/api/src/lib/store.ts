@@ -32,8 +32,15 @@ export interface User {
   lemonSubscriptionId?: string
   lemonOrderId?: string
   lemonVariantId?: string
+  /** Polar MoR identifiers */
+  polarCustomerId?: string
+  polarSubscriptionId?: string
+  polarOrderId?: string
+  polarProductId?: string
+  /** Optional Polar License Key benefit (audit / support — not the sole entitlement gate) */
+  polarLicenseKey?: string
   singleSession?: SingleSessionState
-  /** True when account was auto-created from Lemon checkout — user must set a password */
+  /** True when account was auto-created from checkout — user must set a password */
   needsPasswordSetup?: boolean
   /** Admin note / internal label */
   adminNote?: string
@@ -127,6 +134,16 @@ export function findUserByLemonSubscription(subscriptionId: string): User | null
   return raw ? hydrateUser(raw) : null
 }
 
+export function findUserByPolarCustomer(customerId: string): User | null {
+  const raw = read().users.find((u) => u.polarCustomerId === customerId)
+  return raw ? hydrateUser(raw) : null
+}
+
+export function findUserByPolarSubscription(subscriptionId: string): User | null {
+  const raw = read().users.find((u) => u.polarSubscriptionId === subscriptionId)
+  return raw ? hydrateUser(raw) : null
+}
+
 export function createUser(
   email: string,
   password: string,
@@ -181,14 +198,28 @@ export function bumpUsage(id: string, tokens: number): User | null {
 
 export function grantSingleSessionPass(
   userId: string,
-  lemonOrderId?: string,
-  purchasedAt = Date.now()
+  orderRef?:
+    | string
+    | {
+        lemonOrderId?: string
+        polarOrderId?: string
+        purchasedAt?: number
+      }
 ): User | null {
+  const lemonOrderId = typeof orderRef === 'string' ? orderRef : orderRef?.lemonOrderId
+  const polarOrderId = typeof orderRef === 'object' ? orderRef?.polarOrderId : undefined
+  const purchasedAt =
+    typeof orderRef === 'object' && orderRef?.purchasedAt ? orderRef.purchasedAt : Date.now()
+
   return updateUser(userId, {
     plan: 'single_session',
     subStatus: 'active',
-    lemonOrderId,
-    singleSession: createUnusedSingleSession(purchasedAt, lemonOrderId)
+    lemonOrderId: lemonOrderId || undefined,
+    polarOrderId: polarOrderId || undefined,
+    singleSession: createUnusedSingleSession(purchasedAt, {
+      lemonOrderId,
+      polarOrderId
+    })
   })
 }
 
@@ -250,6 +281,10 @@ export function publicUser(user: User) {
     lemonCustomerId: user.lemonCustomerId || null,
     lemonSubscriptionId: user.lemonSubscriptionId || null,
     lemonOrderId: user.lemonOrderId || null,
+    polarCustomerId: user.polarCustomerId || null,
+    polarSubscriptionId: user.polarSubscriptionId || null,
+    polarOrderId: user.polarOrderId || null,
+    hasPolarLicenseKey: Boolean(user.polarLicenseKey),
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
     /** @deprecated use featureTier + subStatus */
@@ -273,7 +308,9 @@ export function listUsers(opts?: {
         u.email.includes(q) ||
         u.id.includes(q) ||
         (u.lemonCustomerId || '').includes(q) ||
-        (u.lemonOrderId || '').includes(q)
+        (u.lemonOrderId || '').includes(q) ||
+        (u.polarCustomerId || '').includes(q) ||
+        (u.polarOrderId || '').includes(q)
     )
   }
   if (opts?.plan && opts.plan !== 'all') {
@@ -311,6 +348,7 @@ export function adminOverview() {
   let paidActive = 0
   let suspended = 0
   let lemonLinked = 0
+  let polarLinked = 0
   let needsPassword = 0
   let newThisWeek = 0
 
@@ -321,6 +359,7 @@ export function adminOverview() {
     if (hasPaidLicense(plan, u.subStatus, u.singleSession)) paidActive += 1
     if (u.suspended || u.subStatus === 'suspended') suspended += 1
     if (u.lemonCustomerId || u.lemonSubscriptionId || u.lemonOrderId) lemonLinked += 1
+    if (u.polarCustomerId || u.polarSubscriptionId || u.polarOrderId) polarLinked += 1
     if (u.needsPasswordSetup) needsPassword += 1
     if (u.createdAt >= weekAgo) newThisWeek += 1
   }
@@ -330,6 +369,7 @@ export function adminOverview() {
     paidActive,
     suspended,
     lemonLinked,
+    polarLinked,
     needsPassword,
     newThisWeek,
     byPlan,

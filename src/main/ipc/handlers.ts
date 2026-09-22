@@ -1,4 +1,13 @@
-import { BrowserWindow, app, clipboard, desktopCapturer, globalShortcut, ipcMain } from 'electron'
+import {
+  BrowserWindow,
+  app,
+  clipboard,
+  desktopCapturer,
+  globalShortcut,
+  ipcMain,
+  shell,
+  systemPreferences
+} from 'electron'
 import { AnswerEntry } from '../../preload/index'
 import { HistoryManager } from '../services/historyManager'
 import { OpenAIService } from '../services/openaiService'
@@ -192,14 +201,16 @@ export function initializeIpcHandlers(window: BrowserWindow): void {
   }
 
   const bootSettings = settingsManager.getSettings()
+  const demoRecord =
+    ['1', 'true', 'yes'].includes((process.env.KALFI_DEMO_RECORD || '').trim().toLowerCase())
   applyRuntimeBranding(
     mainWindow,
     bootSettings.brandName,
     bootSettings.brandLogoPath,
-    shouldHideFromDock(bootSettings.hideFromDock)
+    demoRecord ? false : shouldHideFromDock(bootSettings.hideFromDock)
   )
   // Persist default hide-from-dock so first-run settings already match reality
-  if (typeof bootSettings.hideFromDock !== 'boolean') {
+  if (!demoRecord && typeof bootSettings.hideFromDock !== 'boolean') {
     settingsManager.updateSettings({ hideFromDock: true })
   }
 
@@ -698,18 +709,48 @@ export function initializeIpcHandlers(window: BrowserWindow): void {
     }
   })
 
-  // Get audio sources for system audio capture
+  // Get audio sources for system audio capture (needs macOS Screen Recording)
   ipcMain.handle('get-audio-sources', async () => {
-    const sources = await desktopCapturer.getSources({
-      types: ['screen', 'window'],
-      fetchWindowIcons: true
-    })
+    const screenStatus =
+      process.platform === 'darwin' ? systemPreferences.getMediaAccessStatus('screen') : 'granted'
+    console.log('[kalfi] screen recording status:', screenStatus, 'exe:', app.getPath('exe'))
 
-    return sources.map((source) => ({
-      id: source.id,
-      name: source.name,
-      thumbnail: source.thumbnail.toDataURL()
-    }))
+    try {
+      const sources = await desktopCapturer.getSources({
+        types: ['screen', 'window'],
+        thumbnailSize: { width: 0, height: 0 },
+        fetchWindowIcons: false
+      })
+
+      return sources.map((source) => ({
+        id: source.id,
+        name: source.name,
+        thumbnail: ''
+      }))
+    } catch (err) {
+      console.error('[kalfi] get-audio-sources failed:', err, 'status=', screenStatus)
+      // Return empty instead of throwing — caller can fall back to mic without a fatal UI error
+      return []
+    }
+  })
+
+  ipcMain.handle('get-demo-record-mode', () => {
+    const v = (process.env.KALFI_DEMO_RECORD || '').trim().toLowerCase()
+    return v === '1' || v === 'true' || v === 'yes'
+  })
+
+  ipcMain.handle('get-screen-recording-status', () => {
+    if (process.platform !== 'darwin') return { status: 'granted' as const }
+    return { status: systemPreferences.getMediaAccessStatus('screen') }
+  })
+
+  ipcMain.handle('open-screen-recording-settings', () => {
+    if (process.platform === 'darwin') {
+      void shell.openExternal(
+        'x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture'
+      )
+    }
+    return { ok: true }
   })
 
   // Window control handlers
@@ -996,6 +1037,12 @@ export function initializeIpcHandlers(window: BrowserWindow): void {
 }
 
 export function reapplyDockPreference(): void {
+  const demoRecord =
+    ['1', 'true', 'yes'].includes((process.env.KALFI_DEMO_RECORD || '').trim().toLowerCase())
+  if (demoRecord) {
+    applyDockVisibility(false)
+    return
+  }
   const hide = shouldHideFromDock(settingsManager?.getSettings()?.hideFromDock)
   applyDockVisibility(hide)
 }

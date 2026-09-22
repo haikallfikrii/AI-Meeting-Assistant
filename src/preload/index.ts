@@ -189,6 +189,11 @@ const api = {
   getCaptureStatus: (): Promise<boolean> => ipcRenderer.invoke('get-capture-status'),
   sendAudioData: (audioData: ArrayBuffer): void => ipcRenderer.send('audio-data', audioData),
   getAudioSources: (): Promise<AudioSource[]> => ipcRenderer.invoke('get-audio-sources'),
+  getDemoRecordMode: (): Promise<boolean> => ipcRenderer.invoke('get-demo-record-mode'),
+  getScreenRecordingStatus: (): Promise<{ status: string }> =>
+    ipcRenderer.invoke('get-screen-recording-status'),
+  openScreenRecordingSettings: (): Promise<{ ok: boolean }> =>
+    ipcRenderer.invoke('open-screen-recording-settings'),
 
   setAlwaysOnTop: (value: boolean): Promise<boolean> =>
     ipcRenderer.invoke('set-always-on-top', value),

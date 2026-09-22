@@ -13,6 +13,16 @@ import { applyOverlayWindowBehavior } from './windowOverlay'
 
 let mainWindow: BrowserWindow | null = null
 
+/**
+ * Payment / sales screen-recording demo:
+ *   KALFI_DEMO_RECORD=1 npm run dev
+ * Disables content-protection so the overlay is visible in QuickTime / Zoom recordings.
+ */
+function isDemoRecordMode(): boolean {
+  const v = (process.env.KALFI_DEMO_RECORD || '').trim().toLowerCase()
+  return v === '1' || v === 'true' || v === 'yes'
+}
+
 /** Electron menu roles use ~0.5 zoom-level steps */
 const ZOOM_STEP = 0.5
 const ZOOM_MIN = -3
@@ -122,36 +132,43 @@ function setupAppMenu(): void {
 
 function createWindow(): void {
   const appIcon = nativeImage.createFromPath(icon)
+  const demoRecord = isDemoRecordMode()
+  if (demoRecord) {
+    console.log('[kalfi] DEMO RECORD mode — overlay visible in screen recordings')
+  }
 
   // Calculate dynamic initial height based on laptop screen work area (approx 75% height)
   const primaryDisplay = screen.getPrimaryDisplay()
   const { height: workAreaHeight } = primaryDisplay.workAreaSize
   const initialHeight = Math.max(550, Math.min(700, Math.floor(workAreaHeight * 0.95)))
 
-  // Create the browser window with screen share protection
+  // Create the browser window with screen share protection (off in demo-record mode)
   mainWindow = new BrowserWindow({
     width: 620,
     height: initialHeight,
     minWidth: 380,
     minHeight: 500,
     show: false,
-    title: 'Kalfi',
+    title: demoRecord ? 'Kalfi (Demo Record)' : 'Kalfi',
     autoHideMenuBar: true,
     frame: false, // Frameless for custom title bar
     transparent: false,
     alwaysOnTop: true,
-    skipTaskbar: true,
+    skipTaskbar: !demoRecord,
     resizable: true,
     fullscreenable: false,
     minimizable: true,
     maximizable: false,
     // macOS: NSPanel-style window can float over other apps' fullscreen Spaces
+    // Demo-record uses a normal window so capture tools can see it reliably
     ...(process.platform === 'darwin'
-      ? {
-          type: 'panel' as const,
-          hiddenInMissionControl: true,
-          acceptFirstMouse: true
-        }
+      ? demoRecord
+        ? { acceptFirstMouse: true }
+        : {
+            type: 'panel' as const,
+            hiddenInMissionControl: true,
+            acceptFirstMouse: true
+          }
       : {}),
     icon: appIcon,
     webPreferences: {
@@ -163,7 +180,8 @@ function createWindow(): void {
   })
 
   // Hide from screen capture / Meet "entire screen" when possible
-  mainWindow.setContentProtection(true)
+  // Demo-record: keep visible for payment-gateway / sales recordings
+  mainWindow.setContentProtection(!demoRecord)
 
   // Float over fullscreen Meet/Chrome without splitting the Space
   applyOverlayWindowBehavior(mainWindow, true)
@@ -174,28 +192,35 @@ function createWindow(): void {
     if (process.platform === 'win32' && !appIcon.isEmpty()) {
       mainWindow?.setIcon(appIcon)
     }
-    // showInactive: don't steal focus from the fullscreen Meet window
-    mainWindow?.showInactive()
+    if (demoRecord) {
+      mainWindow?.show()
+      mainWindow?.focus()
+    } else {
+      // showInactive: don't steal focus from the fullscreen Meet window
+      mainWindow?.showInactive()
+    }
     // Showing a panel window can briefly reveal the Dock — re-apply preference
-    reapplyDockPreference()
-    ;[50, 200, 500, 1200].forEach((ms) => {
-      setTimeout(() => reapplyDockPreference(), ms)
-    })
+    if (!demoRecord) {
+      reapplyDockPreference()
+      ;[50, 200, 500, 1200].forEach((ms) => {
+        setTimeout(() => reapplyDockPreference(), ms)
+      })
+    }
   })
 
   // Re-apply overlay flags if macOS resets them after Space / display changes
   mainWindow.on('show', () => {
     if (mainWindow) applyOverlayWindowBehavior(mainWindow, true)
-    reapplyDockPreference()
+    if (!demoRecord) reapplyDockPreference()
   })
 
   mainWindow.webContents.on('did-finish-load', () => {
-    reapplyDockPreference()
+    if (!demoRecord) reapplyDockPreference()
     registerShotShortcut()
   })
 
   mainWindow.on('focus', () => {
-    reapplyDockPreference()
+    if (!demoRecord) reapplyDockPreference()
   })
 
   mainWindow.on('blur', () => {
@@ -242,8 +267,9 @@ app.whenReady().then(() => {
   electronApp.setAppUserModelId('com.kalfi.app')
 
   // Hide from Dock before the first window — default stealth until settings load
+  // Demo-record keeps the Dock icon so presenters can find the app easily
   if (process.platform === 'darwin') {
-    applyDockVisibility(true)
+    applyDockVisibility(!isDemoRecordMode())
   }
 
   setupAppMenu()

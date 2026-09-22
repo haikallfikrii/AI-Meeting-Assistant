@@ -98,18 +98,24 @@ export interface SingleSessionState {
   purchasedAt: number
   expiresAt: number
   sessionStartedAt?: number
+  /** Legacy Lemon order id */
   lemonOrderId?: string
+  /** Polar order id */
+  polarOrderId?: string
 }
 
 export function createUnusedSingleSession(
   purchasedAt = Date.now(),
-  lemonOrderId?: string
+  orderRef?: { lemonOrderId?: string; polarOrderId?: string } | string
 ): SingleSessionState {
+  const lemonOrderId = typeof orderRef === 'string' ? orderRef : orderRef?.lemonOrderId
+  const polarOrderId = typeof orderRef === 'object' ? orderRef?.polarOrderId : undefined
   return {
     status: 'unused',
     purchasedAt,
     expiresAt: purchasedAt + SINGLE_SESSION_TTL_MS,
-    lemonOrderId
+    lemonOrderId,
+    polarOrderId
   }
 }
 
