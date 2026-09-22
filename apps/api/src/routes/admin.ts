@@ -17,6 +17,7 @@ import {
   updateUser
 } from '../lib/store.js'
 import { sendAppEmail } from '../lib/mail.js'
+import { planActivatedEmail } from '../lib/email-templates.js'
 import {
   findManualOrder,
   listManualOrders,
@@ -336,19 +337,16 @@ adminRoutes.post('/manual-orders/:id/activate', async (c) => {
     meta: { orderId: order.id, ref: order.ref, plan: order.plan }
   })
 
-  const appUrl = env('APP_URL', 'https://kalfi.app')
+  const activeMail = planActivatedEmail({
+    email: order.email,
+    plan: order.plan,
+    ref: order.ref
+  })
   void sendAppEmail({
     to: order.email,
-    subject: 'Your Kalfi plan is active',
-    text:
-      `Payment received — your ${order.plan.replace(/_/g, ' ')} plan is active.\n\n` +
-      `1. Download Kalfi: ${appUrl}/#download\n` +
-      `2. Open Settings → Account\n` +
-      `3. Claim / Log in with ${order.email} (set a password the first time)\n` +
-      `4. Tap Sync plan\n\n` +
-      `No license key needed.\n\n` +
-      `Ref: ${order.ref}\n` +
-      `Help: hello@kalfi.app\n`
+    subject: activeMail.subject,
+    text: activeMail.text,
+    html: activeMail.html
   })
 
   return c.json({

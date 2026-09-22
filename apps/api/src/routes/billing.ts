@@ -9,6 +9,15 @@ import { recordEvent } from '../lib/events.js'
 import { markLeadSubscribed, upsertLead } from '../lib/leads.js'
 import { sendAppEmail } from '../lib/mail.js'
 import {
+  paymentFailedEmail,
+  pastDueEmail,
+  planActivatedEmail,
+  subscriptionActiveEmail,
+  subscriptionCanceledEmail,
+  wisePaymentInstructionsEmail,
+  wiseReportedPaidEmail
+} from '../lib/email-templates.js'
+import {
   createManualOrder,
   findManualOrder,
   paymentInstructionsFor,
@@ -264,13 +273,28 @@ billingRoutes.post('/manual/checkout', async (c) => {
   })
 
   const appUrl = env('APP_URL', 'https://kalfi.app')
+  const userPayMail = wisePaymentInstructionsEmail({
+    email: verifiedEmail,
+    plan,
+    amountUsd: order.amountUsd,
+    ref: order.ref,
+    wiseEmail: wise.email,
+    accountName: wise.accountName,
+    payLink: wise.payLink || null
+  })
+  void sendAppEmail({
+    to: verifiedEmail,
+    subject: userPayMail.subject,
+    text: userPayMail.text,
+    html: userPayMail.html
+  })
   void sendAppEmail({
     to: wise.notifyEmail,
     subject: `[Kalfi] New Wise order ${order.ref} — $${order.amountUsd} ${plan}`,
     text:
       `New manual/Wise order\n\n` +
       `Ref: ${order.ref}\nEmail: ${verifiedEmail}\nPlan: ${plan}\nAmount: $${order.amountUsd} USD\n` +
-      `Activate in admin → Payments, or POST /v1/admin/manual-orders/${order.id}/activate\n` +
+      `Activate in admin → Wise payments (or Overview queue).\n` +
       `Admin: ${appUrl}/admin/\n`
   })
 
@@ -306,19 +330,34 @@ billingRoutes.post('/manual/mark-paid', async (c) => {
     reportedAt: Date.now(),
     note: body.data.note || order.note
   })
+  upsertLead(order.email, {
+    status: 'reported_paid',
+    plan: order.plan,
+    sku: order.plan,
+    source: 'wise'
+  })
   recordEvent('manual_order_reported', {
     email: order.email,
-    meta: { orderId: order.id, ref: order.ref }
+    meta: { orderId: order.id, ref: order.ref, plan: order.plan, amountUsd: order.amountUsd }
   })
 
   const wise = wisePayConfig()
+  const userAck = wiseReportedPaidEmail({ plan: order.plan, ref: order.ref })
+  void sendAppEmail({
+    to: order.email,
+    subject: userAck.subject,
+    text: userAck.text,
+    html: userAck.html
+  })
+  const appUrl = env('APP_URL', 'https://kalfi.app')
   void sendAppEmail({
     to: wise.notifyEmail,
-    subject: `[Kalfi] User reported paid ${order.ref} — activate now`,
+    subject: `[Kalfi] ACTIVATE NOW — ${order.ref} $${order.amountUsd}`,
     text:
       `User marked Wise transfer as sent.\n\n` +
       `Ref: ${order.ref}\nEmail: ${order.email}\nPlan: ${order.plan}\nAmount: $${order.amountUsd}\n` +
-      `Check Wise, then Activate in admin → Payments.\n`
+      `Open admin → Overview or Wise payments → Activate\n` +
+      `${appUrl}/admin/\n`
   })
 
   return c.json({
@@ -537,7 +576,18 @@ export async function handleLemonWebhook(
       userId: user.id,
       meta: { event, plan: nextPlan, status, subscriptionId }
     })
-    if (active) markLeadSubscribed(user.email, nextPlan)
+    if (active) {
+      markLeadSubscribed(user.email, nextPlan)
+      if (event === 'subscription_created' || event === 'subscription_payment_success') {
+        const mail = subscriptionActiveEmail({ plan: nextPlan })
+        void sendAppEmail({
+          to: user.email,
+          subject: mail.subject,
+          text: mail.text,
+          html: mail.html
+        })
+      }
+    }
     return { ok: true }
   }
 
@@ -546,7 +596,16 @@ export async function handleLemonWebhook(
       (subscriptionId && findUserByLemonSubscription(subscriptionId)) ||
       (customerId && findUserByLemonCustomer(customerId)) ||
       (email ? findUserByEmail(email) : null)
-    if (user) updateUser(user.id, { subStatus: 'past_due' })
+    if (user) {
+      updateUser(user.id, { subStatus: 'past_due' })
+      const mail = paymentFailedEmail({ plan: user.plan })
+      void sendAppEmail({
+        to: user.email,
+        subject: mail.subject,
+        text: mail.text,
+        html: mail.html
+      })
+    }
     return { ok: true }
   }
 
@@ -568,6 +627,16 @@ export async function handleLemonWebhook(
       } else {
         updateUser(user.id, { subStatus: 'canceled' })
       }
+      const mail = subscriptionCanceledEmail({
+        plan: user.plan,
+        immediate: !stillActive
+      })
+      void sendAppEmail({
+        to: user.email,
+        subject: mail.subject,
+        text: mail.text,
+        html: mail.html
+      })
     }
     return { ok: true }
   }

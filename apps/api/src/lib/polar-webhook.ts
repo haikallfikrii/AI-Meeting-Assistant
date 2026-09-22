@@ -14,6 +14,12 @@ import { env } from './config.js'
 import { type BillingPlan } from './entitlement.js'
 import { recordEvent } from './events.js'
 import { markLeadSubscribed } from './leads.js'
+import { sendAppEmail } from './mail.js'
+import {
+  pastDueEmail,
+  subscriptionActiveEmail,
+  subscriptionCanceledEmail
+} from './email-templates.js'
 import { planFromPolarProductId, type PaidBillingPlan } from './polar-products.js'
 import {
   createUser,
@@ -230,9 +236,42 @@ export async function handlePolarWebhook(
       let user = findUser({ email, customerId, subscriptionId })
       if (!user && email) user = ensureUserFromCheckout(email)
       if (user) {
+        const prevStatus = user.subStatus
         applySubscriptionGrant(user, plan, data)
-        if (mapSubStatus(str(data.status) || 'active') === 'active') {
+        const nextStatus = mapSubStatus(str(data.status) || 'active')
+        if (nextStatus === 'active') {
           markLeadSubscribed(user.email, plan || undefined)
+          if (prevStatus !== 'active') {
+            const mail = subscriptionActiveEmail({ plan: plan || user.plan })
+            void sendAppEmail({
+              to: user.email,
+              subject: mail.subject,
+              text: mail.text,
+              html: mail.html
+            })
+          }
+        } else if (nextStatus === 'past_due') {
+          const mail = pastDueEmail({ plan: plan || user.plan })
+          void sendAppEmail({
+            to: user.email,
+            subject: mail.subject,
+            text: mail.text,
+            html: mail.html
+          })
+        } else if (
+          (nextStatus === 'canceled' || nextStatus === 'expired') &&
+          (type === 'subscription.canceled' || type === 'subscription.revoked')
+        ) {
+          const mail = subscriptionCanceledEmail({
+            plan: plan || user.plan,
+            immediate: nextStatus === 'expired' || type === 'subscription.revoked'
+          })
+          void sendAppEmail({
+            to: user.email,
+            subject: mail.subject,
+            text: mail.text,
+            html: mail.html
+          })
         }
         recordEvent('polar_subscription', {
           email: user.email,

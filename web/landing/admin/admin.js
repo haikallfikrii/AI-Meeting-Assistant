@@ -29,11 +29,25 @@
         'X-Admin-Secret': state.secret
       },
       body: opts.body ? JSON.stringify(opts.body) : undefined
-    }).then(function (res) {
-      return res.json().then(function (data) {
-        return { ok: res.ok, status: res.status, data: data || {} }
-      })
     })
+      .then(function (res) {
+        return res.text().then(function (raw) {
+          var data = {}
+          try {
+            data = raw ? JSON.parse(raw) : {}
+          } catch (e) {
+            data = { error: 'Bad JSON from API', raw: raw.slice(0, 120) }
+          }
+          return { ok: res.ok, status: res.status, data: data }
+        })
+      })
+      .catch(function (err) {
+        return {
+          ok: false,
+          status: 0,
+          data: { error: (err && err.message) || 'Network error' }
+        }
+      })
   }
 
   function fmtDate(ms) {
@@ -157,6 +171,129 @@
       renderBars('plan-bars', o.byPlan)
       renderBars('status-bars', o.byStatus)
     })
+    loadPendingQueue()
+  }
+
+  function activateOrder(id, btn) {
+    if (btn) {
+      btn.disabled = true
+      btn.textContent = '…'
+    }
+    return api('/v1/admin/manual-orders/' + encodeURIComponent(id) + '/activate', {
+      method: 'POST',
+      body: {}
+    }).then(function (res) {
+      if (!res.ok) {
+        if (btn) {
+          btn.disabled = false
+          btn.textContent = 'Activate'
+        }
+        alert((res.data && res.data.error) || 'Activate failed')
+        return false
+      }
+      loadPendingQueue()
+      loadPayments()
+      loadUsers()
+      return true
+    })
+  }
+
+  function renderOrderRows(orders, emptyMsg) {
+    if (!orders.length) {
+      return (
+        '<tr><td colspan="7" class="muted" style="padding:18px;text-align:center">' +
+        (emptyMsg || 'No orders.') +
+        '</td></tr>'
+      )
+    }
+    return orders
+      .map(function (o) {
+        var canAct = o.status === 'reported_paid' || o.status === 'awaiting_payment'
+        var pill =
+          o.status === 'reported_paid'
+            ? 'pill pill--ok'
+            : o.status === 'activated'
+              ? 'pill'
+              : 'pill'
+        return (
+          '<tr><td><code>' +
+          escapeHtml(o.ref) +
+          '</code></td><td>' +
+          escapeHtml(o.email) +
+          '</td><td>' +
+          escapeHtml(o.plan) +
+          '</td><td>$' +
+          o.amountUsd +
+          '</td><td><span class="' +
+          pill +
+          '">' +
+          escapeHtml(o.status) +
+          '</span></td><td>' +
+          fmtDate(o.updatedAt) +
+          '</td><td>' +
+          (canAct
+            ? '<button type="button" class="btn btn--primary btn--sm" data-activate="' +
+              escapeHtml(o.id) +
+              '">Activate</button>'
+            : '—') +
+          '</td></tr>'
+        )
+      })
+      .join('')
+  }
+
+  function loadPendingQueue() {
+    var box = document.getElementById('pending-payments')
+    var meta = document.getElementById('pending-payments-meta')
+    var body = document.getElementById('pending-payments-body')
+    if (!box || !body) return
+    api('/v1/admin/manual-orders?limit=50&status=reported_paid').then(function (res) {
+      if (!res.ok) {
+        if (meta) meta.textContent = (res.data && res.data.error) || 'Failed to load'
+        return
+      }
+      var orders = res.data.orders || []
+      var badge = document.getElementById('nav-pay-badge')
+      if (badge) {
+        badge.hidden = orders.length === 0
+        badge.textContent = String(orders.length)
+      }
+      box.hidden = false
+      if (meta) {
+        meta.textContent =
+          orders.length === 0
+            ? 'No pending Wise payments — you’re clear.'
+            : orders.length + ' waiting for activation (check Wise, then Activate).'
+      }
+      body.innerHTML = renderOrderRows(
+        orders,
+        'Nothing to activate. New “I’ve paid” notices appear here.'
+      )
+    })
+  }
+
+  function loadPayments() {
+    var statusEl = document.getElementById('pay-status')
+    var status = (statusEl && statusEl.value) || 'reported_paid'
+    var meta = document.getElementById('payments-meta')
+    var body = document.getElementById('payments-body')
+    if (!body) return
+    api('/v1/admin/manual-orders?limit=100&status=' + encodeURIComponent(status)).then(function (
+      res
+    ) {
+      if (!res.ok) {
+        if (meta) meta.textContent = (res.data && res.data.error) || 'Failed to load payments'
+        return
+      }
+      var orders = res.data.orders || []
+      if (meta) meta.textContent = orders.length + ' orders · filter: ' + status
+      body.innerHTML = renderOrderRows(
+        orders,
+        status === 'reported_paid'
+          ? 'No reported_paid orders. Try filter “All” — or check Overview queue.'
+          : 'No orders for this filter.'
+      )
+    })
   }
 
   function loadUsers() {
@@ -265,47 +402,6 @@
     })
   }
 
-  function loadPayments() {
-    var status = document.getElementById('pay-status').value || 'reported_paid'
-    api('/v1/admin/manual-orders?limit=100&status=' + encodeURIComponent(status)).then(function (
-      res
-    ) {
-      if (!res.ok) {
-        document.getElementById('payments-meta').textContent =
-          (res.data && res.data.error) || 'Failed to load payments'
-        return
-      }
-      var orders = res.data.orders || []
-      document.getElementById('payments-meta').textContent = orders.length + ' orders'
-      document.getElementById('payments-body').innerHTML = orders
-        .map(function (o) {
-          var canAct = o.status === 'reported_paid' || o.status === 'awaiting_payment'
-          return (
-            '<tr><td><code>' +
-            escapeHtml(o.ref) +
-            '</code></td><td>' +
-            escapeHtml(o.email) +
-            '</td><td>' +
-            escapeHtml(o.plan) +
-            '</td><td>$' +
-            o.amountUsd +
-            '</td><td><span class="pill">' +
-            escapeHtml(o.status) +
-            '</span></td><td>' +
-            fmtDate(o.updatedAt) +
-            '</td><td>' +
-            (canAct
-              ? '<button type="button" class="btn btn--primary btn--sm" data-activate="' +
-                escapeHtml(o.id) +
-                '">Activate</button>'
-              : '—') +
-            '</td></tr>'
-          )
-        })
-        .join('')
-    })
-  }
-
   function loadAnalytics() {
     api('/v1/admin/analytics').then(function (res) {
       if (!res.ok) return
@@ -315,7 +411,7 @@
       document.getElementById('sales-cards').innerHTML = [
         ['Lemon events (30d)', sales.lemonEvents30d],
         ['Checkout OTPs (30d)', sales.checkoutOtps30d],
-        ['Leads submitted', leadSummary.otp_sent || 0],
+        ['Wise reported (pending)', leadSummary.reported_paid || 0],
         ['Leads subscribed', leadSummary.subscribed || 0],
         ['Paid active', o.paidActive],
         ['Total users', o.totalUsers]
@@ -333,15 +429,23 @@
       var events = res.data.events || []
       document.getElementById('events-body').innerHTML = events
         .map(function (e) {
+          var meta = e.meta || {}
+          var act =
+            e.type === 'manual_order_reported' && meta.orderId
+              ? ' <button type="button" class="btn btn--primary btn--sm" data-activate="' +
+                escapeHtml(meta.orderId) +
+                '">Activate</button>'
+              : ''
           return (
             '<tr><td>' +
             fmtDate(e.at) +
             '</td><td>' +
             escapeHtml(e.type) +
+            act +
             '</td><td>' +
             escapeHtml(e.email || '—') +
             '</td><td>' +
-            escapeHtml(JSON.stringify(e.meta || {})) +
+            escapeHtml(JSON.stringify(meta)) +
             '</td></tr>'
           )
         })
@@ -499,26 +603,19 @@
   })
   document.getElementById('btn-search-leads').addEventListener('click', loadLeads)
   document.getElementById('btn-search-payments').addEventListener('click', loadPayments)
-  document.getElementById('payments-body').addEventListener('click', function (ev) {
+  document.getElementById('pay-status').addEventListener('change', loadPayments)
+
+  function onActivateClick(ev) {
     var btn = ev.target.closest('[data-activate]')
     if (!btn) return
-    var id = btn.getAttribute('data-activate')
-    btn.disabled = true
-    btn.textContent = '…'
-    api('/v1/admin/manual-orders/' + encodeURIComponent(id) + '/activate', {
-      method: 'POST',
-      body: {}
-    }).then(function (res) {
-      if (!res.ok) {
-        btn.disabled = false
-        btn.textContent = 'Activate'
-        alert((res.data && res.data.error) || 'Activate failed')
-        return
-      }
-      loadPayments()
-      loadUsers()
-    })
-  })
+    activateOrder(btn.getAttribute('data-activate'), btn)
+  }
+  document.getElementById('payments-body').addEventListener('click', onActivateClick)
+  var pendingBody = document.getElementById('pending-payments-body')
+  if (pendingBody) pendingBody.addEventListener('click', onActivateClick)
+  var eventsBody = document.getElementById('events-body')
+  if (eventsBody) eventsBody.addEventListener('click', onActivateClick)
+
   document.getElementById('lead-q').addEventListener('keydown', function (ev) {
     if (ev.key === 'Enter') loadLeads()
   })
