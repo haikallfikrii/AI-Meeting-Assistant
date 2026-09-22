@@ -9,7 +9,7 @@
  *     order.created, order.paid,
  *     benefit_grant.created (optional — store license key)
  */
-import { webhooks } from '@polar-sh/sdk/2026-04'
+import { webhooks } from '@polar-sh/sdk/2026-10'
 import { env } from './config.js'
 import { type BillingPlan } from './entitlement.js'
 import { recordEvent } from './events.js'

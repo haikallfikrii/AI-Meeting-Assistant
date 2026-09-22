@@ -1,13 +1,14 @@
 /**
  * Polar.sh client for Kalfi billing (Merchant of Record).
- * Uses the official typed SDK pinned to API version 2026-04.
+ * Uses the official typed SDK pinned to API version 2026-10
+ * (matches Polar webhook endpoint API version).
  *
  * Env:
  *   POLAR_ACCESS_TOKEN   — Organization Access Token (OAT), never ship to the desktop/renderer
  *   POLAR_ENVIRONMENT    — "sandbox" | "production" (default: production)
  *   POLAR_PRODUCT_*      — product UUIDs from Polar dashboard (see polar-products.ts)
  */
-import { createPolar } from '@polar-sh/sdk/2026-04'
+import { createPolar } from '@polar-sh/sdk/2026-10'
 import { env } from './config.js'
 import { type PaidBillingPlan, polarProductIdForPlan } from './polar-products.js'
 
