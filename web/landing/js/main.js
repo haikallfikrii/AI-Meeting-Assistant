@@ -526,6 +526,210 @@
 
   /* ---------- Polar billing (OTP gate → API checkout session; Lemon fallback) ---------- */
 
+  var CHECKOUT_PROOF_KEY = 'kalfi_checkout_proof'
+  var CHECKOUT_INTENT_KEY = 'kalfi_checkout_intent'
+  var ORDER_TRACK_KEY = 'kalfi_order_track'
+  var PROOF_TTL_MS = 48 * 60 * 60 * 1000
+
+  function saveCheckoutProof(email, emailProof) {
+    try {
+      localStorage.setItem(
+        CHECKOUT_PROOF_KEY,
+        JSON.stringify({
+          email: String(email || '').toLowerCase(),
+          emailProof: emailProof,
+          exp: Date.now() + PROOF_TTL_MS
+        })
+      )
+    } catch (e) {}
+  }
+
+  function loadCheckoutProof() {
+    try {
+      var raw = localStorage.getItem(CHECKOUT_PROOF_KEY)
+      if (!raw) return null
+      var data = JSON.parse(raw)
+      if (!data || !data.emailProof || !data.email || !data.exp || data.exp < Date.now()) {
+        localStorage.removeItem(CHECKOUT_PROOF_KEY)
+        return null
+      }
+      return data
+    } catch (e) {
+      return null
+    }
+  }
+
+  function saveCheckoutIntent(intent) {
+    try {
+      localStorage.setItem(CHECKOUT_INTENT_KEY, JSON.stringify(intent || {}))
+    } catch (e) {}
+  }
+
+  function loadCheckoutIntent() {
+    try {
+      return JSON.parse(localStorage.getItem(CHECKOUT_INTENT_KEY) || 'null')
+    } catch (e) {
+      return null
+    }
+  }
+
+  function saveOrderTrack(track) {
+    try {
+      localStorage.setItem(ORDER_TRACK_KEY, JSON.stringify(track))
+    } catch (e) {}
+  }
+
+  function loadOrderTrack() {
+    try {
+      return JSON.parse(localStorage.getItem(ORDER_TRACK_KEY) || 'null')
+    } catch (e) {
+      return null
+    }
+  }
+
+  function clearOrderTrack() {
+    try {
+      localStorage.removeItem(ORDER_TRACK_KEY)
+    } catch (e) {}
+  }
+
+  function statusMeta(status) {
+    if (status === 'awaiting_payment') {
+      return {
+        label: 'Awaiting payment',
+        hint: 'Send Wise with your reference, then tap I’ve paid.'
+      }
+    }
+    if (status === 'reported_paid') {
+      return {
+        label: 'Under review',
+        hint: 'Queued for activation — usually within a few hours. This page updates automatically.'
+      }
+    }
+    if (status === 'activated') {
+      return {
+        label: 'Active',
+        hint: 'Plan is live. Claim / Log in in the app with the same email.'
+      }
+    }
+    return { label: status || 'Unknown', hint: '' }
+  }
+
+  function goDownloadAndClose(gateRoot) {
+    if (gateRoot) gateRoot.remove()
+    var target = document.getElementById('download')
+    if (target) {
+      history.replaceState(null, '', '#download')
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    } else {
+      window.location.hash = 'download'
+    }
+  }
+
+  function ensureOrderTrackBanner() {
+    var track = loadOrderTrack()
+    var existing = document.getElementById('order-track-banner')
+    if (!track || !track.orderId) {
+      if (existing) existing.remove()
+      return
+    }
+    if (track.status === 'activated') {
+      if (existing) existing.remove()
+      return
+    }
+    var meta = statusMeta(track.status)
+    if (!existing) {
+      existing = document.createElement('div')
+      existing.id = 'order-track-banner'
+      existing.className = 'order-track-banner'
+      document.body.appendChild(existing)
+    }
+    existing.innerHTML =
+      '<div class="order-track-banner__inner">' +
+      '<div><strong>Order ' +
+      (track.ref || '') +
+      '</strong> · ' +
+      meta.label +
+      '<span class="order-track-banner__hint">' +
+      meta.hint +
+      '</span></div>' +
+      '<div class="order-track-banner__actions">' +
+      '<button type="button" class="btn btn--accent btn--sm" data-track-open>View status</button>' +
+      '<button type="button" class="btn btn--line btn--sm" data-track-dismiss aria-label="Dismiss">×</button>' +
+      '</div></div>'
+    existing.querySelector('[data-track-open]').onclick = function () {
+      reopenOrderTracker()
+    }
+    existing.querySelector('[data-track-dismiss]').onclick = function () {
+      existing.remove()
+    }
+  }
+
+  function pollOrderTrackBanner() {
+    var track = loadOrderTrack()
+    if (!track || !track.orderId || !track.email) return
+    var apiBase = String(CONFIG.apiBaseUrl || '').replace(/\/$/, '')
+    if (!apiBase) return
+    fetch(
+      apiBase +
+        '/v1/billing/manual/status?orderId=' +
+        encodeURIComponent(track.orderId) +
+        '&email=' +
+        encodeURIComponent(track.email)
+    )
+      .then(function (res) {
+        return res.json().then(function (data) {
+          return { ok: res.ok, data: data }
+        })
+      })
+      .then(function (result) {
+        if (!result.ok || !result.data) return
+        track.status = result.data.status
+        track.ref = result.data.ref || track.ref
+        saveOrderTrack(track)
+        ensureOrderTrackBanner()
+        if (result.data.status === 'activated') {
+          // Keep banner briefly as success via reopen path
+          setTimeout(function () {
+            clearOrderTrack()
+            ensureOrderTrackBanner()
+          }, 60 * 1000)
+        }
+      })
+      .catch(function () {})
+  }
+
+  function reopenOrderTracker() {
+    var track = loadOrderTrack()
+    if (!track || !track.orderId) return
+    var existing = document.getElementById('checkout-email-gate')
+    if (existing) existing.remove()
+    var root = document.createElement('div')
+    root.id = 'checkout-email-gate'
+    root.className = 'email-gate'
+    root.style.display = 'grid'
+    root.style.placeItems = 'center'
+    root.innerHTML = '<div class="email-gate__card" role="dialog" aria-modal="true"></div>'
+    document.body.appendChild(root)
+    showWiseInstructions(
+      root,
+      {
+        orderId: track.orderId,
+        instructions: {
+          ref: track.ref,
+          amountUsd: track.amountUsd,
+          plan: track.plan,
+          wiseEmail: track.wiseEmail || 'hello@kalfi.app',
+          accountName: track.accountName || 'Kalfi',
+          payLink: track.payLink || null,
+          steps: []
+        }
+      },
+      track.email,
+      track.status || 'awaiting_payment'
+    )
+  }
+
   function isPlaceholderCheckout(url) {
     return (
       !url ||
@@ -714,40 +918,141 @@
     paintInterval()
   }
 
-  function showWiseInstructions(gateRoot, payload, email) {
+  function showWiseInstructions(gateRoot, payload, email, initialStatus) {
     var card = gateRoot.querySelector('.email-gate__card')
     if (!card) return
     var ins = payload.instructions || {}
     var orderId = payload.orderId
     var apiBase = String(CONFIG.apiBaseUrl || '').replace(/\/$/, '')
     var pollTimer = null
-    var steps = (ins.steps || []).map(function (s) {
-      return '<li>' + s + '</li>'
-    }).join('')
-    var payLink = ins.payLink
-      ? '<p style="text-align:center;margin:0 0 12px"><a class="btn btn--accent btn--sm" href="' +
-        ins.payLink +
-        '" target="_blank" rel="noopener">Open Wise payment</a></p>'
-      : ''
+    var currentStatus = initialStatus || 'awaiting_payment'
+
+    saveOrderTrack({
+      orderId: orderId,
+      email: email,
+      ref: ins.ref,
+      plan: ins.plan,
+      amountUsd: ins.amountUsd,
+      wiseEmail: ins.wiseEmail,
+      accountName: ins.accountName,
+      payLink: ins.payLink || null,
+      status: currentStatus
+    })
+    ensureOrderTrackBanner()
+
+    function bindClose() {
+      var closeBtn = card.querySelector('[data-gate-close]')
+      if (closeBtn) {
+        closeBtn.addEventListener('click', function () {
+          if (pollTimer) clearInterval(pollTimer)
+          gateRoot.remove()
+          ensureOrderTrackBanner()
+        })
+      }
+      gateRoot.addEventListener('keydown', function (ev) {
+        if (ev.key === 'Escape') {
+          if (pollTimer) clearInterval(pollTimer)
+          gateRoot.remove()
+          ensureOrderTrackBanner()
+        }
+      })
+    }
+
+    function progressHtml(status) {
+      var steps = [
+        { key: 'awaiting_payment', label: 'Pay' },
+        { key: 'reported_paid', label: 'Review' },
+        { key: 'activated', label: 'Active' }
+      ]
+      var rank = { awaiting_payment: 0, reported_paid: 1, activated: 2 }
+      var cur = rank[status] != null ? rank[status] : 0
+      return (
+        '<ol class="order-progress">' +
+        steps
+          .map(function (s, i) {
+            var cls =
+              i < cur ? 'is-done' : i === cur ? 'is-current' : 'is-todo'
+            return (
+              '<li class="' +
+              cls +
+              '"><span>' +
+              (i + 1) +
+              '</span>' +
+              s.label +
+              '</li>'
+            )
+          })
+          .join('') +
+        '</ol>'
+      )
+    }
 
     function showActivated() {
       if (pollTimer) {
         clearInterval(pollTimer)
         pollTimer = null
       }
+      currentStatus = 'activated'
+      saveOrderTrack(
+        Object.assign(loadOrderTrack() || {}, {
+          status: 'activated',
+          orderId: orderId,
+          email: email
+        })
+      )
+      ensureOrderTrackBanner()
       card.innerHTML =
         '<button type="button" class="email-gate__close" data-gate-close aria-label="Close">×</button>' +
+        '<p class="email-gate__eyebrow">Status · Active</p>' +
         '<h3 id="email-gate-title">You’re in</h3>' +
+        progressHtml('activated') +
         '<p class="email-gate__ready">Plan activated for <strong>' +
         email +
         '</strong>. No license key.</p>' +
         '<p class="email-gate__lead">Open Kalfi → Settings → Claim / Log in with that email (set a password first time), then Sync plan.</p>' +
-        '<p style="text-align:center;margin-top:14px"><a class="btn btn--accent" href="https://kalfi.app/#download">Download Kalfi</a></p>'
-      var closeReady = card.querySelector('[data-gate-close]')
-      if (closeReady) {
-        closeReady.addEventListener('click', function () {
-          gateRoot.remove()
+        '<p style="text-align:center;margin-top:14px"><button type="button" class="btn btn--accent" id="wise-download">Download Kalfi</button></p>'
+      bindClose()
+      var dl = card.querySelector('#wise-download')
+      if (dl) {
+        dl.addEventListener('click', function () {
+          goDownloadAndClose(gateRoot)
         })
+      }
+    }
+
+    function showUnderReview() {
+      currentStatus = 'reported_paid'
+      saveOrderTrack(
+        Object.assign(loadOrderTrack() || {}, {
+          status: 'reported_paid',
+          orderId: orderId,
+          email: email,
+          ref: ins.ref
+        })
+      )
+      ensureOrderTrackBanner()
+      var meta = statusMeta('reported_paid')
+      card.innerHTML =
+        '<button type="button" class="email-gate__close" data-gate-close aria-label="Close">×</button>' +
+        '<p class="email-gate__eyebrow">Status · ' +
+        meta.label +
+        '</p>' +
+        '<h3 id="email-gate-title">Payment under review</h3>' +
+        progressHtml('reported_paid') +
+        '<p class="email-gate__lead">' +
+        meta.hint +
+        '</p>' +
+        '<p class="email-gate__ref">Reference: <code>' +
+        (ins.ref || '') +
+        '</code></p>' +
+        '<p class="email-gate__meta">We’ll email <strong>' +
+        email +
+        '</strong> when your plan is live. Keep this tab open — status updates here automatically.</p>' +
+        '<p class="email-gate__msg" id="wise-msg">Checking status…</p>'
+      bindClose()
+      if (!pollTimer) {
+        pollTimer = setInterval(pollStatus, 6000)
+        pollStatus()
       }
     }
 
@@ -765,16 +1070,50 @@
           })
         })
         .then(function (result) {
-          if (result.ok && result.data && result.data.status === 'activated') {
+          if (!result.ok || !result.data) return
+          var st = result.data.status
+          var msg = card.querySelector('#wise-msg')
+          if (st === 'activated') {
             showActivated()
+            return
+          }
+          if (st === 'reported_paid' && currentStatus !== 'reported_paid') {
+            showUnderReview()
+            return
+          }
+          if (msg && result.data.statusLabel) {
+            msg.hidden = false
+            msg.textContent =
+              result.data.statusLabel +
+              (result.data.statusHint ? ' — ' + result.data.statusHint : '')
           }
         })
         .catch(function () {})
     }
 
+    if (currentStatus === 'activated') {
+      showActivated()
+      return
+    }
+    if (currentStatus === 'reported_paid') {
+      showUnderReview()
+      return
+    }
+
+    var payLink = ins.payLink
+      ? '<p style="text-align:center;margin:0 0 12px"><a class="btn btn--accent btn--sm" href="' +
+        ins.payLink +
+        '" target="_blank" rel="noopener">Open Wise payment</a></p>'
+      : ''
+    var steps = (ins.steps || []).map(function (s) {
+      return '<li>' + s + '</li>'
+    }).join('')
+
     card.innerHTML =
       '<button type="button" class="email-gate__close" data-gate-close aria-label="Close">×</button>' +
+      '<p class="email-gate__eyebrow">Status · Awaiting payment</p>' +
       '<h3 id="email-gate-title">Pay with Wise</h3>' +
+      progressHtml('awaiting_payment') +
       '<p class="email-gate__lead">Send <strong>$' +
       ins.amountUsd +
       ' USD</strong> for <strong>' +
@@ -790,22 +1129,14 @@
       (ins.accountName ? ' · ' + ins.accountName : '') +
       '</p>' +
       payLink +
-      '<ol class="email-gate__steps">' +
-      steps +
-      '</ol>' +
+      (steps ? '<ol class="email-gate__steps">' + steps + '</ol>' : '') +
       '<button type="button" class="btn btn--accent" id="wise-mark-paid">I’ve paid — notify Kalfi</button>' +
       '<p class="email-gate__msg" id="wise-msg" hidden></p>' +
-      '<p class="email-gate__hint">After we confirm, this screen updates automatically. Then Claim / Log in in the app with <strong>' +
+      '<p class="email-gate__hint">After you notify us, status becomes <strong>Under review</strong> here (and by email). Then Claim / Log in in the app with <strong>' +
       email +
-      '</strong> — no license key.</p>'
+      '</strong>.</p>'
 
-    var closeBtn = card.querySelector('[data-gate-close]')
-    if (closeBtn) {
-      closeBtn.addEventListener('click', function () {
-        if (pollTimer) clearInterval(pollTimer)
-        gateRoot.remove()
-      })
-    }
+    bindClose()
     var copyBtn = card.querySelector('#wise-copy-ref')
     if (copyBtn) {
       copyBtn.addEventListener('click', function () {
@@ -837,20 +1168,16 @@
               showActivated()
               return
             }
+            if (result.ok) {
+              showUnderReview()
+              return
+            }
             if (msg) {
               msg.hidden = false
-              msg.textContent =
-                (result.data && result.data.message) ||
-                (result.ok
-                  ? 'Thanks — waiting for activation…'
-                  : (result.data && result.data.error) || 'Could not notify.')
+              msg.textContent = (result.data && result.data.error) || 'Could not notify.'
             }
-            markBtn.textContent = result.ok ? 'Waiting for activation…' : 'Try again'
-            markBtn.disabled = result.ok
-            if (result.ok && !pollTimer) {
-              pollTimer = setInterval(pollStatus, 8000)
-              pollStatus()
-            }
+            markBtn.disabled = false
+            markBtn.textContent = 'I’ve paid — notify Kalfi'
           })
           .catch(function () {
             markBtn.disabled = false
@@ -865,6 +1192,14 @@
   }
 
   function openCheckoutEmailGate(opts) {
+    saveCheckoutIntent({
+      plan: opts.plan,
+      sku: opts.sku,
+      interval: opts.interval,
+      fallback: opts.fallback,
+      embed: opts.embed
+    })
+
     var existing = document.getElementById('checkout-email-gate')
     if (existing) existing.remove()
 
@@ -872,6 +1207,15 @@
     var planLabel = opts.plan
       ? String(opts.plan).replace(/_/g, ' ')
       : 'your plan'
+    var proof = loadCheckoutProof()
+    var skipOtp = Boolean(
+      proof &&
+        proof.emailProof &&
+        (!opts.prefillEmail ||
+          String(opts.prefillEmail).toLowerCase() === String(proof.email).toLowerCase()) &&
+        !opts.prefillCode
+    )
+
     var root = document.createElement('div')
     root.id = 'checkout-email-gate'
     root.className = 'email-gate'
@@ -879,11 +1223,21 @@
       '<div class="email-gate__card" role="dialog" aria-modal="true" aria-labelledby="email-gate-title">' +
       '<button type="button" class="email-gate__close" data-gate-close aria-label="Close">×</button>' +
       '<p class="email-gate__eyebrow">Checkout</p>' +
-      '<h3 id="email-gate-title">Confirm email for payment</h3>' +
-      '<p class="email-gate__lead">We lock this inbox to your <strong>' +
-      planLabel +
-      '</strong> checkout — the same email you will use in the Kalfi app.</p>' +
-      '<div data-gate-step="email">' +
+      '<h3 id="email-gate-title">' +
+      (skipOtp ? 'Continue checkout' : 'Confirm email for payment') +
+      '</h3>' +
+      '<p class="email-gate__lead">' +
+      (skipOtp
+        ? 'Email already verified — continuing as <strong>' +
+          proof.email +
+          '</strong> (no new code for ~48 hours).'
+        : 'We lock this inbox to your <strong>' +
+          planLabel +
+          '</strong> checkout — the same email you will use in the Kalfi app.') +
+      '</p>' +
+      '<div data-gate-step="email"' +
+      (skipOtp ? ' hidden' : '') +
+      '>' +
       '<label class="email-gate__label">Email' +
       '<input type="email" data-gate-email placeholder="you@email.com" autocomplete="email" /></label>' +
       '</div>' +
@@ -897,12 +1251,16 @@
       '</div>' +
       '</div>' +
       '<p class="email-gate__msg" data-gate-msg hidden></p>' +
-      '<button type="button" class="btn btn--accent email-gate__primary" data-gate-primary>Send code</button>' +
+      '<button type="button" class="btn btn--accent email-gate__primary" data-gate-primary>' +
+      (skipOtp ? 'Continue to payment' : 'Send code') +
+      '</button>' +
       '<button type="button" class="email-gate__resend" data-gate-resend hidden>Resend code</button>' +
+      (skipOtp
+        ? '<button type="button" class="email-gate__resend" data-gate-use-other>Use a different email</button>'
+        : '') +
       '</div>'
 
     document.body.appendChild(root)
-    // Force paint centering even if older CSS cached
     root.style.display = 'grid'
     root.style.placeItems = 'center'
 
@@ -916,9 +1274,18 @@
     var msgEl = root.querySelector('[data-gate-msg]')
     var primaryBtn = root.querySelector('[data-gate-primary]')
     var resendBtn = root.querySelector('[data-gate-resend]')
-    var stage = 'email' // email | code
+    var useOtherBtn = root.querySelector('[data-gate-use-other]')
+    var stage = skipOtp ? 'verified' : 'email'
     var busy = false
     var autoPayStarted = false
+    var cachedProof = skipOtp ? proof.emailProof : ''
+
+    if (emailEl) {
+      emailEl.value = opts.prefillEmail || (skipOtp ? proof.email : '') || ''
+    }
+    if (opts.prefillCode && codeEl) {
+      codeEl.value = String(opts.prefillCode).replace(/\D/g, '').slice(0, 6)
+    }
 
     function setMsg(text, isError) {
       if (!msgEl) return
@@ -936,14 +1303,12 @@
       root.remove()
     }
 
-    // Close only via × (or Escape) — not backdrop / outside click.
     root.addEventListener('click', function (ev) {
       if (ev.target.closest('[data-gate-close]')) close()
     })
     root.addEventListener('keydown', function (ev) {
       if (ev.key === 'Escape') close()
     })
-    // Swallow backdrop clicks so accidental outside taps don't dismiss.
     root.addEventListener('mousedown', function (ev) {
       if (ev.target === root) ev.preventDefault()
     })
@@ -953,7 +1318,8 @@
       if (stepEmail) stepEmail.hidden = true
       if (stepCode) stepCode.hidden = false
       if (sentEl) {
-        sentEl.textContent = 'Code sent to ' + email + '. Paste it below to open payment.'
+        sentEl.textContent =
+          'Code sent to ' + email + '. Paste it below, or tap Verify & continue in the email.'
       }
       primaryBtn.textContent = 'Continue to payment'
       resendBtn.hidden = false
@@ -966,6 +1332,31 @@
         codeBox.hidden = true
       }
       if (codeEl) codeEl.focus()
+    }
+
+    function startCheckoutWithProof(email, emailProof) {
+      var provider = CONFIG.paymentProvider || 'wise'
+      var path =
+        provider === 'polar' ? '/v1/billing/checkout' : '/v1/billing/manual/checkout'
+      return fetch(apiBase + path, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          plan: opts.sku,
+          email: email,
+          emailProof: emailProof,
+          embed: Boolean(opts.embed),
+          successUrl:
+            'https://kalfi.app/?checkout=success&plan=' +
+            encodeURIComponent(opts.sku) +
+            '&email=' +
+            encodeURIComponent(email)
+        })
+      }).then(function (res) {
+        return res.json().then(function (data) {
+          return { ok: res.ok, data: data, provider: provider }
+        })
+      })
     }
 
     function requestCode() {
@@ -1010,7 +1401,7 @@
           }
           showCodeStep(email, result.data && result.data.devCode)
           if (!result.data || !result.data.devCode) {
-            setMsg('Check your inbox for the 6-digit code.')
+            setMsg('Check your inbox — tap Verify & continue, or paste the code here.')
           }
         })
         .catch(function (err) {
@@ -1030,8 +1421,7 @@
 
     function legacyCheckout(gateOpts, email) {
       var successUrl =
-        window.location.origin +
-        '/?checkout=success&plan=' +
+        'https://kalfi.app/?checkout=success&plan=' +
         encodeURIComponent(gateOpts.sku || '') +
         '&email=' +
         encodeURIComponent(email || '')
@@ -1074,14 +1464,68 @@
         })
     }
 
+    function afterProof(email, emailProof) {
+      return startCheckoutWithProof(email, emailProof).then(function (result) {
+        if (!result) return
+        if (result.provider !== 'polar') {
+          if (!result.ok || !result.data || !result.data.instructions) {
+            setMsg((result.data && result.data.error) || 'Could not create Wise order.', true)
+            return
+          }
+          showWiseInstructions(root, result.data, email)
+          return
+        }
+        var url =
+          result.ok && result.data && result.data.url ? result.data.url : opts.fallback
+        if (!url || isPlaceholderCheckout(url)) {
+          setMsg('Checkout is not ready for this plan yet.', true)
+          return
+        }
+        if (url.indexOf('checkout') !== -1 && url.indexOf('email') === -1) {
+          url +=
+            (url.indexOf('?') >= 0 ? '&' : '?') +
+            'checkout[email]=' +
+            encodeURIComponent(email)
+        }
+        window.location.href = url
+      })
+    }
+
     function continueToPayment() {
-      var email = (emailEl && emailEl.value || '').trim()
+      var email =
+        (emailEl && emailEl.value || '').trim() || (proof && proof.email) || ''
+      if (busy) return
+
+      if (stage === 'verified' && cachedProof) {
+        busy = true
+        autoPayStarted = true
+        primaryBtn.disabled = true
+        primaryBtn.textContent = 'Opening payment…'
+        setMsg('')
+        afterProof(email, cachedProof)
+          .catch(function () {
+            setMsg('Session expired — send a new code.', true)
+            try {
+              localStorage.removeItem(CHECKOUT_PROOF_KEY)
+            } catch (e) {}
+            stage = 'email'
+            if (stepEmail) stepEmail.hidden = false
+            primaryBtn.textContent = 'Send code'
+          })
+          .finally(function () {
+            busy = false
+            primaryBtn.disabled = false
+            autoPayStarted = false
+            if (stage === 'verified') primaryBtn.textContent = 'Continue to payment'
+          })
+        return
+      }
+
       var code = (codeEl && codeEl.value || '').trim()
       if (!email || code.length < 6) {
         setMsg('Paste the 6-digit code from your email.', true)
         return
       }
-      if (busy) return
       busy = true
       autoPayStarted = true
       primaryBtn.disabled = true
@@ -1103,55 +1547,9 @@
             setMsg((result.data && result.data.error) || 'Invalid or expired code.', true)
             return null
           }
-          var provider = CONFIG.paymentProvider || 'wise'
-          var path =
-            provider === 'polar' ? '/v1/billing/checkout' : '/v1/billing/manual/checkout'
-          return fetch(apiBase + path, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              plan: opts.sku,
-              email: email,
-              emailProof: result.data.emailProof,
-              embed: Boolean(opts.embed),
-              successUrl:
-                window.location.origin +
-                '/?checkout=success&plan=' +
-                encodeURIComponent(opts.sku) +
-                '&email=' +
-                encodeURIComponent(email)
-            })
-          }).then(function (res) {
-            return res.json().then(function (data) {
-              return { ok: res.ok, data: data, provider: provider }
-            })
-          })
-        })
-        .then(function (result) {
-          if (!result) return
-          if (result.provider !== 'polar') {
-            if (!result.ok || !result.data || !result.data.instructions) {
-              setMsg((result.data && result.data.error) || 'Could not create Wise order.', true)
-              return
-            }
-            showWiseInstructions(root, result.data, email)
-            return
-          }
-          var url =
-            result.ok && result.data && result.data.url
-              ? result.data.url
-              : opts.fallback
-          if (!url || isPlaceholderCheckout(url)) {
-            setMsg('Checkout is not ready for this plan yet.', true)
-            return
-          }
-          if (url.indexOf('checkout') !== -1 && url.indexOf('email') === -1) {
-            url +=
-              (url.indexOf('?') >= 0 ? '&' : '?') +
-              'checkout[email]=' +
-              encodeURIComponent((emailEl && emailEl.value || '').trim())
-          }
-          window.location.href = url
+          saveCheckoutProof(email, result.data.emailProof)
+          cachedProof = result.data.emailProof
+          return afterProof(email, result.data.emailProof)
         })
         .catch(function () {
           setMsg('Could not open payment. Try again.', true)
@@ -1170,11 +1568,31 @@
     }
 
     primaryBtn.addEventListener('click', onPrimary)
-    resendBtn.addEventListener('click', function () {
-      stage = 'email'
-      if (stepEmail) stepEmail.hidden = false
-      requestCode()
-    })
+    if (resendBtn) {
+      resendBtn.addEventListener('click', function () {
+        stage = 'email'
+        if (stepEmail) stepEmail.hidden = false
+        requestCode()
+      })
+    }
+    if (useOtherBtn) {
+      useOtherBtn.addEventListener('click', function () {
+        try {
+          localStorage.removeItem(CHECKOUT_PROOF_KEY)
+        } catch (e) {}
+        stage = 'email'
+        cachedProof = ''
+        if (stepEmail) stepEmail.hidden = false
+        if (stepCode) stepCode.hidden = true
+        primaryBtn.textContent = 'Send code'
+        useOtherBtn.hidden = true
+        setMsg('')
+        if (emailEl) {
+          emailEl.value = ''
+          emailEl.focus()
+        }
+      })
+    }
 
     if (emailEl) {
       emailEl.addEventListener('keydown', function (ev) {
@@ -1201,7 +1619,23 @@
       })
     }
 
-    if (emailEl) emailEl.focus()
+    if (opts.autoVerify && opts.prefillEmail && opts.prefillCode) {
+      stage = 'code'
+      if (stepEmail) stepEmail.hidden = true
+      if (stepCode) stepCode.hidden = false
+      primaryBtn.textContent = 'Continue to payment'
+      setMsg('Verifying code from your email…')
+      setTimeout(function () {
+        continueToPayment()
+      }, 200)
+    } else if (skipOtp) {
+      setMsg('Verified recently — no new code needed for ~48 hours.')
+      setTimeout(function () {
+        continueToPayment()
+      }, 350)
+    } else if (emailEl) {
+      emailEl.focus()
+    }
   }
 
   /* ---------- multi-OS downloads ---------- */
@@ -1820,6 +2254,60 @@
     copyCommands()
     installModal()
     faqAccordion()
+    ensureOrderTrackBanner()
+    pollOrderTrackBanner()
+    setInterval(pollOrderTrackBanner, 20000)
+    handleCheckoutDeepLinks()
+  }
+
+  function handleCheckoutDeepLinks() {
+    function parseHashParams() {
+      var raw = (location.hash || '').replace(/^#/, '')
+      if (!raw) return {}
+      var out = {}
+      // support #otp=123&email=a@b.com or #download
+      raw.split('&').forEach(function (part) {
+        var i = part.indexOf('=')
+        if (i < 0) {
+          out[part] = true
+          return
+        }
+        out[decodeURIComponent(part.slice(0, i))] = decodeURIComponent(part.slice(i + 1))
+      })
+      return out
+    }
+
+    function run() {
+      var params = parseHashParams()
+      if (!params.otp) return
+      var code = String(params.otp || '').replace(/\D/g, '').slice(0, 6)
+      var email = String(params.email || '').trim()
+      if (!code || code.length < 6 || !email) return
+
+      // Clear sensitive hash from the URL bar
+      history.replaceState(null, '', location.pathname + location.search + '#pricing')
+
+      var intent = loadCheckoutIntent() || {}
+      var sku =
+        intent.sku ||
+        planSku(intent.plan || 'hosted', intent.interval || 'monthly') ||
+        'hosted_monthly'
+      openCheckoutEmailGate({
+        plan: intent.plan || 'hosted',
+        sku: sku,
+        interval: intent.interval || 'monthly',
+        fallback: intent.fallback || '',
+        embed: Boolean(intent.embed),
+        prefillEmail: email,
+        prefillCode: code,
+        autoVerify: true
+      })
+    }
+
+    run()
+    window.addEventListener('hashchange', function () {
+      if ((location.hash || '').indexOf('otp=') !== -1) run()
+    })
   }
 
   if (document.readyState === 'loading') {

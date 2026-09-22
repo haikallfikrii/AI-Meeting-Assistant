@@ -141,6 +141,8 @@ export function verifyOtp(
 }
 
 export async function signEmailProof(email: string, purpose: OtpPurpose): Promise<string> {
+  // Checkout proof stays valid so users don't re-OTP for a while (landing also caches it).
+  const ttl = purpose === 'checkout' ? '48h' : '30m'
   return new SignJWT({
     kind: 'email_proof',
     email: email.trim().toLowerCase(),
@@ -148,7 +150,7 @@ export async function signEmailProof(email: string, purpose: OtpPurpose): Promis
   })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
-    .setExpirationTime('30m')
+    .setExpirationTime(ttl)
     .sign(secret())
 }
 
@@ -243,10 +245,10 @@ export async function sendOtpEmail(
   purpose: OtpPurpose,
   code: string
 ): Promise<{ ok: true; devCode?: string } | { ok: false; error: string }> {
-  const { otpEmail } = await import('./email-templates.js')
-  const tpl = otpEmail(purpose, code)
-
   const toAddr = to.trim().toLowerCase()
+  const { otpEmail } = await import('./email-templates.js')
+  const tpl = otpEmail(purpose, code, { email: toAddr })
+
   const from = env('EMAIL_FROM', 'Kalfi <hello@kalfi.app>')
   const resendKey = env('RESEND_API_KEY')
 

@@ -2344,6 +2344,103 @@ select {
   line-height: 1.5;
 }
 
+.order-progress {
+  list-style: none;
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  padding: 0;
+  margin: 0 auto 16px;
+  max-width: 34ch;
+}
+
+.order-progress li {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.order-progress li span {
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  font-weight: 700;
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.order-progress li.is-done span,
+.order-progress li.is-current span {
+  background: rgba(91, 140, 255, 0.2);
+  border-color: rgba(91, 140, 255, 0.55);
+  color: #dbeafe;
+}
+
+.order-progress li.is-done {
+  color: #86efac;
+}
+
+.order-progress li.is-current {
+  color: #93c5fd;
+}
+
+.order-track-banner {
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  z-index: 60;
+  pointer-events: none;
+}
+
+.order-track-banner__inner {
+  pointer-events: auto;
+  margin: 0 auto;
+  max-width: 720px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(8, 10, 15, 0.92);
+  border: 1px solid rgba(91, 140, 255, 0.35);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+  color: #e2e8f0;
+  font-size: 0.88rem;
+  line-height: 1.35;
+  backdrop-filter: blur(10px);
+}
+
+.order-track-banner__hint {
+  display: block;
+  margin-top: 2px;
+  color: #94a3b8;
+  font-size: 0.78rem;
+}
+
+.order-track-banner__actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+  .order-track-banner__inner {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
 .billing-toggle__btn {
   appearance: none;
   border: 0;
