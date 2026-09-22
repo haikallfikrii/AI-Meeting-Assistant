@@ -936,8 +936,16 @@
       root.remove()
     }
 
+    // Close only via × (or Escape) — not backdrop / outside click.
     root.addEventListener('click', function (ev) {
-      if (ev.target === root || ev.target.closest('[data-gate-close]')) close()
+      if (ev.target.closest('[data-gate-close]')) close()
+    })
+    root.addEventListener('keydown', function (ev) {
+      if (ev.key === 'Escape') close()
+    })
+    // Swallow backdrop clicks so accidental outside taps don't dismiss.
+    root.addEventListener('mousedown', function (ev) {
+      if (ev.target === root) ev.preventDefault()
     })
 
     function showCodeStep(email, devCode) {
