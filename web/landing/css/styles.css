@@ -2282,6 +2282,68 @@ select {
   color: #e2e8f0;
 }
 
+.email-gate__ref {
+  margin: 0 auto 12px;
+  max-width: 36ch;
+  font-size: 0.88rem;
+  color: #cbd5e1;
+  text-align: center;
+  line-height: 1.45;
+}
+
+.email-gate__ref code {
+  display: inline-block;
+  margin: 6px 4px 0 0;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: 0.95rem;
+  letter-spacing: 0.06em;
+  color: #f8fafc;
+}
+
+.email-gate__meta {
+  margin: 0 auto 14px;
+  max-width: 36ch;
+  font-size: 0.82rem;
+  color: #94a3b8;
+  text-align: center;
+}
+
+.email-gate__steps {
+  margin: 0 auto 16px;
+  padding-left: 1.2rem;
+  max-width: 38ch;
+  text-align: left;
+  font-size: 0.84rem;
+  color: #cbd5e1;
+  line-height: 1.5;
+}
+
+.email-gate__steps li + li {
+  margin-top: 6px;
+}
+
+.email-gate__hint {
+  margin: 14px auto 0;
+  max-width: 36ch;
+  font-size: 0.8rem;
+  color: #94a3b8;
+  text-align: center;
+  line-height: 1.45;
+}
+
+.email-gate__ready {
+  margin: 0 auto 12px;
+  max-width: 36ch;
+  font-size: 0.95rem;
+  color: #86efac;
+  text-align: center;
+  line-height: 1.5;
+}
+
 .billing-toggle__btn {
   appearance: none;
   border: 0;

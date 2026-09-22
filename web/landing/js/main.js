@@ -667,9 +667,10 @@
       })
 
       if (note) {
-        note.textContent = apiReady
-          ? 'Before checkout we verify your email with a one-time code, then open Polar with that address locked. Use the same email later in the app to claim your account.'
-          : 'Checkout opens once the API is configured (Polar product IDs + access token).'
+        note.textContent =
+          (CONFIG.paymentProvider || 'wise') === 'wise'
+            ? 'Verify your email, pay with Wise (USD), then Claim in the app with the same email — no license key.'
+            : 'Before checkout we verify your email with a one-time code, then open payment with that address locked.'
       }
     }
 
@@ -711,6 +712,156 @@
     })
 
     paintInterval()
+  }
+
+  function showWiseInstructions(gateRoot, payload, email) {
+    var card = gateRoot.querySelector('.email-gate__card')
+    if (!card) return
+    var ins = payload.instructions || {}
+    var orderId = payload.orderId
+    var apiBase = String(CONFIG.apiBaseUrl || '').replace(/\/$/, '')
+    var pollTimer = null
+    var steps = (ins.steps || []).map(function (s) {
+      return '<li>' + s + '</li>'
+    }).join('')
+    var payLink = ins.payLink
+      ? '<p style="text-align:center;margin:0 0 12px"><a class="btn btn--accent btn--sm" href="' +
+        ins.payLink +
+        '" target="_blank" rel="noopener">Open Wise payment</a></p>'
+      : ''
+
+    function showActivated() {
+      if (pollTimer) {
+        clearInterval(pollTimer)
+        pollTimer = null
+      }
+      card.innerHTML =
+        '<button type="button" class="email-gate__close" data-gate-close aria-label="Close">×</button>' +
+        '<h3 id="email-gate-title">You’re in</h3>' +
+        '<p class="email-gate__ready">Plan activated for <strong>' +
+        email +
+        '</strong>. No license key.</p>' +
+        '<p class="email-gate__lead">Open Kalfi → Settings → Claim / Log in with that email (set a password first time), then Sync plan.</p>' +
+        '<p style="text-align:center;margin-top:14px"><a class="btn btn--accent" href="#download">Download Kalfi</a></p>'
+      var closeReady = card.querySelector('[data-gate-close]')
+      if (closeReady) {
+        closeReady.addEventListener('click', function () {
+          gateRoot.remove()
+        })
+      }
+    }
+
+    function pollStatus() {
+      fetch(
+        apiBase +
+          '/v1/billing/manual/status?orderId=' +
+          encodeURIComponent(orderId) +
+          '&email=' +
+          encodeURIComponent(email)
+      )
+        .then(function (res) {
+          return res.json().then(function (data) {
+            return { ok: res.ok, data: data }
+          })
+        })
+        .then(function (result) {
+          if (result.ok && result.data && result.data.status === 'activated') {
+            showActivated()
+          }
+        })
+        .catch(function () {})
+    }
+
+    card.innerHTML =
+      '<button type="button" class="email-gate__close" data-gate-close aria-label="Close">×</button>' +
+      '<h3 id="email-gate-title">Pay with Wise</h3>' +
+      '<p class="email-gate__lead">Send <strong>$' +
+      ins.amountUsd +
+      ' USD</strong> for <strong>' +
+      String(ins.plan || '').replace(/_/g, ' ') +
+      '</strong>.</p>' +
+      '<p class="email-gate__ref">Payment reference (put in Wise memo):<br><code id="wise-ref">' +
+      (ins.ref || '') +
+      '</code> ' +
+      '<button type="button" class="btn btn--line btn--sm" id="wise-copy-ref">Copy</button></p>' +
+      '<p class="email-gate__meta">Wise recipient: <strong>' +
+      (ins.wiseEmail || 'hello@kalfi.app') +
+      '</strong>' +
+      (ins.accountName ? ' · ' + ins.accountName : '') +
+      '</p>' +
+      payLink +
+      '<ol class="email-gate__steps">' +
+      steps +
+      '</ol>' +
+      '<button type="button" class="btn btn--accent" id="wise-mark-paid">I’ve paid — notify Kalfi</button>' +
+      '<p class="email-gate__msg" id="wise-msg" hidden></p>' +
+      '<p class="email-gate__hint">After we confirm, this screen updates automatically. Then Claim / Log in in the app with <strong>' +
+      email +
+      '</strong> — no license key.</p>'
+
+    var closeBtn = card.querySelector('[data-gate-close]')
+    if (closeBtn) {
+      closeBtn.addEventListener('click', function () {
+        if (pollTimer) clearInterval(pollTimer)
+        gateRoot.remove()
+      })
+    }
+    var copyBtn = card.querySelector('#wise-copy-ref')
+    if (copyBtn) {
+      copyBtn.addEventListener('click', function () {
+        var ref = ins.ref || ''
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(ref)
+        }
+        copyBtn.textContent = 'Copied'
+      })
+    }
+    var markBtn = card.querySelector('#wise-mark-paid')
+    var msg = card.querySelector('#wise-msg')
+    if (markBtn) {
+      markBtn.addEventListener('click', function () {
+        markBtn.disabled = true
+        markBtn.textContent = 'Sending…'
+        fetch(apiBase + '/v1/billing/manual/mark-paid', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ orderId: orderId, email: email })
+        })
+          .then(function (res) {
+            return res.json().then(function (data) {
+              return { ok: res.ok, data: data }
+            })
+          })
+          .then(function (result) {
+            if (result.ok && result.data && result.data.status === 'activated') {
+              showActivated()
+              return
+            }
+            if (msg) {
+              msg.hidden = false
+              msg.textContent =
+                (result.data && result.data.message) ||
+                (result.ok
+                  ? 'Thanks — waiting for activation…'
+                  : (result.data && result.data.error) || 'Could not notify.')
+            }
+            markBtn.textContent = result.ok ? 'Waiting for activation…' : 'Try again'
+            markBtn.disabled = result.ok
+            if (result.ok && !pollTimer) {
+              pollTimer = setInterval(pollStatus, 8000)
+              pollStatus()
+            }
+          })
+          .catch(function () {
+            markBtn.disabled = false
+            markBtn.textContent = 'I’ve paid — notify Kalfi'
+            if (msg) {
+              msg.hidden = false
+              msg.textContent = 'Network error — email hello@kalfi.app with your reference.'
+            }
+          })
+      })
+    }
   }
 
   function openCheckoutEmailGate(opts) {
@@ -944,7 +1095,10 @@
             setMsg((result.data && result.data.error) || 'Invalid or expired code.', true)
             return null
           }
-          return fetch(apiBase + '/v1/billing/checkout', {
+          var provider = CONFIG.paymentProvider || 'wise'
+          var path =
+            provider === 'polar' ? '/v1/billing/checkout' : '/v1/billing/manual/checkout'
+          return fetch(apiBase + path, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -959,16 +1113,22 @@
                 '&email=' +
                 encodeURIComponent(email)
             })
-          })
-        })
-        .then(function (res) {
-          if (!res) return null
-          return res.json().then(function (data) {
-            return { ok: res.ok, data: data }
+          }).then(function (res) {
+            return res.json().then(function (data) {
+              return { ok: res.ok, data: data, provider: provider }
+            })
           })
         })
         .then(function (result) {
           if (!result) return
+          if (result.provider !== 'polar') {
+            if (!result.ok || !result.data || !result.data.instructions) {
+              setMsg((result.data && result.data.error) || 'Could not create Wise order.', true)
+              return
+            }
+            showWiseInstructions(root, result.data, email)
+            return
+          }
           var url =
             result.ok && result.data && result.data.url
               ? result.data.url

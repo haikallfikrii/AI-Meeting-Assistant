@@ -7,6 +7,14 @@ import { checkoutUrlForPlan, lemonStoreId, lemonVariantMap } from '../lib/lemon-
 import { verifyEmailProof } from '../lib/otp.js'
 import { recordEvent } from '../lib/events.js'
 import { markLeadSubscribed, upsertLead } from '../lib/leads.js'
+import { sendAppEmail } from '../lib/mail.js'
+import {
+  createManualOrder,
+  findManualOrder,
+  paymentInstructionsFor,
+  updateManualOrder,
+  wisePayConfig
+} from '../lib/manual-orders.js'
 import { createPolarCheckout, getPolar, polarConfigured } from '../lib/polarService.js'
 import { polarProductIdForPlan } from '../lib/polar-products.js'
 import { requireAuth, type AppVars } from '../middleware/auth.js'
@@ -213,6 +221,127 @@ billingRoutes.post('/checkout-return', async (c) => {
     meta: { source: 'checkout_return', plan: body.data.plan, note: 'awaiting_webhook' }
   })
   return c.json({ ok: true, lead })
+})
+
+/**
+ * Wise / manual checkout — no license key.
+ * After payment + admin activate (or mark-paid queue), user Claims with email in the app.
+ */
+billingRoutes.post('/manual/checkout', async (c) => {
+  const wise = wisePayConfig()
+  if (!wise.enabled) {
+    return c.json({ error: 'Manual Wise checkout is not enabled.' }, 503)
+  }
+
+  const body = checkoutSchema.safeParse(await c.req.json())
+  if (!body.success) {
+    return c.json({ error: 'Verify your email first, then continue to checkout.' }, 400)
+  }
+
+  let verifiedEmail: string
+  try {
+    ;({ email: verifiedEmail } = await verifyEmailProof(body.data.emailProof, 'checkout'))
+  } catch {
+    return c.json({ error: 'Email verification expired. Request a new code.' }, 400)
+  }
+  if (verifiedEmail !== body.data.email.trim().toLowerCase()) {
+    return c.json({ error: 'Email does not match the verified address.' }, 400)
+  }
+
+  const plan = body.data.plan
+  const order = createManualOrder({ email: verifiedEmail, plan })
+  const instructions = paymentInstructionsFor(order)
+
+  upsertLead(verifiedEmail, {
+    status: 'checkout_opened',
+    plan,
+    sku: plan,
+    source: 'wise'
+  })
+  recordEvent('manual_order_created', {
+    email: verifiedEmail,
+    meta: { orderId: order.id, ref: order.ref, plan, amountUsd: order.amountUsd }
+  })
+
+  const appUrl = env('APP_URL', 'https://kalfi.app')
+  void sendAppEmail({
+    to: wise.notifyEmail,
+    subject: `[Kalfi] New Wise order ${order.ref} — $${order.amountUsd} ${plan}`,
+    text:
+      `New manual/Wise order\n\n` +
+      `Ref: ${order.ref}\nEmail: ${verifiedEmail}\nPlan: ${plan}\nAmount: $${order.amountUsd} USD\n` +
+      `Activate in admin → Payments, or POST /v1/admin/manual-orders/${order.id}/activate\n` +
+      `Admin: ${appUrl}/admin/\n`
+  })
+
+  return c.json({
+    ok: true,
+    via: 'wise',
+    orderId: order.id,
+    instructions
+  })
+})
+
+billingRoutes.post('/manual/mark-paid', async (c) => {
+  const body = z
+    .object({
+      orderId: z.string().min(4),
+      email: z.string().email(),
+      note: z.string().max(500).optional()
+    })
+    .safeParse(await c.req.json())
+  if (!body.success) return c.json({ error: 'Invalid payload' }, 400)
+
+  const order = findManualOrder(body.data.orderId)
+  if (!order) return c.json({ error: 'Order not found' }, 404)
+  if (order.email !== body.data.email.trim().toLowerCase()) {
+    return c.json({ error: 'Email does not match this order' }, 403)
+  }
+  if (order.status === 'activated') {
+    return c.json({ ok: true, status: 'activated', message: 'Already active — open the app and log in.' })
+  }
+
+  const updated = updateManualOrder(order.id, {
+    status: 'reported_paid',
+    reportedAt: Date.now(),
+    note: body.data.note || order.note
+  })
+  recordEvent('manual_order_reported', {
+    email: order.email,
+    meta: { orderId: order.id, ref: order.ref }
+  })
+
+  const wise = wisePayConfig()
+  void sendAppEmail({
+    to: wise.notifyEmail,
+    subject: `[Kalfi] User reported paid ${order.ref} — activate now`,
+    text:
+      `User marked Wise transfer as sent.\n\n` +
+      `Ref: ${order.ref}\nEmail: ${order.email}\nPlan: ${order.plan}\nAmount: $${order.amountUsd}\n` +
+      `Check Wise, then Activate in admin → Payments.\n`
+  })
+
+  return c.json({
+    ok: true,
+    status: updated?.status || 'reported_paid',
+    message:
+      'Thanks — we got your notice. Once the transfer clears we activate your plan. Then open Kalfi → Claim/Log in with this email (no license key).'
+  })
+})
+
+billingRoutes.get('/manual/status', async (c) => {
+  const orderId = c.req.query('orderId') || ''
+  const email = (c.req.query('email') || '').trim().toLowerCase()
+  if (!orderId || !email) return c.json({ error: 'orderId and email required' }, 400)
+  const order = findManualOrder(orderId)
+  if (!order || order.email !== email) return c.json({ error: 'Order not found' }, 404)
+  return c.json({
+    ok: true,
+    status: order.status,
+    plan: order.plan,
+    ref: order.ref,
+    amountUsd: order.amountUsd
+  })
 })
 
 billingRoutes.get('/status', requireAuth, async (c) => {
