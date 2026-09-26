@@ -1,0 +1,48 @@
+.partner-main {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 20px 48px;
+  display: grid;
+  gap: 16px;
+}
+
+.link-card .link-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.link-card code {
+  flex: 1;
+  min-width: 200px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  font-size: 13px;
+  word-break: break-all;
+}
+
+.code-chip {
+  margin: 12px 0 0;
+  font-size: 14px;
+}
+
+.code-chip strong {
+  color: var(--accent);
+  letter-spacing: 0.06em;
+}
+
+#login-form .banner {
+  margin: 0;
+}
+
+#login-form a {
+  color: var(--accent);
+}
+
+#resend-btn {
+  width: 100%;
+}
