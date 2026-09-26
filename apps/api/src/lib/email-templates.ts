@@ -176,15 +176,25 @@ export function wisePaymentInstructionsEmail(input: {
   accountName?: string
   payLink?: string | null
   qrImageUrl?: string | null
+  qrImageUrls?: string[] | null
 }) {
   const method = input.payMethodLabel || 'Wise'
   const amount = input.amountLabel || `$${input.amountUsd} USD`
   const pay = input.payLink
     ? `<p style="margin:16px 0 0"><a href="${input.payLink}" style="color:${ACCENT};font-weight:600;text-decoration:none">Open payment link →</a></p>`
     : ''
-  const qr = input.qrImageUrl
-    ? `<p style="margin:16px 0 0;text-align:center"><img src="${escapeHtml(input.qrImageUrl)}" alt="QRIS" width="220" style="max-width:220px;border-radius:12px;border:1px solid ${LINE}" /></p>`
-    : ''
+  const qrList =
+    input.qrImageUrls && input.qrImageUrls.length
+      ? input.qrImageUrls
+      : input.qrImageUrl
+        ? [input.qrImageUrl]
+        : []
+  const qr = qrList
+    .map(
+      (url) =>
+        `<p style="margin:16px 0 0;text-align:center"><img src="${escapeHtml(url)}" alt="Payment QR" width="220" style="max-width:220px;border-radius:12px;border:1px solid ${LINE}" /></p>`
+    )
+    .join('')
   const stepsHtml = (input.steps && input.steps.length
     ? input.steps
     : [

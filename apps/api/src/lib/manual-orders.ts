@@ -154,9 +154,17 @@ export function merchantPayConfig() {
       accountName: env('PAY_QRIS_NAME', 'Kalfi').trim() || 'Kalfi'
     },
     duitnow: {
-      enabled: flagOn('PAY_DUITNOW_ENABLED') && Boolean(env('PAY_DUITNOW_ID').trim()),
-      id: env('PAY_DUITNOW_ID').trim(),
-      accountName: env('PAY_DUITNOW_NAME', 'Kalfi').trim() || 'Kalfi'
+      enabled:
+        flagOn('PAY_DUITNOW_ENABLED') &&
+        Boolean(
+          env('PAY_DUITNOW_ID').trim() ||
+            env('PAY_DUITNOW_IMAGE_URL').trim() ||
+            env('PAY_DUITNOW_IMAGE_URL_2').trim()
+        ),
+      id: env('PAY_DUITNOW_ID').trim() || 'Malaysia National QR (DuitNow)',
+      accountName: env('PAY_DUITNOW_NAME', 'Kalfi').trim() || 'Kalfi',
+      imageUrl: env('PAY_DUITNOW_IMAGE_URL').trim() || null,
+      imageUrl2: env('PAY_DUITNOW_IMAGE_URL_2').trim() || null
     }
   }
 }
@@ -306,6 +314,7 @@ export function paymentInstructionsFor(order: ManualOrder) {
   let destinationLines: string[] = []
   let payLink: string | null = null
   let qrImageUrl: string | null = null
+  let qrImageUrls: string[] = []
 
   if (method === 'wise') {
     destination = m.wise.email
@@ -313,8 +322,8 @@ export function paymentInstructionsFor(order: ManualOrder) {
     destinationLines = [
       `Send exactly $${order.amountUsd} USD via Wise.`,
       m.wise.payLink
-        ? `Open the Wise payment link (or send to ${m.wise.email}).`
-        : `Send to Wise: ${m.wise.email} (${m.wise.accountName}).`
+        ? `Open the Wise payment link (or send to ${m.wise.email} / ${m.wise.accountName}).`
+        : `Send to Wise: ${m.wise.email} or tag ${m.wise.accountName}.`
     ]
   } else if (method === 'bank') {
     destination = m.bank.account
@@ -338,16 +347,21 @@ export function paymentInstructionsFor(order: ManualOrder) {
   } else if (method === 'qris') {
     destination = m.qris.note || m.qris.accountName
     qrImageUrl = m.qris.imageUrl
+    if (m.qris.imageUrl) qrImageUrls = [m.qris.imageUrl]
     destinationLines = [
       `Pay exactly ${formatLocalAmount(amountLocal, localCurrency)} via QRIS.`,
       m.qris.note || `Pay to ${m.qris.accountName}`,
-      ...(m.qris.imageUrl ? ['Open the QRIS image from the payment screen or email.'] : [])
+      ...(m.qris.imageUrl ? ['Scan the QRIS image on the payment screen.'] : [])
     ]
   } else {
     destination = m.duitnow.id
+    qrImageUrl = m.duitnow.imageUrl
+    qrImageUrls = [m.duitnow.imageUrl, m.duitnow.imageUrl2].filter(Boolean) as string[]
     destinationLines = [
-      `Pay exactly ${formatLocalAmount(amountLocal, localCurrency)} via QR DuitNow.`,
-      `DuitNow ID: ${m.duitnow.id} (${m.duitnow.accountName})`
+      `Pay exactly ${formatLocalAmount(amountLocal, localCurrency)} via QR DuitNow (Malaysia National QR).`,
+      `Recipient: ${m.duitnow.accountName}`,
+      m.duitnow.id ? `Note: ${m.duitnow.id}` : 'Scan Bank Islam or Touch ’n Go QR below.',
+      ...(qrImageUrls.length ? ['Scan either QR with any Malaysian banking / eWallet app.'] : [])
     ]
   }
 
@@ -392,6 +406,7 @@ export function paymentInstructionsFor(order: ManualOrder) {
     bankName: method === 'bank' ? m.bank.bankName : null,
     payLink,
     qrImageUrl,
+    qrImageUrls,
     steps
   }
 }

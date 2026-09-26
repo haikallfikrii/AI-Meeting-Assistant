@@ -2533,8 +2533,30 @@ select {
   background: #fff;
 }
 
+.pay-qr-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 0 0 14px;
+}
+
+.pay-qr-fig {
+  margin: 0;
+  text-align: center;
+}
+
+.pay-qr-fig figcaption {
+  margin-top: 6px;
+  font-size: 0.72rem;
+  color: #94a3b8;
+}
+
 @media (max-width: 420px) {
   .pay-method-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pay-qr-grid {
     grid-template-columns: 1fr;
   }
 }

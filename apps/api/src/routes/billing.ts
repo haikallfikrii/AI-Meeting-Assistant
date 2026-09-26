@@ -359,7 +359,8 @@ billingRoutes.post('/manual/checkout', async (c) => {
     payMethodLabel: instructions.payMethodLabel,
     steps: instructions.steps,
     payLink: instructions.payLink || null,
-    qrImageUrl: instructions.qrImageUrl || null
+    qrImageUrl: instructions.qrImageUrl || null,
+    qrImageUrls: instructions.qrImageUrls || []
   })
   void sendAppEmail({
     to: verifiedEmail,

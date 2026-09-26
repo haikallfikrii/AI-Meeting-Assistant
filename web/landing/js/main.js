@@ -1269,10 +1269,34 @@
         ins.payLink +
         '" target="_blank" rel="noopener">Open payment link</a></p>'
       : ''
-    var qrImg = ins.qrImageUrl
-      ? '<p style="text-align:center;margin:0 0 12px"><img class="pay-qr" src="' +
-        ins.qrImageUrl +
-        '" alt="QR code" width="200" height="200" /></p>'
+    var qrUrls =
+      ins.qrImageUrls && ins.qrImageUrls.length
+        ? ins.qrImageUrls
+        : ins.qrImageUrl
+          ? [ins.qrImageUrl]
+          : []
+    var qrImg = qrUrls.length
+      ? '<div class="pay-qr-grid">' +
+        qrUrls
+          .map(function (u, i) {
+            var label =
+              ins.payMethod === 'duitnow'
+                ? i === 0
+                  ? 'Bank Islam'
+                  : 'Touch ’n Go'
+                : 'QR'
+            return (
+              '<figure class="pay-qr-fig"><img class="pay-qr" src="' +
+              u +
+              '" alt="' +
+              label +
+              '" /><figcaption>' +
+              label +
+              '</figcaption></figure>'
+            )
+          })
+          .join('') +
+        '</div>'
       : ''
     var steps = (ins.steps || []).map(function (s) {
       return '<li>' + s + '</li>'
