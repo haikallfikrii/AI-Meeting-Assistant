@@ -91,10 +91,12 @@
   }
 
   function switchTab(name) {
-    ;['overview', 'users', 'leads', 'payments', 'create', 'analytics'].forEach(function (tab) {
-      var panel = document.getElementById('tab-' + tab)
-      if (panel) panel.hidden = tab !== name
-    })
+    ;['overview', 'users', 'leads', 'payments', 'affiliates', 'create', 'analytics'].forEach(
+      function (tab) {
+        var panel = document.getElementById('tab-' + tab)
+        if (panel) panel.hidden = tab !== name
+      }
+    )
     Array.prototype.forEach.call(document.querySelectorAll('.nav__btn'), function (btn) {
       btn.classList.toggle('is-active', btn.getAttribute('data-tab') === name)
     })
@@ -103,6 +105,7 @@
       users: 'Users',
       leads: 'Checkout leads',
       payments: 'Wise payments',
+      affiliates: 'Affiliates & vouchers',
       create: 'Add user',
       analytics: 'Sales & activity'
     }
@@ -111,6 +114,7 @@
     if (name === 'users') loadUsers()
     if (name === 'leads') loadLeads()
     if (name === 'payments') loadPayments()
+    if (name === 'affiliates') loadAffiliates()
     if (name === 'analytics') loadAnalytics()
   }
 
@@ -224,6 +228,12 @@
           escapeHtml(o.plan) +
           '</td><td>$' +
           o.amountUsd +
+          (o.voucherCode
+            ? ' <span class="muted" style="font-size:11px">(' +
+              escapeHtml(o.voucherCode) +
+              (o.discountUsd ? ' −$' + o.discountUsd : '') +
+              ')</span>'
+            : '') +
           '</td><td><span class="' +
           pill +
           '">' +
@@ -293,6 +303,97 @@
           ? 'No reported_paid orders. Try filter “All” — or check Overview queue.'
           : 'No orders for this filter.'
       )
+    })
+  }
+
+  function loadAffiliates() {
+    var statsEl = document.getElementById('aff-stats')
+    var body = document.getElementById('aff-body')
+    var convBody = document.getElementById('aff-conv-body')
+    var listMeta = document.getElementById('aff-list-meta')
+    var convMeta = document.getElementById('aff-conv-meta')
+    api('/v1/admin/affiliates').then(function (res) {
+      if (!res.ok) {
+        if (listMeta) listMeta.textContent = (res.data && res.data.error) || 'Failed'
+        return
+      }
+      var stats = res.data.stats || {}
+      if (statsEl) {
+        statsEl.innerHTML =
+          '<div class="card"><strong>' +
+          (stats.activeAffiliates || 0) +
+          '</strong><span>Active partners</span></div>' +
+          '<div class="card"><strong>' +
+          (stats.conversions || 0) +
+          '</strong><span>Conversions</span></div>' +
+          '<div class="card"><strong>$' +
+          (stats.commissionOwedUsd || 0) +
+          '</strong><span>Commission owed</span></div>' +
+          '<div class="card"><strong>$' +
+          (stats.commissionPaidUsd || 0) +
+          '</strong><span>Commission paid</span></div>'
+      }
+      var affiliates = res.data.affiliates || []
+      if (listMeta) listMeta.textContent = affiliates.length + ' partners · vouchers auto-sync with code'
+      if (body) {
+        body.innerHTML = affiliates
+          .map(function (a) {
+            return (
+              '<tr><td><code>' +
+              escapeHtml(a.code) +
+              '</code></td><td>' +
+              escapeHtml(a.name) +
+              '<br><span class="muted" style="font-size:11px">' +
+              escapeHtml(a.email) +
+              ' · ' +
+              escapeHtml(a.country || '') +
+              '</span></td><td>' +
+              a.discountPercent +
+              '%</td><td>' +
+              a.commissionPercent +
+              '%</td><td>' +
+              escapeHtml(a.status) +
+              '</td><td><button type="button" class="btn btn--sm" data-aff-edit="' +
+              escapeAttr(a.code) +
+              '">Edit</button> ' +
+              '<button type="button" class="btn btn--sm" data-aff-copy="' +
+              escapeAttr('https://kalfi.app/?ref=' + a.code + '#pricing') +
+              '">Copy link</button></td></tr>'
+            )
+          })
+          .join('')
+      }
+      var conversions = res.data.conversions || []
+      if (convMeta) convMeta.textContent = conversions.length + ' recent'
+      if (convBody) {
+        convBody.innerHTML = conversions.length
+          ? conversions
+              .map(function (c) {
+                return (
+                  '<tr><td>' +
+                  fmtDate(c.createdAt) +
+                  '</td><td><code>' +
+                  escapeHtml(c.voucherCode) +
+                  '</code></td><td>' +
+                  escapeHtml(c.customerEmail) +
+                  '</td><td>$' +
+                  c.paidUsd +
+                  '</td><td>$' +
+                  c.commissionUsd +
+                  '</td><td>' +
+                  escapeHtml(c.commissionStatus) +
+                  '</td><td>' +
+                  (c.commissionStatus === 'owed'
+                    ? '<button type="button" class="btn btn--primary btn--sm" data-aff-paid="' +
+                      escapeHtml(c.id) +
+                      '">Mark paid</button>'
+                    : '—') +
+                  '</td></tr>'
+                )
+              })
+              .join('')
+          : '<tr><td colspan="7" class="muted" style="padding:18px;text-align:center">No conversions yet.</td></tr>'
+      }
     })
   }
 
@@ -604,6 +705,93 @@
   document.getElementById('btn-search-leads').addEventListener('click', loadLeads)
   document.getElementById('btn-search-payments').addEventListener('click', loadPayments)
   document.getElementById('pay-status').addEventListener('change', loadPayments)
+
+  var affForm = document.getElementById('aff-form')
+  if (affForm) {
+    affForm.addEventListener('submit', function (ev) {
+      ev.preventDefault()
+      var msg = document.getElementById('aff-form-msg')
+      api('/v1/admin/affiliates', {
+        method: 'POST',
+        body: {
+          name: document.getElementById('aff-name').value.trim(),
+          email: document.getElementById('aff-email').value.trim(),
+          country: document.getElementById('aff-country').value.trim() || 'GLOBAL',
+          code: document.getElementById('aff-code').value.trim().toUpperCase(),
+          discountPercent: Number(document.getElementById('aff-discount').value || 15),
+          commissionPercent: Number(document.getElementById('aff-commission').value || 20),
+          status: document.getElementById('aff-status').value,
+          payoutNote: document.getElementById('aff-note').value.trim() || undefined
+        }
+      }).then(function (res) {
+        if (msg) {
+          msg.hidden = false
+          msg.className = 'banner ' + (res.ok ? 'banner--ok' : 'banner--error')
+          msg.textContent = res.ok
+            ? 'Saved ' + res.data.affiliate.code + ' — link: https://kalfi.app/?ref=' + res.data.affiliate.code + '#pricing'
+            : (res.data && res.data.error) || 'Save failed'
+        }
+        if (res.ok) loadAffiliates()
+      })
+    })
+  }
+
+  var affBody = document.getElementById('aff-body')
+  if (affBody) {
+    affBody.addEventListener('click', function (ev) {
+      var copyBtn = ev.target.closest('[data-aff-copy]')
+      if (copyBtn) {
+        var link = copyBtn.getAttribute('data-aff-copy')
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(link)
+        }
+        copyBtn.textContent = 'Copied'
+        setTimeout(function () {
+          copyBtn.textContent = 'Copy link'
+        }, 1200)
+        return
+      }
+      var editBtn = ev.target.closest('[data-aff-edit]')
+      if (!editBtn) return
+      var code = editBtn.getAttribute('data-aff-edit')
+      api('/v1/admin/affiliates').then(function (res) {
+        if (!res.ok) return
+        var aff = (res.data.affiliates || []).find(function (a) {
+          return a.code === code
+        })
+        if (!aff) return
+        document.getElementById('aff-name').value = aff.name
+        document.getElementById('aff-email').value = aff.email
+        document.getElementById('aff-country').value = aff.country || ''
+        document.getElementById('aff-code').value = aff.code
+        document.getElementById('aff-discount').value = aff.discountPercent
+        document.getElementById('aff-commission').value = aff.commissionPercent
+        document.getElementById('aff-status').value = aff.status
+        document.getElementById('aff-note').value = aff.payoutNote || ''
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      })
+    })
+  }
+
+  var affConvBody = document.getElementById('aff-conv-body')
+  if (affConvBody) {
+    affConvBody.addEventListener('click', function (ev) {
+      var btn = ev.target.closest('[data-aff-paid]')
+      if (!btn) return
+      btn.disabled = true
+      api('/v1/admin/affiliates/conversions/' + encodeURIComponent(btn.getAttribute('data-aff-paid')) + '/paid', {
+        method: 'POST',
+        body: {}
+      }).then(function (res) {
+        if (!res.ok) {
+          btn.disabled = false
+          alert((res.data && res.data.error) || 'Failed')
+          return
+        }
+        loadAffiliates()
+      })
+    })
+  }
 
   function onActivateClick(ev) {
     var btn = ev.target.closest('[data-activate]')

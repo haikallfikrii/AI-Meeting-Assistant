@@ -16,8 +16,15 @@ export interface ManualOrder {
   ref: string
   email: string
   plan: Exclude<BillingPlan, 'free'>
+  /** List price before voucher. */
+  listUsd: number
   amountUsd: number
+  discountUsd?: number
+  voucherCode?: string
+  affiliateId?: string
   currency: 'USD'
+  /** Display currency hint for the buyer (settlement stays USD). */
+  displayCurrency?: string
   status: ManualOrderStatus
   createdAt: number
   updatedAt: number
@@ -84,16 +91,32 @@ export function wisePayConfig() {
 export function createManualOrder(input: {
   email: string
   plan: Exclude<BillingPlan, 'free'>
+  amountUsd?: number
+  listUsd?: number
+  discountUsd?: number
+  voucherCode?: string
+  affiliateId?: string
+  displayCurrency?: string
 }): ManualOrder {
   const db = read()
   const now = Date.now()
+  const listUsd = input.listUsd ?? MANUAL_PLAN_PRICES_USD[input.plan]
+  const amountUsd =
+    input.amountUsd != null && Number.isFinite(input.amountUsd)
+      ? Math.max(1, Math.round(input.amountUsd * 100) / 100)
+      : listUsd
   const order: ManualOrder = {
     id: `mord_${now.toString(36)}_${randomBytes(3).toString('hex')}`,
     ref: makeRef(),
     email: input.email.trim().toLowerCase(),
     plan: input.plan,
-    amountUsd: MANUAL_PLAN_PRICES_USD[input.plan],
+    listUsd,
+    amountUsd,
+    discountUsd: input.discountUsd || 0,
+    voucherCode: input.voucherCode,
+    affiliateId: input.affiliateId,
     currency: 'USD',
+    displayCurrency: input.displayCurrency || 'USD',
     status: 'awaiting_payment',
     createdAt: now,
     updatedAt: now
@@ -137,10 +160,18 @@ export function listManualOrders(opts?: {
 
 export function paymentInstructionsFor(order: ManualOrder) {
   const wise = wisePayConfig()
+  const discountLine =
+    order.discountUsd && order.discountUsd > 0 && order.voucherCode
+      ? `Voucher ${order.voucherCode}: −$${order.discountUsd} (was $${order.listUsd || order.amountUsd + order.discountUsd}).`
+      : null
   return {
     ref: order.ref,
     amountUsd: order.amountUsd,
+    listUsd: order.listUsd || order.amountUsd,
+    discountUsd: order.discountUsd || 0,
+    voucherCode: order.voucherCode || null,
     currency: order.currency,
+    displayCurrency: order.displayCurrency || 'USD',
     plan: order.plan,
     email: order.email,
     wiseEmail: wise.email,
@@ -148,6 +179,7 @@ export function paymentInstructionsFor(order: ManualOrder) {
     payLink: wise.payLink || null,
     steps: [
       `Send exactly $${order.amountUsd} USD via Wise.`,
+      ...(discountLine ? [discountLine] : []),
       wise.payLink
         ? `Open the Wise payment link (or send to ${wise.email}).`
         : `Send to Wise email / tag: ${wise.email} (${wise.accountName}).`,
