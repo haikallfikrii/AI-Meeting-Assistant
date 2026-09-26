@@ -6,7 +6,7 @@ import { SignJWT, jwtVerify } from 'jose'
 import nodemailer from 'nodemailer'
 import { env } from './config.js'
 
-export type OtpPurpose = 'checkout' | 'reset' | 'register'
+export type OtpPurpose = 'checkout' | 'reset' | 'register' | 'partner'
 
 interface OtpRecord {
   email: string
@@ -142,7 +142,8 @@ export function verifyOtp(
 
 export async function signEmailProof(email: string, purpose: OtpPurpose): Promise<string> {
   // Checkout proof stays valid so users don't re-OTP for a while (landing also caches it).
-  const ttl = purpose === 'checkout' ? '48h' : '30m'
+  // Partner sessions last a week so influencers aren't nagged daily.
+  const ttl = purpose === 'checkout' ? '48h' : purpose === 'partner' ? '7d' : '30m'
   return new SignJWT({
     kind: 'email_proof',
     email: email.trim().toLowerCase(),

@@ -198,6 +198,78 @@ export function findAffiliateByCode(code: string): Affiliate | null {
   return read().affiliates.find((a) => a.code === c) || null
 }
 
+export function findAffiliateByEmail(email: string): Affiliate | null {
+  const e = email.trim().toLowerCase()
+  return read().affiliates.find((a) => a.email === e) || null
+}
+
+export function listConversionsForAffiliate(
+  affiliateId: string,
+  limit = 100
+): AffiliateConversion[] {
+  return read()
+    .conversions.filter((c) => c.affiliateId === affiliateId)
+    .slice(0, Math.min(200, limit))
+}
+
+/** Mask PII for partner-facing views: di***@gmail.com */
+export function maskEmail(email: string): string {
+  const raw = email.trim().toLowerCase()
+  const at = raw.indexOf('@')
+  if (at < 1) return '***'
+  const local = raw.slice(0, at)
+  const domain = raw.slice(at + 1)
+  const keep = Math.min(2, local.length)
+  return `${local.slice(0, keep)}***@${domain}`
+}
+
+export function partnerDashboard(affiliateId: string) {
+  const db = read()
+  const aff = db.affiliates.find((a) => a.id === affiliateId)
+  if (!aff) return null
+  const conversions = db.conversions.filter((c) => c.affiliateId === affiliateId)
+  const sales = conversions.length
+  const paidUsd = conversions.reduce((s, c) => s + c.paidUsd, 0)
+  const commissionOwed = conversions
+    .filter((c) => c.commissionStatus === 'owed')
+    .reduce((s, c) => s + c.commissionUsd, 0)
+  const commissionPaid = conversions
+    .filter((c) => c.commissionStatus === 'paid')
+    .reduce((s, c) => s + c.commissionUsd, 0)
+  return {
+    affiliate: {
+      id: aff.id,
+      name: aff.name,
+      email: aff.email,
+      country: aff.country,
+      code: aff.code,
+      discountPercent: aff.discountPercent,
+      commissionPercent: aff.commissionPercent,
+      status: aff.status,
+      link: `https://kalfi.app/?ref=${encodeURIComponent(aff.code)}#pricing`
+    },
+    stats: {
+      sales,
+      paidUsd: Math.round(paidUsd * 100) / 100,
+      commissionOwedUsd: Math.round(commissionOwed * 100) / 100,
+      commissionPaidUsd: Math.round(commissionPaid * 100) / 100,
+      commissionTotalUsd: Math.round((commissionOwed + commissionPaid) * 100) / 100
+    },
+    conversions: conversions.slice(0, 100).map((c) => ({
+      id: c.id,
+      voucherCode: c.voucherCode,
+      customer: maskEmail(c.customerEmail),
+      plan: c.plan,
+      paidUsd: c.paidUsd,
+      discountUsd: c.discountUsd,
+      commissionUsd: c.commissionUsd,
+      commissionStatus: c.commissionStatus,
+      createdAt: c.createdAt,
+      paidAt: c.paidAt || null
+    }))
+  }
+}
+
 export function findVoucher(code: string): Voucher | null {
   const c = normalizeCode(code)
   return read().vouchers.find((v) => v.code === c) || null

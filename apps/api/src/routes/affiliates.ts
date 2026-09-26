@@ -1,8 +1,22 @@
 import { Hono } from 'hono'
 import { z } from 'zod'
-import { applyVoucherToPrice, normalizeCode } from '../lib/affiliates.js'
+import {
+  applyVoucherToPrice,
+  findAffiliateByEmail,
+  normalizeCode,
+  partnerDashboard
+} from '../lib/affiliates.js'
 import { currencyPayload, refreshRates, type DisplayCurrency } from '../lib/currency.js'
 import { MANUAL_PLAN_PRICES_USD } from '../lib/manual-orders.js'
+import {
+  canSendOtp,
+  generateOtpCode,
+  sendOtpEmail,
+  signEmailProof,
+  storeOtp,
+  verifyEmailProof,
+  verifyOtp
+} from '../lib/otp.js'
 
 export const affiliatePublicRoutes = new Hono()
 
@@ -87,4 +101,98 @@ affiliatePublicRoutes.post('/validate', async (c) => {
     percentOff: result.percentOff,
     link: `https://kalfi.app/?ref=${encodeURIComponent(normalizeCode(result.code))}#pricing`
   })
+})
+
+/** Partner portal — OTP login with affiliate email */
+affiliatePublicRoutes.post('/partner/otp/request', async (c) => {
+  const body = z
+    .object({ email: z.string().email() })
+    .safeParse(await c.req.json())
+  if (!body.success) return c.json({ error: 'Enter a valid email.' }, 400)
+
+  const email = body.data.email.trim().toLowerCase()
+  const aff = findAffiliateByEmail(email)
+  // Same response whether or not affiliate exists — avoid email enumeration
+  if (!aff || aff.status === 'archived') {
+    return c.json({
+      ok: true,
+      message: 'If this email is a Kalfi partner, a code was sent.'
+    })
+  }
+
+  const allowed = canSendOtp(email)
+  if (!allowed.ok) return c.json({ error: allowed.error }, 429)
+
+  const code = generateOtpCode()
+  storeOtp(email, 'partner', code)
+  const sent = await sendOtpEmail(email, 'partner', code)
+  if (!sent.ok) return c.json({ error: sent.error || 'Could not send email.' }, 502)
+
+  return c.json({
+    ok: true,
+    message: 'Code sent. Check your inbox.',
+    ...(process.env.NODE_ENV !== 'production' && sent.devCode ? { devCode: sent.devCode } : {})
+  })
+})
+
+affiliatePublicRoutes.post('/partner/otp/verify', async (c) => {
+  const body = z
+    .object({
+      email: z.string().email(),
+      code: z.string().min(4).max(8)
+    })
+    .safeParse(await c.req.json())
+  if (!body.success) return c.json({ error: 'Invalid payload' }, 400)
+
+  const email = body.data.email.trim().toLowerCase()
+  const aff = findAffiliateByEmail(email)
+  if (!aff || aff.status === 'archived') {
+    return c.json({ error: 'No partner account for this email.' }, 404)
+  }
+
+  const checked = verifyOtp(email, 'partner', body.data.code)
+  if (!checked.ok) return c.json({ error: checked.error }, 400)
+
+  const token = await signEmailProof(email, 'partner')
+  const dash = partnerDashboard(aff.id)
+  return c.json({
+    ok: true,
+    token,
+    expiresInDays: 7,
+    ...dash
+  })
+})
+
+affiliatePublicRoutes.get('/partner/me', async (c) => {
+  const auth = c.req.header('Authorization') || ''
+  const token = auth.startsWith('Bearer ') ? auth.slice(7).trim() : ''
+  if (!token) return c.json({ error: 'Sign in required' }, 401)
+
+  let email: string
+  try {
+    ;({ email } = await verifyEmailProof(token, 'partner'))
+  } catch {
+    return c.json({ error: 'Session expired. Sign in again.' }, 401)
+  }
+
+  const aff = findAffiliateByEmail(email)
+  if (!aff || aff.status === 'archived') {
+    return c.json({ error: 'Partner account not found.' }, 404)
+  }
+  if (aff.status === 'paused') {
+    return c.json({
+      ok: true,
+      paused: true,
+      message: 'Your partner code is paused. Contact hello@kalfi.app.',
+      affiliate: {
+        name: aff.name,
+        code: aff.code,
+        email: aff.email,
+        status: aff.status
+      }
+    })
+  }
+
+  const dash = partnerDashboard(aff.id)
+  return c.json({ ok: true, paused: false, ...dash })
 })
