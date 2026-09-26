@@ -91,7 +91,7 @@
   }
 
   function switchTab(name) {
-    ;['overview', 'users', 'leads', 'payments', 'affiliates', 'create', 'analytics'].forEach(
+    ;['overview', 'usage', 'users', 'leads', 'payments', 'affiliates', 'create', 'analytics'].forEach(
       function (tab) {
         var panel = document.getElementById('tab-' + tab)
         if (panel) panel.hidden = tab !== name
@@ -102,6 +102,7 @@
     })
     var titles = {
       overview: 'Overview',
+      usage: 'Hosted AI usage',
       users: 'Users',
       leads: 'Checkout leads',
       payments: 'Wise payments',
@@ -111,6 +112,7 @@
     }
     pageTitle.textContent = titles[name] || name
     if (name === 'overview') loadOverview()
+    if (name === 'usage') loadUsage()
     if (name === 'users') loadUsers()
     if (name === 'leads') loadLeads()
     if (name === 'payments') loadPayments()
@@ -149,16 +151,120 @@
       .join('')
   }
 
+  function fmtTokens(n) {
+    n = Number(n) || 0
+    if (n >= 1e6) return (n / 1e6).toFixed(2) + 'M'
+    if (n >= 1e3) return (n / 1e3).toFixed(1) + 'k'
+    return String(n)
+  }
+
+  function usageBarHtml(used, cap, pct) {
+    var p = typeof pct === 'number' ? pct : cap > 0 ? Math.min(100, Math.round((used / cap) * 100)) : 0
+    var tone = p >= 100 ? 'is-bad' : p >= 80 ? 'is-warn' : 'is-ok'
+    return (
+      '<div class="usage-bar" title="' +
+      used +
+      ' / ' +
+      cap +
+      ' tokens">' +
+      '<div class="usage-bar__track"><span class="usage-bar__fill ' +
+      tone +
+      '" style="width:' +
+      p +
+      '%"></span></div>' +
+      '<span class="usage-bar__label">' +
+      fmtTokens(used) +
+      ' / ' +
+      fmtTokens(cap) +
+      ' (' +
+      p +
+      '%)</span></div>'
+    )
+  }
+
+  function loadUsage() {
+    api('/v1/admin/usage').then(function (res) {
+      if (!res.ok) {
+        document.getElementById('usage-meta').textContent =
+          (res.data && res.data.error) || 'Failed to load usage'
+        return
+      }
+      var u = res.data.usage || {}
+      document.getElementById('usage-cards').innerHTML = [
+        ['Month', u.month || '—'],
+        ['Tokens used', fmtTokens(u.totalTokensThisMonth)],
+        ['AI requests', u.totalRequestsThisMonth || 0],
+        ['Hosted eligible', u.hostedEligible || 0],
+        ['Active 24h', u.activeLast24h || 0],
+        ['Active 7d', u.activeLast7d || 0],
+        ['Near cap (≥80%)', u.usersNearCap || 0],
+        ['At / over cap', u.usersAtCap || 0]
+      ]
+        .map(function (row) {
+          return (
+            '<div class="stat"><span>' +
+            row[0] +
+            '</span><strong>' +
+            row[1] +
+            '</strong></div>'
+          )
+        })
+        .join('')
+      document.getElementById('usage-meta').textContent =
+        'Global soft cap: ' +
+        fmtTokens(u.globalCap) +
+        ' tokens / user / month · ' +
+        (u.usersWithUsage || 0) +
+        ' users with usage this month'
+      var rows = u.topUsers || []
+      document.getElementById('usage-body').innerHTML = rows.length
+        ? rows
+            .map(function (row) {
+              return (
+                '<tr>' +
+                '<td>' +
+                escapeHtml(row.email) +
+                (row.suspended ? ' <span class="pill pill--bad">suspended</span>' : '') +
+                '</td>' +
+                '<td>' +
+                escapeHtml(row.plan) +
+                '</td>' +
+                '<td>' +
+                usageBarHtml(row.tokensUsed, row.tokenCap, row.usagePercent) +
+                '</td>' +
+                '<td>' +
+                fmtTokens(row.tokenCap) +
+                '</td>' +
+                '<td>' +
+                (row.aiRequestCount || 0) +
+                '</td>' +
+                '<td>' +
+                (row.lastAiAt ? fmtDate(row.lastAiAt) : '—') +
+                '</td>' +
+                '<td><button type="button" class="btn" data-open="' +
+                escapeHtml(row.id) +
+                '">Manage</button></td>' +
+                '</tr>'
+              )
+            })
+            .join('')
+        : '<tr><td colspan="7" class="muted" style="padding:18px;text-align:center">No hosted usage yet this month.</td></tr>'
+    })
+  }
+
   function loadOverview() {
     api('/v1/admin/overview').then(function (res) {
       if (!res.ok) return
       var o = res.data.overview || {}
+      var usage = o.usage || {}
       var cards = document.getElementById('overview-cards')
       cards.innerHTML = [
         ['Users', o.totalUsers],
         ['Paid active', o.paidActive],
         ['Suspended', o.suspended],
-        ['Lemon linked', o.lemonLinked],
+        ['Tokens (month)', fmtTokens(usage.totalTokensThisMonth)],
+        ['AI active 7d', usage.activeLast7d || 0],
+        ['Near / at cap', (usage.usersNearCap || 0) + ' / ' + (usage.usersAtCap || 0)],
         ['New (7d)', o.newThisWeek],
         ['Need password', o.needsPassword]
       ]
@@ -414,13 +520,17 @@
     var q = document.getElementById('user-q').value.trim()
     var plan = document.getElementById('user-plan').value
     var status = document.getElementById('user-status').value
+    var sortEl = document.getElementById('user-sort')
+    var sort = sortEl ? sortEl.value : 'updated'
     var qs =
       '/v1/admin/users?limit=100&q=' +
       encodeURIComponent(q) +
       '&plan=' +
       encodeURIComponent(plan) +
       '&status=' +
-      encodeURIComponent(status)
+      encodeURIComponent(status) +
+      '&sort=' +
+      encodeURIComponent(sort)
     api(qs).then(function (res) {
       if (!res.ok) {
         document.getElementById('users-meta').textContent =
@@ -447,6 +557,9 @@
             '">' +
             escapeHtml(u.subStatus) +
             '</span></td>' +
+            '<td>' +
+            usageBarHtml(u.tokensUsed || 0, u.tokenCap || 0, u.usagePercent) +
+            '</td>' +
             '<td>' +
             fmtDate(u.updatedAt) +
             '</td>' +
@@ -591,6 +704,29 @@
         '<div class="kv"><span>Updated</span>' +
         fmtDate(u.updatedAt) +
         '</div>' +
+        '<div class="usage-panel">' +
+        '<h3>Hosted AI usage (' +
+        escapeHtml(u.usageMonth || '—') +
+        ')</h3>' +
+        usageBarHtml(u.tokensUsed || 0, u.tokenCap || 0, u.usagePercent) +
+        '<div class="kv"><span>Requests</span><strong>' +
+        (u.aiRequestCount || 0) +
+        '</strong></div>' +
+        '<div class="kv"><span>Last AI call</span>' +
+        (u.lastAiAt ? fmtDate(u.lastAiAt) : '—') +
+        '</div>' +
+        '<div class="kv"><span>Remaining</span><strong>' +
+        fmtTokens(u.tokensRemaining || 0) +
+        '</strong></div>' +
+        '<label>Custom monthly cap (tokens)<input id="edit-cap" type="number" min="0" step="1000" placeholder="Blank = global default" value="' +
+        (u.tokenCapOverride != null ? escapeAttr(String(u.tokenCapOverride)) : '') +
+        '" /></label>' +
+        '<p class="muted" style="margin:0;font-size:12px">Leave blank to use global soft cap. Set <code>0</code> to block hosted AI for this user.</p>' +
+        '<div class="drawer__actions" style="margin-top:8px">' +
+        '<button type="button" class="btn btn--primary" id="btn-save-cap">Save cap</button>' +
+        '<button type="button" class="btn" id="btn-reset-usage">Reset usage</button>' +
+        '</div>' +
+        '</div>' +
         '<div class="kv"><span>Lemon customer</span>' +
         escapeHtml(u.lemonCustomerId || '—') +
         '</div>' +
@@ -599,11 +735,6 @@
         '</div>' +
         '<div class="kv"><span>Lemon order</span>' +
         escapeHtml(u.lemonOrderId || '—') +
-        '</div>' +
-        '<div class="kv"><span>Usage</span>' +
-        (u.tokensUsed || 0) +
-        ' tokens · ' +
-        escapeHtml(u.usageMonth || '—') +
         '</div>' +
         '<label>Change plan<select id="edit-plan">' +
         planOptions(u.plan) +
@@ -715,6 +846,10 @@
   document.getElementById('user-q').addEventListener('keydown', function (ev) {
     if (ev.key === 'Enter') loadUsers()
   })
+  var userSort = document.getElementById('user-sort')
+  if (userSort) userSort.addEventListener('change', loadUsers)
+  var btnRefreshUsage = document.getElementById('btn-refresh-usage')
+  if (btnRefreshUsage) btnRefreshUsage.addEventListener('click', loadUsage)
   document.getElementById('btn-search-leads').addEventListener('click', loadLeads)
   document.getElementById('btn-search-payments').addEventListener('click', loadPayments)
   document.getElementById('pay-status').addEventListener('change', loadPayments)
@@ -825,6 +960,13 @@
     var btn = ev.target.closest('[data-open]')
     if (btn) openUser(btn.getAttribute('data-open'))
   })
+  var usageBody = document.getElementById('usage-body')
+  if (usageBody) {
+    usageBody.addEventListener('click', function (ev) {
+      var btn = ev.target.closest('[data-open]')
+      if (btn) openUser(btn.getAttribute('data-open'))
+    })
+  }
 
   document.getElementById('drawer-close').addEventListener('click', function () {
     drawer.hidden = true
@@ -836,6 +978,45 @@
   drawerBody.addEventListener('click', function (ev) {
     if (!state.selected) return
     var id = state.selected.id
+    if (ev.target.id === 'btn-save-cap') {
+      var capRaw = document.getElementById('edit-cap').value.trim()
+      var capBody = {
+        tokenCapOverride: capRaw === '' ? null : Number(capRaw)
+      }
+      if (capRaw !== '' && !Number.isFinite(capBody.tokenCapOverride)) {
+        setDrawerMsg('Invalid cap', false)
+        return
+      }
+      api('/v1/admin/users/' + encodeURIComponent(id), { method: 'PATCH', body: capBody }).then(
+        function (res) {
+          if (!res.ok) {
+            setDrawerMsg((res.data && res.data.error) || 'Cap save failed', false)
+            return
+          }
+          setDrawerMsg('Cap saved.', true)
+          loadUsers()
+          loadUsage()
+          openUser(id)
+        }
+      )
+      return
+    }
+    if (ev.target.id === 'btn-reset-usage') {
+      if (!confirm('Reset this user’s monthly token usage to 0?')) return
+      api('/v1/admin/users/' + encodeURIComponent(id) + '/reset-usage', { method: 'POST' }).then(
+        function (res) {
+          if (!res.ok) {
+            setDrawerMsg((res.data && res.data.error) || 'Reset failed', false)
+            return
+          }
+          setDrawerMsg('Usage reset.', true)
+          loadUsers()
+          loadUsage()
+          openUser(id)
+        }
+      )
+      return
+    }
     if (ev.target.id === 'btn-save-user') {
       var body = {
         plan: document.getElementById('edit-plan').value,
@@ -864,6 +1045,7 @@
             return
           }
           loadUsers()
+          loadUsage()
           openUser(id)
         }
       )
@@ -889,6 +1071,7 @@
         }
         drawer.hidden = true
         loadUsers()
+        loadUsage()
       })
     }
   })
