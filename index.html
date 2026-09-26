@@ -9,6 +9,12 @@
       content="Kalfi is a macOS overlay that listens to your call, catches the question, and writes a line you can say out loud. BYOK $14/mo or Hosted AI $19/mo — vs ~$150 tools."
     />
     <link rel="canonical" href="https://kalfi.app/" />
+    <link rel="alternate" hreflang="en" href="https://kalfi.app/" />
+    <link rel="alternate" hreflang="id" href="https://kalfi.app/?lang=id" />
+    <link rel="alternate" hreflang="es" href="https://kalfi.app/?lang=es" />
+    <link rel="alternate" hreflang="pt" href="https://kalfi.app/?lang=pt" />
+    <link rel="alternate" hreflang="vi" href="https://kalfi.app/?lang=vi" />
+    <link rel="alternate" hreflang="x-default" href="https://kalfi.app/" />
     <meta name="theme-color" content="#080a0f" />
     <meta
       name="google-site-verification"
@@ -64,7 +70,7 @@
   </head>
 
   <body>
-    <a class="skip" href="#main">Skip to content</a>
+    <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
 
     <header class="topbar" id="topbar" data-compact="false" data-scrolled="false">
       <div class="topbar__float">
@@ -82,7 +88,7 @@
           </a>
           <nav class="topnav" aria-label="Primary">
             <div class="nav-item">
-              <button type="button" class="nav-item__trigger" aria-expanded="false">
+              <button type="button" class="nav-item__trigger" aria-expanded="false" data-i18n="nav.product">
                 Product
                 <svg viewBox="0 0 12 12" width="10" height="10" aria-hidden="true">
                   <path d="M2.2 4.2 6 8l3.8-3.8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
@@ -90,25 +96,25 @@
               </button>
               <div class="mega" role="menu">
                 <a href="#demo" role="menuitem">
-                  <strong>Live demo</strong>
-                  <span>Watch the overlay catch a question</span>
+                  <strong data-i18n="nav.demo">Live demo</strong>
+                  <span data-i18n="nav.demo.sub">Watch the overlay catch a question</span>
                 </a>
                 <a href="#flow" role="menuitem">
-                  <strong>How it works</strong>
-                  <span>The session loop from setup to summary</span>
+                  <strong data-i18n="nav.flow">How it works</strong>
+                  <span data-i18n="nav.flow.sub">The session loop from setup to summary</span>
                 </a>
                 <a href="#stealth" role="menuitem">
-                  <strong>Stealth</strong>
-                  <span>Stay off the shared screen</span>
+                  <strong data-i18n="nav.stealth">Stealth</strong>
+                  <span data-i18n="nav.stealth.sub">Stay off the shared screen</span>
                 </a>
                 <a href="#brand" role="menuitem">
-                  <strong>Custom brand</strong>
-                  <span>Your name and logo in the process list</span>
+                  <strong data-i18n="nav.brand">Custom brand</strong>
+                  <span data-i18n="nav.brand.sub">Your name and logo in the process list</span>
                 </a>
               </div>
             </div>
             <div class="nav-item">
-              <button type="button" class="nav-item__trigger" aria-expanded="false">
+              <button type="button" class="nav-item__trigger" aria-expanded="false" data-i18n="nav.pricing">
                 Pricing
                 <svg viewBox="0 0 12 12" width="10" height="10" aria-hidden="true">
                   <path d="M2.2 4.2 6 8l3.8-3.8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
@@ -116,21 +122,21 @@
               </button>
               <div class="mega" role="menu">
                 <a href="#cost" role="menuitem">
-                  <strong>Cost model</strong>
-                  <span>BYOK vs hosted vs ~$150 tools</span>
+                  <strong data-i18n="nav.cost">Cost model</strong>
+                  <span data-i18n="nav.cost.sub">BYOK vs hosted vs ~$150 tools</span>
                 </a>
                 <a href="#pricing" role="menuitem">
-                  <strong>Plans</strong>
-                  <span>$14 BYOK · $19 Hosted · $9 Pass</span>
+                  <strong data-i18n="nav.plans">Plans</strong>
+                  <span data-i18n="nav.plans.sub">$14 BYOK · $19 Hosted · $9 Pass</span>
                 </a>
                 <a href="#compare" role="menuitem">
-                  <strong>Compare</strong>
-                  <span>Side-by-side with the usual suspects</span>
+                  <strong data-i18n="nav.compare">Compare</strong>
+                  <span data-i18n="nav.compare.sub">Side-by-side with the usual suspects</span>
                 </a>
               </div>
             </div>
             <div class="nav-item">
-              <button type="button" class="nav-item__trigger" aria-expanded="false">
+              <button type="button" class="nav-item__trigger" aria-expanded="false" data-i18n="nav.resources">
                 Resources
                 <svg viewBox="0 0 12 12" width="10" height="10" aria-hidden="true">
                   <path d="M2.2 4.2 6 8l3.8-3.8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
@@ -138,24 +144,37 @@
               </button>
               <div class="mega" role="menu">
                 <a href="docs/" role="menuitem">
-                  <strong>Docs</strong>
-                  <span>Install, setup, daily use</span>
+                  <strong data-i18n="nav.docs">Docs</strong>
+                  <span data-i18n="nav.docs.sub">Install, setup, daily use</span>
                 </a>
                 <a href="#faq" role="menuitem">
-                  <strong>FAQ</strong>
-                  <span>Gatekeeper, keys, and rules of the room</span>
+                  <strong data-i18n="nav.faq">FAQ</strong>
+                  <span data-i18n="nav.faq.sub">Gatekeeper, keys, and rules of the room</span>
                 </a>
                 <a href="blog/" role="menuitem">
-                  <strong>Blog</strong>
-                  <span>Comparisons with the prices left in</span>
+                  <strong data-i18n="nav.blog">Blog</strong>
+                  <span data-i18n="nav.blog.sub">Comparisons with the prices left in</span>
                 </a>
               </div>
             </div>
           </nav>
           <div class="topbar__actions">
-            <a class="btn btn--line btn--sm" href="#download">Download</a>
-            <button class="btn btn--accent btn--sm" type="button" data-subscribe>Get Pro</button>
-            <button class="burger" type="button" id="burger" aria-label="Menu" aria-expanded="false">
+            <div class="lang-switch" data-lang-switch>
+              <button type="button" class="lang-switch__btn" data-lang-trigger aria-expanded="false" aria-haspopup="listbox" data-i18n-aria="nav.lang">
+                <span data-lang-current>EN</span>
+              </button>
+              <div class="lang-switch__menu" data-lang-menu hidden role="listbox">
+                <button type="button" role="option" data-lang-option="en">English</button>
+                <button type="button" role="option" data-lang-option="id">Bahasa Indonesia</button>
+                <button type="button" role="option" data-lang-option="es">Español</button>
+                <button type="button" role="option" data-lang-option="pt">Português</button>
+                <button type="button" role="option" data-lang-option="vi">Tiếng Việt</button>
+              </div>
+            </div>
+
+            <a class="btn btn--line btn--sm" href="#download" data-i18n="nav.download">Download</a>
+            <button class="btn btn--accent btn--sm" type="button" data-subscribe data-i18n="nav.pro">Get Pro</button>
+            <button class="burger" type="button" id="burger" aria-label="Menu" data-i18n-aria="nav.menu" aria-expanded="false">
               <span></span><span></span>
             </button>
           </div>
@@ -163,25 +182,25 @@
       </div>
       <div class="drawer" id="drawer" data-open="false">
         <div class="drawer__group">
-          <p>Product</p>
-          <a href="#demo">Live demo</a>
-          <a href="#flow">How it works</a>
-          <a href="#stealth">Stealth</a>
-          <a href="#brand">Custom brand</a>
+          <p data-i18n="nav.product">Product</p>
+          <a href="#demo" data-i18n="nav.demo">Live demo</a>
+          <a href="#flow" data-i18n="nav.flow">How it works</a>
+          <a href="#stealth" data-i18n="nav.stealth">Stealth</a>
+          <a href="#brand" data-i18n="nav.brand">Custom brand</a>
         </div>
         <div class="drawer__group">
-          <p>Pricing</p>
-          <a href="#cost">Cost model</a>
-          <a href="#pricing">Plans</a>
-          <a href="#compare">Compare</a>
+          <p data-i18n="nav.pricing">Pricing</p>
+          <a href="#cost" data-i18n="nav.cost">Cost model</a>
+          <a href="#pricing" data-i18n="nav.plans">Plans</a>
+          <a href="#compare" data-i18n="nav.compare">Compare</a>
         </div>
         <div class="drawer__group">
-          <p>Resources</p>
+          <p data-i18n="nav.resources">Resources</p>
           <a href="docs/">Docs</a>
           <a href="#faq">FAQ</a>
-          <a href="blog/">Blog</a>
+          <a href="blog/" data-i18n="foot.blog">Blog</a>
         </div>
-        <a class="drawer__cta" href="#download">Download</a>
+        <a class="drawer__cta" href="#download" data-i18n="nav.download">Download</a>
       </div>
     </header>
 
@@ -193,11 +212,11 @@
         <div class="hero-pin" id="hero-stage">
           <div class="hero-sticky">
             <div class="shell hero-copy" id="hero-copy">
-              <span class="tagline hero-in">macOS overlay · $14 BYOK</span>
-              <h1 class="hero-in" style="--d: 1">
+              <span class="tagline hero-in" data-i18n="hero.tag">macOS overlay · $14 BYOK</span>
+              <h1 class="hero-in" style="--d: 1" data-i18n="hero.title">
                 The answer is on screen before the pause gets awkward.
               </h1>
-              <p class="hero__lead hero-in" style="--d: 2">
+              <p class="hero__lead hero-in" style="--d: 2" data-i18n="hero.lead">
                 Kalfi listens to your call from your own Mac, catches the question, and writes one line
                 you can actually say out loud. BYOK is $14/mo with your OpenAI or OpenRouter key — or $19
                 if we host the models. Final Round lists around $150.
@@ -209,7 +228,7 @@
                     <a class="dl__go" data-download-primary href="#download">
                       <span class="dl__icon" data-download-icon aria-hidden="true"></span>
                       <span class="dl__copy">
-                        <span class="dl__label" data-download-label>Download for Mac</span>
+                        <span class="dl__label" data-download-label data-i18n="hero.dl">Download for Mac</span>
                         <span class="dl__ext" data-download-ext>.dmg</span>
                       </span>
                     </a>
@@ -258,7 +277,7 @@
                   </div>
                 </div>
                 <button class="btn btn--line btn--hero-side" type="button" data-demo-focus>
-                  Run the demo <span class="kbd" data-mod-enter>⌘↵</span>
+                  <span data-i18n="hero.demo">Run the demo</span> <span class="kbd" data-mod-enter>⌘↵</span>
                 </button>
                 </div>
               </div>
@@ -360,8 +379,8 @@
       <section class="band band--tight" id="flow">
         <div class="shell timeline" data-reveal>
           <aside class="timeline__rail">
-            <span class="tagline">Workflow</span>
-            <h2>One loop. Every call.</h2>
+            <span class="tagline" data-i18n="flow.eyebrow">Workflow</span>
+            <h2 data-i18n="flow.title">One loop. Every call.</h2>
             <p>
               From loading context to speaking the line to closing the meeting — the same path,
               tightened each time you reuse the thread.
@@ -380,7 +399,7 @@
               <div class="tl-card__mark" aria-hidden="true"><span></span></div>
               <div class="tl-card__body">
                 <span class="tl-card__num">01</span>
-                <h3>Load the context once</h3>
+                <h3 data-i18n="flow.1.t">Load the context once</h3>
                 <p>
                   Pick Interview, Client, or Chat. Fill only what that mode needs — JD and resume,
                   project scope, or a chat topic. Length, tone, and meeting language stick to the
@@ -398,7 +417,7 @@
               <div class="tl-card__mark" aria-hidden="true"><span></span></div>
               <div class="tl-card__body">
                 <span class="tl-card__num">02</span>
-                <h3>Listen the way the call runs</h3>
+                <h3 data-i18n="flow.2.t">Listen the way the call runs</h3>
                 <p>
                   Mix system audio from Meet/Zoom with your mic, or pick one. The overlay floats
                   above fullscreen so you never leave the call to “check the AI.”
@@ -415,7 +434,7 @@
               <div class="tl-card__mark" aria-hidden="true"><span></span></div>
               <div class="tl-card__body">
                 <span class="tl-card__num">03</span>
-                <h3>Say one speakable line</h3>
+                <h3 data-i18n="flow.3.t">Say one speakable line</h3>
                 <p>
                   Not a transcript dump. Kalfi writes a line you can actually say out loud — short
                   enough for the pause, tuned to the tone you set, grounded in the session context.
@@ -432,7 +451,7 @@
               <div class="tl-card__mark" aria-hidden="true"><span></span></div>
               <div class="tl-card__body">
                 <span class="tl-card__num">04</span>
-                <h3>Close the meeting properly</h3>
+                <h3 data-i18n="flow.4.t">Close the meeting properly</h3>
                 <p>
                   Generate a summary, browse history without hijacking the live session, then start
                   the next meeting inside the same project thread — so meeting two already knows
@@ -453,7 +472,7 @@
       <section class="band" id="stealth">
         <div class="shell band__head" data-reveal>
           <span class="tagline">Stealth</span>
-          <h2>Flip the switch and watch it leave the shared screen.</h2>
+          <h2 data-i18n="stealth.title">Flip the switch and watch it leave the shared screen.</h2>
           <p>
             Same Google Meet call, same Kalfi overlay you actually run. Content protection keeps the
             panel off the shared screen — toggle stealth off to see what you would leak without it.
@@ -607,7 +626,7 @@
       <section class="band" id="brand">
         <div class="shell band__head" data-reveal>
           <span class="tagline">Personal stealth</span>
-          <h2>Make it look like Notes — not like an AI copilot.</h2>
+          <h2 data-i18n="brand.title">Make it look like Notes — not like an AI copilot.</h2>
           <p>
             Competitors hide the dock icon and still appear in Activity Monitor under brand names like
             Cluely, Final Round, or Parakeet. Kalfi lets you set your own display name and logo, so the
@@ -766,7 +785,7 @@
       <section class="band" id="cost">
         <div class="shell band__head" data-reveal>
           <span class="tagline">Real monthly cost</span>
-          <h2>Do the maths before you sign a $150 subscription.</h2>
+          <h2 data-i18n="cost.title">Do the maths before you sign a $150 subscription.</h2>
           <p>
             Final Round markets around $150/mo for live help. Kalfi BYOK is $14 plus your own model
             spend — or $19 flat if we host the models. Move the sliders.
@@ -866,7 +885,7 @@
       <section class="band" id="pricing">
         <div class="shell band__head band__head--center" data-reveal>
           <span class="tagline">Pricing</span>
-          <h2>Clear packs. Still a fraction of $150 tools.</h2>
+          <h2 data-i18n="pricing.title">Clear packs. Still a fraction of $150 tools.</h2>
           <p>
             BYOK or Hosted — monthly or annual. Team for 3 seats. Need one call only? Grab a Single
             Session Pass. Cancel any time.
@@ -875,12 +894,12 @@
 
         <div class="shell">
           <div id="checkout-success" class="checkout-success" hidden>
-            <strong>Payment received.</strong>
+            <strong data-i18n="pricing.paid">Payment received.</strong>
             <p data-success-detail>
               Open the Kalfi app → Settings → Account. Use the same email from checkout to set your
               password (first time) or log in. Your plan unlocks automatically.
             </p>
-            <a class="btn btn--accent btn--sm" href="#download">Download Kalfi</a>
+            <a class="btn btn--accent btn--sm" href="#download" data-i18n="pricing.dl">Download Kalfi</a>
           </div>
 
           <div class="billing-toggle-wrap" data-reveal>
@@ -890,12 +909,11 @@
               aria-label="Billing period"
               id="billing-toggle"
             >
-              <button type="button" class="billing-toggle__btn is-on" data-billing="monthly">
+              <button type="button" class="billing-toggle__btn is-on" data-billing="monthly" data-i18n="pricing.monthly">
                 Monthly
               </button>
-              <button type="button" class="billing-toggle__btn" data-billing="annual">
-                Annual
-                <span class="billing-toggle__save">Save up to 29%</span>
+              <button type="button" class="billing-toggle__btn" data-billing="annual"><span data-i18n="pricing.annual">Annual</span>
+                <span class="billing-toggle__save" data-i18n="pricing.save">Save up to 29%</span>
               </button>
             </div>
           </div>
@@ -918,7 +936,7 @@
               </div>
               <p class="plan__billed" data-price-billed hidden>Billed $120 / year</p>
               <span class="plan__save" data-price-save hidden>Save ~29%</span>
-              <p class="plan__desc">
+              <p class="plan__desc" data-i18n="plan.byok.desc">
                 Full desktop app. You pay OpenAI or OpenRouter directly for usage on top.
               </p>
               <ul class="plan__feats">
@@ -934,6 +952,7 @@
                 href="#"
                 data-polar-checkout="byok"
                 data-interval="monthly"
+                data-i18n="plan.byok.cta"
                 >Start BYOK</a
               >
             </article>
@@ -955,7 +974,7 @@
               </div>
               <p class="plan__billed" data-price-billed hidden>Billed $180 / year</p>
               <span class="plan__save" data-price-save hidden>Save ~21%</span>
-              <p class="plan__desc">
+              <p class="plan__desc" data-i18n="plan.hosted.desc">
                 No provider account. We carry chat + transcription with a fair monthly quota.
               </p>
               <ul class="plan__feats">
@@ -970,6 +989,7 @@
                 href="#"
                 data-polar-checkout="hosted"
                 data-interval="monthly"
+                data-i18n="plan.hosted.cta"
                 >Subscribe Hosted</a
               >
               <p class="note" id="pro-note" style="margin-top: 12px"></p>
@@ -981,7 +1001,7 @@
                 <span class="chip">3 seats</span>
               </div>
               <div class="plan__price">$49<span> / month</span></div>
-              <p class="plan__desc">
+              <p class="plan__desc" data-i18n="plan.team.desc">
                 Three Hosted seats on one invoice — for agencies and interview coaches.
               </p>
               <ul class="plan__feats">
@@ -991,7 +1011,7 @@
                 <li>Priority setup help</li>
                 <li>Need more seats? Contact hello@kalfi.app</li>
               </ul>
-              <a class="btn btn--line" href="#" data-polar-checkout="team">Start Team</a>
+              <a class="btn btn--line" href="#" data-polar-checkout="team" data-i18n="plan.team.cta">Start Team</a>
             </article>
           </div>
 
@@ -1003,7 +1023,7 @@
                   <span class="chip">One call</span>
                 </div>
                 <div class="plan__price">$9<span> one-time</span></div>
-                <p class="plan__desc" style="margin-bottom: 0">
+                <p class="plan__desc" style="margin-bottom: 0" data-i18n="plan.pass.desc">
                   Only need it for one call? No subscription. Access for 2 hours / 1 session —
                   expires in 30 days if unused.
                 </p>
@@ -1012,6 +1032,7 @@
                 class="btn btn--accent"
                 href="#"
                 data-polar-checkout="singleSession"
+                data-i18n="plan.pass.cta"
                 >Get Session Pass</a
               >
             </div>
@@ -1023,7 +1044,7 @@
       <section class="band" id="compare">
         <div class="shell band__head" data-reveal>
           <span class="tagline">Landscape</span>
-          <h2>What the other tabs in your browser are charging.</h2>
+          <h2 data-i18n="compare.title">What the other tabs in your browser are charging.</h2>
           <p>Public marketing and list prices, September 2026. Not a lab benchmark.</p>
         </div>
 
@@ -1109,13 +1130,13 @@
           <div class="docs-teaser" data-reveal>
             <div>
               <span class="tagline">Documentation</span>
-              <h2>Install, set up, and use it every day.</h2>
+              <h2 data-i18n="docs.title">Install, set up, and use it every day.</h2>
               <p>
                 Full beginner guide lives on its own page — macOS Gatekeeper fixes, Windows SmartScreen,
                 Linux AppImage, first-time setup, and the daily call loop.
               </p>
             </div>
-            <a class="btn btn--solid" href="docs/">Open docs</a>
+            <a class="btn btn--solid" href="docs/" data-i18n="docs.cta">Open docs</a>
           </div>
         </div>
       </section>
@@ -1125,7 +1146,7 @@
         <div class="shell" data-reveal>
           <div class="band__head">
             <span class="tagline">Questions</span>
-            <h2>The things people ask before downloading.</h2>
+            <h2 data-i18n="faq.title">The things people ask before downloading.</h2>
           </div>
           <div class="faq">
             <details open>
@@ -1216,7 +1237,7 @@
         <div class="shell">
           <div class="closer closer--download" data-reveal>
             <div>
-              <h2>Install it, paste a key, join your next call.</h2>
+              <h2 data-i18n="dl.title">Install it, paste a key, join your next call.</h2>
               <p data-download-blurb>
                 One button detects your OS. Use the chevron to switch Mac, Windows, or Linux. On Mac,
                 if you see “damaged”, follow
@@ -1284,14 +1305,14 @@
                 <p class="download-meta" data-download-meta>Detecting your system…</p>
               </div>
               <div class="download-alt">
-                <a class="btn btn--line btn--sm" href="docs/">Docs</a>
-                <button class="btn btn--line btn--sm" type="button" data-subscribe>Get Pro instead</button>
+                <a class="btn btn--line btn--sm" href="docs/" data-i18n="dl.docs">Docs</a>
+                <button class="btn btn--line btn--sm" type="button" data-subscribe data-i18n="dl.pro">Get Pro instead</button>
                 <a
                   class="download-all"
                   href="https://github.com/haikallfikrii/AI-Meeting-Assistant/releases"
                   target="_blank"
                   rel="noopener"
-                  >All releases</a
+                   data-i18n="dl.releases">All releases</a
                 >
               </div>
             </div>
@@ -1341,14 +1362,14 @@
 
     <footer class="foot">
       <div class="shell foot__row">
-        <span>© <span id="year">2026</span> Kalfi — desktop AI for interviews and meetings.</span>
+        <span>© <span id="year">2026</span> <span data-i18n="foot.tag">Kalfi — desktop AI for interviews and meetings.</span></span>
         <span>
           <a href="blog/">Blog</a>
           ·
           <a href="https://github.com/haikallfikrii/AI-Meeting-Assistant" target="_blank" rel="noopener"
-            >Source</a
+             data-i18n="foot.source">Source</a
           >
-          · <a href="mailto:hello@kalfi.app">Contact</a>
+          · <a href="mailto:hello@kalfi.app" data-i18n="foot.contact">Contact</a>
         </span>
       </div>
     </footer>
@@ -1416,8 +1437,9 @@
         }
       }
     </script>
+    <script src="js/i18n.js?v=1.0.9" defer></script>
     <script src="js/demo.js?v=1.0.8" defer></script>
-    <script src="js/main.js?v=1.0.8" defer></script>
+    <script src="js/main.js?v=1.0.9" defer></script>
     <script
       src="https://chatlm.tech/widget/widget.js"
       data-api-key="c2c4fe3020681f0625b7835c3d7a105ade36199f7bd58a9d32d1e39465d2aafa"
