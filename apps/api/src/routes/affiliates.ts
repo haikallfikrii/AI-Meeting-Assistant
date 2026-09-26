@@ -4,7 +4,9 @@ import {
   applyVoucherToPrice,
   findAffiliateByEmail,
   normalizeCode,
-  partnerDashboard
+  partnerDashboard,
+  updatePartnerPayout,
+  type PayoutMethod
 } from '../lib/affiliates.js'
 import { currencyPayload, refreshRates, type DisplayCurrency } from '../lib/currency.js'
 import { MANUAL_PLAN_PRICES_USD } from '../lib/manual-orders.js'
@@ -195,4 +197,49 @@ affiliatePublicRoutes.get('/partner/me', async (c) => {
 
   const dash = partnerDashboard(aff.id)
   return c.json({ ok: true, paused: false, ...dash })
+})
+
+affiliatePublicRoutes.post('/partner/payout', async (c) => {
+  const auth = c.req.header('Authorization') || ''
+  const token = auth.startsWith('Bearer ') ? auth.slice(7).trim() : ''
+  if (!token) return c.json({ error: 'Sign in required' }, 401)
+
+  let email: string
+  try {
+    ;({ email } = await verifyEmailProof(token, 'partner'))
+  } catch {
+    return c.json({ error: 'Session expired. Sign in again.' }, 401)
+  }
+
+  const aff = findAffiliateByEmail(email)
+  if (!aff || aff.status === 'archived') {
+    return c.json({ error: 'Partner account not found.' }, 404)
+  }
+
+  const body = z
+    .object({
+      payoutMethod: z.enum(['wise', 'bank', 'dana', 'ovo', 'qris', 'duitnow']),
+      payoutAccount: z.string().min(3).max(120),
+      payoutAccountName: z.string().max(120).optional(),
+      payoutBankName: z.string().max(120).optional(),
+      payoutNote: z.string().max(500).optional()
+    })
+    .safeParse(await c.req.json())
+  if (!body.success) return c.json({ error: 'Fill method and account details.' }, 400)
+
+  if (body.data.payoutMethod === 'bank' && !(body.data.payoutBankName || '').trim()) {
+    return c.json({ error: 'Bank name is required for bank transfer.' }, 400)
+  }
+
+  const updated = updatePartnerPayout(aff.id, {
+    payoutMethod: body.data.payoutMethod as PayoutMethod,
+    payoutAccount: body.data.payoutAccount,
+    payoutAccountName: body.data.payoutAccountName,
+    payoutBankName: body.data.payoutBankName,
+    payoutNote: body.data.payoutNote
+  })
+  if (!updated) return c.json({ error: 'Could not save payout details.' }, 400)
+
+  const dash = partnerDashboard(updated.id)
+  return c.json({ ok: true, message: 'Payout details saved.', ...dash })
 })

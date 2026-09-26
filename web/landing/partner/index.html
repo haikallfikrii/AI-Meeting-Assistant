@@ -2,8 +2,9 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="robots" content="noindex,nofollow" />
+    <meta name="theme-color" content="#0c1118" />
     <title>Kalfi Partner</title>
     <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -13,7 +14,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../admin/admin.css" />
-    <link rel="stylesheet" href="./partner.css" />
+    <link rel="stylesheet" href="./partner.css?v=2" />
   </head>
   <body>
     <div id="login-view" class="login">
@@ -51,8 +52,8 @@
     </div>
 
     <div id="app-view" class="app" hidden>
-      <header class="top">
-        <div>
+      <header class="top partner-top">
+        <div class="partner-top__text">
           <p class="top__brand">Kalfi Partner</p>
           <h1 id="partner-name">Dashboard</h1>
           <p id="partner-meta" class="muted"></p>
@@ -76,10 +77,67 @@
           <p id="code-chip" class="code-chip"></p>
         </div>
 
+        <div class="card payout-card">
+          <h2>How we pay you</h2>
+          <p class="muted">
+            Choose Wise, bank transfer, DANA, OVO, QRIS, or QR DuitNow. Save so we can send commissions.
+          </p>
+          <form id="payout-form" class="payout-form">
+            <fieldset class="payout-methods" id="payout-methods">
+              <legend class="sr-only">Payout method</legend>
+              <label class="payout-opt">
+                <input type="radio" name="payoutMethod" value="wise" />
+                <span>Wise</span>
+              </label>
+              <label class="payout-opt">
+                <input type="radio" name="payoutMethod" value="bank" />
+                <span>Bank</span>
+              </label>
+              <label class="payout-opt">
+                <input type="radio" name="payoutMethod" value="dana" />
+                <span>DANA</span>
+              </label>
+              <label class="payout-opt">
+                <input type="radio" name="payoutMethod" value="ovo" />
+                <span>OVO</span>
+              </label>
+              <label class="payout-opt">
+                <input type="radio" name="payoutMethod" value="qris" />
+                <span>QRIS</span>
+              </label>
+              <label class="payout-opt">
+                <input type="radio" name="payoutMethod" value="duitnow" />
+                <span>DuitNow</span>
+              </label>
+            </fieldset>
+
+            <label id="payout-bank-wrap" hidden>
+              Bank name
+              <input type="text" id="payout-bank" maxlength="120" placeholder="BCA / Mandiri / Maybank…" />
+            </label>
+            <label>
+              <span id="payout-account-label">Account / phone / email</span>
+              <input type="text" id="payout-account" maxlength="120" required placeholder="+62…" />
+            </label>
+            <label>
+              Account holder name
+              <input type="text" id="payout-name" maxlength="120" placeholder="Name on the account" />
+            </label>
+            <label>
+              Note (optional)
+              <input type="text" id="payout-note" maxlength="500" placeholder="QR description, branch, etc." />
+            </label>
+            <button type="submit" class="btn btn--primary" id="payout-save">Save payout details</button>
+            <p id="payout-msg" class="banner" hidden></p>
+            <p id="payout-summary" class="muted payout-summary"></p>
+          </form>
+        </div>
+
         <div class="card">
           <h2>Sales through your code</h2>
           <p id="sales-meta" class="muted">Loading…</p>
-          <div class="table-wrap">
+          <div class="sales-list" id="sales-list" aria-live="polite"></div>
+          <div class="table-wrap sales-table-desktop">
             <table>
               <thead>
                 <tr>
@@ -95,8 +153,7 @@
             </table>
           </div>
           <p class="muted" style="margin-top:12px;font-size:12px">
-            Customer emails are masked for privacy. Payouts are marked Paid after we send your commission
-            via Wise.
+            Customer emails are masked for privacy. We pay after marking commission Paid in admin.
           </p>
         </div>
       </main>
@@ -105,6 +162,6 @@
     <script>
       window.KALFI_PARTNER_API = 'https://api.srv835792.hstgr.cloud'
     </script>
-    <script src="./partner.js?v=1"></script>
+    <script src="./partner.js?v=2"></script>
   </body>
 </html>

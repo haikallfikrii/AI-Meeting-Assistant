@@ -10,6 +10,16 @@ import { fileURLToPath } from 'node:url'
 export type AffiliateStatus = 'active' | 'paused' | 'archived'
 export type VoucherType = 'percent' | 'fixed_usd'
 export type CommissionStatus = 'pending' | 'owed' | 'paid' | 'void'
+export type PayoutMethod = 'wise' | 'bank' | 'dana' | 'ovo' | 'qris' | 'duitnow'
+
+export const PAYOUT_METHODS: { id: PayoutMethod; label: string; hint: string }[] = [
+  { id: 'wise', label: 'Wise', hint: 'Wise email or tag' },
+  { id: 'bank', label: 'Bank transfer', hint: 'Account number' },
+  { id: 'dana', label: 'DANA', hint: 'Phone number linked to DANA' },
+  { id: 'ovo', label: 'OVO', hint: 'Phone number linked to OVO' },
+  { id: 'qris', label: 'QRIS', hint: 'Merchant name / phone / QR note' },
+  { id: 'duitnow', label: 'QR DuitNow', hint: 'DuitNow ID / phone / QR note' }
+]
 
 export interface Affiliate {
   id: string
@@ -22,6 +32,14 @@ export interface Affiliate {
   /** Commission % of paid USD after discount. */
   commissionPercent: number
   status: AffiliateStatus
+  /** How they want commission paid. */
+  payoutMethod?: PayoutMethod
+  /** Account / phone / Wise tag / QR identifier. */
+  payoutAccount?: string
+  /** Account holder name. */
+  payoutAccountName?: string
+  /** Bank name when payoutMethod === bank. */
+  payoutBankName?: string
   payoutNote?: string
   createdAt: number
   updatedAt: number
@@ -246,8 +264,14 @@ export function partnerDashboard(affiliateId: string) {
       discountPercent: aff.discountPercent,
       commissionPercent: aff.commissionPercent,
       status: aff.status,
-      link: `https://kalfi.app/?ref=${encodeURIComponent(aff.code)}#pricing`
+      link: `https://kalfi.app/?ref=${encodeURIComponent(aff.code)}#pricing`,
+      payoutMethod: aff.payoutMethod || null,
+      payoutAccount: aff.payoutAccount || null,
+      payoutAccountName: aff.payoutAccountName || null,
+      payoutBankName: aff.payoutBankName || null,
+      payoutNote: aff.payoutNote || null
     },
+    payoutMethods: PAYOUT_METHODS,
     stats: {
       sales,
       paidUsd: Math.round(paidUsd * 100) / 100,
@@ -268,6 +292,38 @@ export function partnerDashboard(affiliateId: string) {
       paidAt: c.paidAt || null
     }))
   }
+}
+
+export function updatePartnerPayout(
+  affiliateId: string,
+  input: {
+    payoutMethod: PayoutMethod
+    payoutAccount: string
+    payoutAccountName?: string
+    payoutBankName?: string
+    payoutNote?: string
+  }
+): Affiliate | null {
+  const db = read()
+  const idx = db.affiliates.findIndex((a) => a.id === affiliateId)
+  if (idx < 0) return null
+  const method = input.payoutMethod
+  if (!PAYOUT_METHODS.some((m) => m.id === method)) return null
+  const account = input.payoutAccount.trim()
+  if (!account) return null
+
+  db.affiliates[idx] = {
+    ...db.affiliates[idx],
+    payoutMethod: method,
+    payoutAccount: account,
+    payoutAccountName: (input.payoutAccountName || '').trim() || undefined,
+    payoutBankName:
+      method === 'bank' ? (input.payoutBankName || '').trim() || undefined : undefined,
+    payoutNote: (input.payoutNote || '').trim() || undefined,
+    updatedAt: Date.now()
+  }
+  write(db)
+  return db.affiliates[idx]
 }
 
 export function findVoucher(code: string): Voucher | null {

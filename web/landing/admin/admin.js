@@ -338,6 +338,16 @@
       if (body) {
         body.innerHTML = affiliates
           .map(function (a) {
+            var payout =
+              a.payoutMethod && a.payoutAccount
+                ? escapeHtml(String(a.payoutMethod).toUpperCase()) +
+                  '<br><span class="muted" style="font-size:11px">' +
+                  escapeHtml(a.payoutAccountName || '') +
+                  (a.payoutBankName ? ' · ' + escapeHtml(a.payoutBankName) : '') +
+                  (a.payoutAccountName || a.payoutBankName ? '<br>' : '') +
+                  escapeHtml(a.payoutAccount) +
+                  '</span>'
+                : '<span class="muted">Not set</span>'
             return (
               '<tr><td><code>' +
               escapeHtml(a.code) +
@@ -352,6 +362,8 @@
               '%</td><td>' +
               a.commissionPercent +
               '%</td><td>' +
+              payout +
+              '</td><td>' +
               escapeHtml(a.status) +
               '</td><td><button type="button" class="btn btn--sm" data-aff-edit="' +
               escapeAttr(a.code) +
