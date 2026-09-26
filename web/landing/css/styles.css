@@ -363,7 +363,7 @@ button {
 .topbar__actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   flex: none;
 }
 
@@ -490,6 +490,73 @@ a.btn.is-disabled {
 .btn--line:hover {
   border-color: var(--fg-faint);
   background: rgba(255, 255, 255, 0.03);
+}
+
+.lang-switch {
+  position: relative;
+}
+
+.lang-switch__btn {
+  appearance: none;
+  border: 1px solid var(--line-strong);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--fg-dim);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  padding: 7px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  min-width: 44px;
+}
+
+.lang-switch__btn:hover {
+  color: var(--fg);
+  border-color: rgba(91, 140, 255, 0.45);
+}
+
+.lang-switch__menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  min-width: 180px;
+  padding: 6px;
+  border-radius: 12px;
+  border: 1px solid var(--line-strong);
+  background: #0d1016;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  z-index: 80;
+  display: grid;
+  gap: 2px;
+}
+
+.lang-switch__menu[hidden] {
+  display: none !important;
+}
+
+.lang-switch__menu button {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--fg-dim);
+  text-align: left;
+  padding: 9px 10px;
+  border-radius: 8px;
+  font-size: 0.84rem;
+  cursor: pointer;
+}
+
+.lang-switch__menu button:hover,
+.lang-switch__menu button.is-on {
+  background: rgba(91, 140, 255, 0.12);
+  color: var(--fg);
+}
+
+@media (max-width: 720px) {
+  .lang-switch__btn {
+    padding: 6px 8px;
+  }
 }
 
 .btn--sm {
