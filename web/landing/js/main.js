@@ -698,8 +698,23 @@
     return { label: status || 'Unknown', hint: '' }
   }
 
-  function goDownloadAndClose(gateRoot) {
+  function lockEmailGateScroll() {
+    document.documentElement.classList.add('email-gate-open')
+    document.body.classList.add('email-gate-open')
+  }
+
+  function unlockEmailGateScroll() {
+    document.documentElement.classList.remove('email-gate-open')
+    document.body.classList.remove('email-gate-open')
+  }
+
+  function closeEmailGate(gateRoot) {
     if (gateRoot) gateRoot.remove()
+    unlockEmailGateScroll()
+  }
+
+  function goDownloadAndClose(gateRoot) {
+    closeEmailGate(gateRoot)
     var target = document.getElementById('download')
     if (target) {
       history.replaceState(null, '', '#download')
@@ -788,14 +803,13 @@
     var track = loadOrderTrack()
     if (!track || !track.orderId) return
     var existing = document.getElementById('checkout-email-gate')
-    if (existing) existing.remove()
+    if (existing) closeEmailGate(existing)
     var root = document.createElement('div')
     root.id = 'checkout-email-gate'
     root.className = 'email-gate'
-    root.style.display = 'grid'
-    root.style.placeItems = 'center'
     root.innerHTML = '<div class="email-gate__card" role="dialog" aria-modal="true"></div>'
     document.body.appendChild(root)
+    lockEmailGateScroll()
     showWiseInstructions(
       root,
       {
@@ -1083,6 +1097,8 @@
   function showWiseInstructions(gateRoot, payload, email, initialStatus) {
     var card = gateRoot.querySelector('.email-gate__card')
     if (!card) return
+    gateRoot.scrollTop = 0
+    card.scrollTop = 0
     var ins = payload.instructions || {}
     var orderId = payload.orderId
     var apiBase = String(CONFIG.apiBaseUrl || '').replace(/\/$/, '')
@@ -1109,14 +1125,14 @@
       if (closeBtn) {
         closeBtn.addEventListener('click', function () {
           if (pollTimer) clearInterval(pollTimer)
-          gateRoot.remove()
+          closeEmailGate(gateRoot)
           ensureOrderTrackBanner()
         })
       }
       gateRoot.addEventListener('keydown', function (ev) {
         if (ev.key === 'Escape') {
           if (pollTimer) clearInterval(pollTimer)
-          gateRoot.remove()
+          closeEmailGate(gateRoot)
           ensureOrderTrackBanner()
         }
       })
@@ -1426,7 +1442,7 @@
     })
 
     var existing = document.getElementById('checkout-email-gate')
-    if (existing) existing.remove()
+    if (existing) closeEmailGate(existing)
 
     var apiBase = String(CONFIG.apiBaseUrl || '').replace(/\/$/, '')
     var planLabel = opts.plan
@@ -1486,8 +1502,7 @@
       '</div>'
 
     document.body.appendChild(root)
-    root.style.display = 'grid'
-    root.style.placeItems = 'center'
+    lockEmailGateScroll()
 
     var emailEl = root.querySelector('[data-gate-email]')
     var codeEl = root.querySelector('[data-gate-code]')
@@ -1525,7 +1540,7 @@
     }
 
     function close() {
-      root.remove()
+      closeEmailGate(root)
     }
 
     root.addEventListener('click', function (ev) {
@@ -1751,7 +1766,7 @@
         var closeBtn = card.querySelector('[data-gate-close]')
         if (closeBtn) {
           closeBtn.addEventListener('click', function () {
-            root.remove()
+            closeEmailGate(root)
           })
         }
         var cont = card.querySelector('#pay-method-continue')
