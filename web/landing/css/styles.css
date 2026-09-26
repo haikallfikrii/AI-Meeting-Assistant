@@ -2140,6 +2140,90 @@ select {
   margin: 0 0 28px;
 }
 
+.affiliate-bar {
+  max-width: 720px;
+  margin: 0 auto 28px;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: color-mix(in srgb, var(--ink-100) 80%, transparent);
+}
+
+.affiliate-bar__row {
+  display: grid;
+  grid-template-columns: 1.4fr 0.8fr;
+  gap: 14px;
+}
+
+@media (max-width: 640px) {
+  .affiliate-bar__row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.affiliate-bar__field {
+  display: grid;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.affiliate-bar__field input,
+.affiliate-bar__field select {
+  width: 100%;
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--ink);
+  font: inherit;
+}
+
+.affiliate-bar__input-wrap {
+  display: flex;
+  gap: 8px;
+}
+
+.affiliate-bar__input-wrap input {
+  flex: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.affiliate-bar__msg {
+  margin: 10px 0 0;
+  font-size: 0.9rem;
+}
+
+.affiliate-bar__msg.is-ok {
+  color: #3d9a5f;
+}
+
+.affiliate-bar__msg.is-err {
+  color: #c45c4a;
+}
+
+.affiliate-bar__hint {
+  margin: 8px 0 0;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.plan__price [data-price-local] {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.plan__price [data-price-strike] {
+  text-decoration: line-through;
+  opacity: 0.55;
+  margin-right: 6px;
+}
+
 .billing-toggle {
   display: inline-flex;
   align-items: center;

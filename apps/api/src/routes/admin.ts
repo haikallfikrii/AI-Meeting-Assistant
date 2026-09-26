@@ -23,6 +23,17 @@ import {
   listManualOrders,
   updateManualOrder
 } from '../lib/manual-orders.js'
+import {
+  affiliateStats,
+  listAffiliates,
+  listConversions,
+  listVouchers,
+  markCommissionPaid,
+  recordConversion,
+  upsertAffiliate,
+  upsertVoucher
+} from '../lib/affiliates.js'
+import { currencyPayload, refreshRates } from '../lib/currency.js'
 
 const PLAN_ENUM = z.enum([
   'free',
@@ -329,6 +340,20 @@ adminRoutes.post('/manual-orders/:id/activate', async (c) => {
     activatedBy: 'admin'
   })
 
+  if (order.voucherCode) {
+    recordConversion({
+      orderId: order.id,
+      orderRef: order.ref,
+      customerEmail: order.email,
+      plan: order.plan,
+      grossUsd: order.listUsd || order.amountUsd + (order.discountUsd || 0),
+      discountUsd: order.discountUsd || 0,
+      paidUsd: order.amountUsd,
+      voucherCode: order.voucherCode,
+      affiliateId: order.affiliateId
+    })
+  }
+
   const refreshed = findUserByEmail(order.email)
   markLeadSubscribed(order.email, order.plan)
   recordEvent('manual_order_activated', {
@@ -354,4 +379,68 @@ adminRoutes.post('/manual-orders/:id/activate', async (c) => {
     user: refreshed ? publicUser(refreshed) : null,
     order: findManualOrder(order.id)
   })
+})
+
+adminRoutes.get('/affiliates', async (c) => {
+  if (!requireAdmin(c)) return c.json({ error: 'Forbidden' }, 403)
+  return c.json({
+    ok: true,
+    stats: affiliateStats(),
+    affiliates: listAffiliates(),
+    vouchers: listVouchers(),
+    conversions: listConversions(80)
+  })
+})
+
+adminRoutes.post('/affiliates', async (c) => {
+  if (!requireAdmin(c)) return c.json({ error: 'Forbidden' }, 403)
+  const body = z
+    .object({
+      id: z.string().optional(),
+      name: z.string().min(2).max(120),
+      email: z.string().email(),
+      country: z.string().min(2).max(16).optional(),
+      code: z.string().min(3).max(24),
+      discountPercent: z.number().min(0).max(90).optional(),
+      commissionPercent: z.number().min(0).max(50).optional(),
+      status: z.enum(['active', 'paused', 'archived']).optional(),
+      payoutNote: z.string().max(500).optional()
+    })
+    .safeParse(await c.req.json())
+  if (!body.success) return c.json({ error: 'Invalid affiliate payload' }, 400)
+  const aff = upsertAffiliate(body.data)
+  return c.json({ ok: true, affiliate: aff })
+})
+
+adminRoutes.post('/vouchers', async (c) => {
+  if (!requireAdmin(c)) return c.json({ error: 'Forbidden' }, 403)
+  const body = z
+    .object({
+      id: z.string().optional(),
+      code: z.string().min(3).max(24),
+      type: z.enum(['percent', 'fixed_usd']),
+      value: z.number().positive(),
+      affiliateId: z.string().optional(),
+      active: z.boolean().optional(),
+      maxRedemptions: z.number().int().positive().optional(),
+      expiresAt: z.number().optional(),
+      note: z.string().max(500).optional()
+    })
+    .safeParse(await c.req.json())
+  if (!body.success) return c.json({ error: 'Invalid voucher payload' }, 400)
+  const voucher = upsertVoucher(body.data)
+  return c.json({ ok: true, voucher })
+})
+
+adminRoutes.post('/affiliates/conversions/:id/paid', async (c) => {
+  if (!requireAdmin(c)) return c.json({ error: 'Forbidden' }, 403)
+  const conv = markCommissionPaid(c.req.param('id'))
+  if (!conv) return c.json({ error: 'Conversion not found' }, 404)
+  return c.json({ ok: true, conversion: conv })
+})
+
+adminRoutes.get('/fx', async (c) => {
+  if (!requireAdmin(c)) return c.json({ error: 'Forbidden' }, 403)
+  if (c.req.query('refresh') === '1') await refreshRates()
+  return c.json({ ok: true, ...currencyPayload() })
 })

@@ -4,6 +4,80 @@
   'use strict'
 
   var CONFIG = window.KALFI_CONFIG || {}
+  var VOUCHER_KEY = 'kalfi_voucher'
+  var CURRENCY_KEY = 'kalfi_display_currency'
+  var affiliateState = {
+    code: '',
+    percentOff: 0,
+    message: '',
+    currency: 'USD',
+    rates: { USD: 1 },
+    symbols: { USD: '$' }
+  }
+
+  function loadStoredVoucher() {
+    try {
+      return (localStorage.getItem(VOUCHER_KEY) || '').toUpperCase()
+    } catch (e) {
+      return ''
+    }
+  }
+
+  function saveVoucher(code) {
+    affiliateState.code = (code || '').toUpperCase().replace(/[^A-Z0-9_-]/g, '')
+    try {
+      if (affiliateState.code) localStorage.setItem(VOUCHER_KEY, affiliateState.code)
+      else localStorage.removeItem(VOUCHER_KEY)
+    } catch (e) {}
+  }
+
+  function detectDefaultCurrency() {
+    try {
+      var stored = localStorage.getItem(CURRENCY_KEY)
+      if (stored) return stored
+    } catch (e) {}
+    try {
+      var lang = (navigator.language || '').toLowerCase()
+      if (lang.indexOf('id') === 0) return 'IDR'
+      if (lang.indexOf('ms') === 0) return 'MYR'
+      if (lang.indexOf('vi') === 0) return 'VND'
+      if (lang.indexOf('pt') === 0 || lang.indexOf('br') !== -1) return 'BRL'
+      if (lang.indexOf('es') === 0) return 'EUR'
+      if (lang.indexOf('en-sg') === 0 || lang.indexOf('zh-sg') === 0) return 'SGD'
+      if (lang.indexOf('en-au') === 0) return 'AUD'
+      if (lang.indexOf('en-gb') === 0) return 'GBP'
+      if (lang.indexOf('ja') === 0) return 'JPY'
+      if (lang.indexOf('fil') === 0 || lang.indexOf('tl') === 0) return 'PHP'
+      if (lang.indexOf('hi') === 0 || lang.indexOf('en-in') === 0) return 'INR'
+    } catch (e) {}
+    return 'USD'
+  }
+
+  function formatLocal(usd) {
+    var cur = affiliateState.currency || 'USD'
+    var rate = affiliateState.rates[cur] || 1
+    var local = usd * rate
+    if (cur === 'USD' || cur === 'EUR' || cur === 'GBP' || cur === 'AUD' || cur === 'SGD') {
+      local = Math.round(local * 100) / 100
+    } else {
+      local = Math.round(local)
+    }
+    try {
+      return new Intl.NumberFormat(undefined, {
+        style: 'currency',
+        currency: cur,
+        maximumFractionDigits: cur === 'USD' || cur === 'EUR' || cur === 'GBP' ? 2 : 0
+      }).format(local)
+    } catch (e) {
+      return (affiliateState.symbols[cur] || cur + ' ') + local.toLocaleString()
+    }
+  }
+
+  function discountedUsd(listUsd) {
+    var pct = affiliateState.percentOff || 0
+    if (!pct) return listUsd
+    return Math.max(1, Math.round(listUsd * (1 - pct / 100) * 100) / 100)
+  }
 
   /* ---------- header, nav, reveal ---------- */
 
@@ -844,28 +918,72 @@
           var suffix = card.querySelector('[data-price-suffix]')
           var billed = card.querySelector('[data-price-billed]')
           var save = card.querySelector('[data-price-save]')
+          var localEl = card.querySelector('[data-price-local]')
           var cta = card.querySelector(checkoutSelector())
-          var monthly = card.getAttribute('data-price-monthly')
-          var annualMo = card.getAttribute('data-price-annual-mo')
-          var annual = card.getAttribute('data-price-annual')
+          var monthly = Number(card.getAttribute('data-price-monthly'))
+          var annualMo = Number(card.getAttribute('data-price-annual-mo'))
+          var annual = Number(card.getAttribute('data-price-annual'))
           var saveLabel = card.getAttribute('data-save-annual')
+          var listUsd = interval === 'annual' ? annualMo : monthly
+          var payUsd = discountedUsd(listUsd)
+          var annualPay = discountedUsd(annual)
 
           if (interval === 'annual') {
-            if (main) main.textContent = annualMo
+            if (main) {
+              main.innerHTML =
+                (affiliateState.percentOff
+                  ? '<span data-price-strike>' + annualMo + '</span>'
+                  : '') +
+                String(payUsd)
+            }
             if (suffix) suffix.textContent = ' / month'
             if (billed) {
               billed.hidden = false
-              billed.textContent = 'Billed $' + annual + ' / year'
+              billed.textContent =
+                'Billed $' +
+                annualPay +
+                ' / year' +
+                (affiliateState.percentOff ? ' (was $' + annual + ')' : '')
             }
             if (save) {
               save.hidden = false
-              save.textContent = 'Save ' + saveLabel
+              save.textContent =
+                (affiliateState.percentOff
+                  ? affiliateState.percentOff + '% partner off · '
+                  : '') +
+                'Save ' +
+                saveLabel
             }
           } else {
-            if (main) main.textContent = monthly
+            if (main) {
+              main.innerHTML =
+                (affiliateState.percentOff
+                  ? '<span data-price-strike>' + monthly + '</span>'
+                  : '') +
+                String(payUsd)
+            }
             if (suffix) suffix.textContent = ' / month'
             if (billed) billed.hidden = true
-            if (save) save.hidden = true
+            if (save) {
+              if (affiliateState.percentOff) {
+                save.hidden = false
+                save.textContent = affiliateState.percentOff + '% off with ' + affiliateState.code
+              } else {
+                save.hidden = true
+              }
+            }
+          }
+          if (localEl) {
+            if (affiliateState.currency && affiliateState.currency !== 'USD') {
+              localEl.hidden = false
+              localEl.textContent =
+                '≈ ' + formatLocal(payUsd) + ' · pay $' + payUsd + ' USD via Wise'
+            } else if (affiliateState.percentOff) {
+              localEl.hidden = false
+              localEl.textContent = 'Pay $' + payUsd + ' USD via Wise'
+            } else {
+              localEl.hidden = true
+            }
           }
           if (cta) {
             cta.setAttribute('data-interval', interval)
@@ -888,6 +1006,39 @@
             : tr('checkout.note.polar')
       }
     }
+
+    window.__kalfiRepaintPricing = paintInterval
+
+    // Fixed-price cards (team / session) — local FX + voucher
+    function paintFixedCards() {
+      Array.prototype.forEach.call(document.querySelectorAll('[data-fixed-usd]'), function (main) {
+        var listUsd = Number(main.getAttribute('data-fixed-usd'))
+        var payUsd = discountedUsd(listUsd)
+        main.innerHTML =
+          (affiliateState.percentOff
+            ? '<span data-price-strike>' + listUsd + '</span>'
+            : '') + String(payUsd)
+        var localEl = main.parentElement && main.parentElement.querySelector('[data-price-local]')
+        if (localEl) {
+          if (affiliateState.currency !== 'USD') {
+            localEl.hidden = false
+            localEl.textContent =
+              '≈ ' + formatLocal(payUsd) + ' · pay $' + payUsd + ' USD via Wise'
+          } else if (affiliateState.percentOff) {
+            localEl.hidden = false
+            localEl.textContent = 'Pay $' + payUsd + ' USD via Wise'
+          } else {
+            localEl.hidden = true
+          }
+        }
+      })
+    }
+    var _paint = paintInterval
+    paintInterval = function () {
+      _paint()
+      paintFixedCards()
+    }
+    window.__kalfiRepaintPricing = paintInterval
 
     if (toggle) {
       toggle.addEventListener('click', function (e) {
@@ -1129,7 +1280,14 @@
       ins.amountUsd +
       ' USD</strong> for <strong>' +
       String(ins.plan || '').replace(/_/g, ' ') +
-      '</strong>.</p>' +
+      '</strong>' +
+      (ins.voucherCode
+        ? ' <span style="opacity:.8">(' +
+          ins.voucherCode +
+          (ins.discountUsd ? ' −$' + ins.discountUsd : '') +
+          ')</span>'
+        : '') +
+      '.</p>' +
       '<p class="email-gate__ref">Payment reference (put in Wise memo):<br><code id="wise-ref">' +
       (ins.ref || '') +
       '</code> ' +
@@ -1357,6 +1515,8 @@
           email: email,
           emailProof: emailProof,
           embed: Boolean(opts.embed),
+          voucherCode: affiliateState.code || undefined,
+          displayCurrency: affiliateState.currency || 'USD',
           successUrl:
             'https://kalfi.app/?checkout=success&plan=' +
             encodeURIComponent(opts.sku) +
@@ -2249,6 +2409,142 @@
     })
   }
 
+  function setupAffiliateBar() {
+    var input = document.getElementById('voucher-code')
+    var applyBtn = document.getElementById('voucher-apply')
+    var msg = document.getElementById('voucher-msg')
+    var currencySel = document.getElementById('display-currency')
+    var apiBase = String(CONFIG.apiBaseUrl || '').replace(/\/$/, '')
+
+    affiliateState.currency = detectDefaultCurrency()
+    if (currencySel) currencySel.value = affiliateState.currency
+
+    try {
+      var params = new URLSearchParams(window.location.search)
+      var ref = (params.get('ref') || params.get('voucher') || params.get('code') || '').trim()
+      if (ref) saveVoucher(ref)
+    } catch (e) {}
+
+    var stored = loadStoredVoucher()
+    if (stored) {
+      affiliateState.code = stored
+      if (input) input.value = stored
+    }
+
+    function setMsg(text, ok) {
+      if (!msg) return
+      if (!text) {
+        msg.hidden = true
+        return
+      }
+      msg.hidden = false
+      msg.textContent = text
+      msg.className = 'affiliate-bar__msg ' + (ok ? 'is-ok' : 'is-err')
+    }
+
+    function repaint() {
+      if (typeof window.__kalfiRepaintPricing === 'function') window.__kalfiRepaintPricing()
+    }
+
+    function applyCode(code, silent) {
+      code = (code || '').toUpperCase().replace(/[^A-Z0-9_-]/g, '')
+      if (!code) {
+        affiliateState.code = ''
+        affiliateState.percentOff = 0
+        affiliateState.message = ''
+        saveVoucher('')
+        if (!silent) setMsg('', true)
+        repaint()
+        return
+      }
+      if (!apiBase) {
+        saveVoucher(code)
+        affiliateState.percentOff = 15
+        affiliateState.message = code + ' saved (offline)'
+        if (!silent) setMsg('Code saved. Discount confirmed at checkout.', true)
+        repaint()
+        return
+      }
+      fetch(apiBase + '/v1/affiliates/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: code, plan: 'byok_monthly' })
+      })
+        .then(function (res) {
+          return res.json().then(function (data) {
+            return { ok: res.ok, data: data }
+          })
+        })
+        .then(function (result) {
+          if (!result.ok) {
+            affiliateState.percentOff = 0
+            if (!silent) setMsg((result.data && result.data.error) || 'Invalid code', false)
+            repaint()
+            return
+          }
+          saveVoucher(result.data.code)
+          affiliateState.percentOff = result.data.percentOff || 0
+          affiliateState.message = result.data.message || ''
+          if (input) input.value = result.data.code
+          if (!silent) {
+            setMsg(
+              (result.data.message || 'Applied') +
+                (result.data.affiliateName ? ' · ' + result.data.affiliateName : ''),
+              true
+            )
+          }
+          repaint()
+        })
+        .catch(function () {
+          if (!silent) setMsg('Could not validate code — try again.', false)
+        })
+    }
+
+    function loadRates() {
+      if (!apiBase) return
+      fetch(apiBase + '/v1/affiliates/currencies')
+        .then(function (res) {
+          return res.json()
+        })
+        .then(function (data) {
+          if (!data || !data.ok || !data.currencies) return
+          data.currencies.forEach(function (c) {
+            affiliateState.rates[c.code] = c.perUsd
+            affiliateState.symbols[c.code] = c.symbol
+          })
+          repaint()
+        })
+        .catch(function () {})
+    }
+
+    if (applyBtn) {
+      applyBtn.addEventListener('click', function () {
+        applyCode(input && input.value)
+      })
+    }
+    if (input) {
+      input.addEventListener('keydown', function (ev) {
+        if (ev.key === 'Enter') {
+          ev.preventDefault()
+          applyCode(input.value)
+        }
+      })
+    }
+    if (currencySel) {
+      currencySel.addEventListener('change', function () {
+        affiliateState.currency = currencySel.value || 'USD'
+        try {
+          localStorage.setItem(CURRENCY_KEY, affiliateState.currency)
+        } catch (e) {}
+        repaint()
+      })
+    }
+
+    loadRates()
+    if (affiliateState.code) applyCode(affiliateState.code, true)
+    else repaint()
+  }
+
   function init() {
     chrome()
     bindModEnterLabels()
@@ -2259,6 +2555,7 @@
     brandPreview()
     calculator()
     billing()
+    setupAffiliateBar()
     bindDownloadWidgets()
     bindDocsOsTabs()
     downloads()

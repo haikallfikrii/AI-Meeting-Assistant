@@ -6,6 +6,7 @@ import { authRoutes } from './routes/auth.js'
 import { aiRoutes } from './routes/ai.js'
 import { adminRoutes } from './routes/admin.js'
 import { billingRoutes, handleLemonWebhook } from './routes/billing.js'
+import { affiliatePublicRoutes } from './routes/affiliates.js'
 import { polarProductMap } from './lib/polar-products.js'
 import { handlePolarWebhook, polarWebhookHeadersFromRequest } from './lib/polar-webhook.js'
 
@@ -45,6 +46,7 @@ app.get('/health', (c) =>
 
 app.route('/v1/auth', authRoutes)
 app.route('/v1/billing', billingRoutes)
+app.route('/v1/affiliates', affiliatePublicRoutes)
 app.route('/v1/ai', aiRoutes)
 app.route('/v1/admin', adminRoutes)
 

@@ -20,10 +20,12 @@ import {
 import {
   createManualOrder,
   findManualOrder,
+  MANUAL_PLAN_PRICES_USD,
   paymentInstructionsFor,
   updateManualOrder,
   wisePayConfig
 } from '../lib/manual-orders.js'
+import { applyVoucherToPrice } from '../lib/affiliates.js'
 import { createPolarCheckout, getPolar, polarConfigured } from '../lib/polarService.js'
 import { polarProductIdForPlan } from '../lib/polar-products.js'
 import { requireAuth, type AppVars } from '../middleware/auth.js'
@@ -65,7 +67,11 @@ const checkoutSchema = z.object({
   successUrl: z.string().url().optional(),
   cancelUrl: z.string().url().optional(),
   /** When true, Polar checkout is created with embed_origin for modal checkout. */
-  embed: z.boolean().optional()
+  embed: z.boolean().optional(),
+  /** Affiliate / promo voucher (e.g. DINAR15). */
+  voucherCode: z.string().min(2).max(32).optional(),
+  /** Display currency hint only — Wise still settles USD. */
+  displayCurrency: z.string().min(3).max(3).optional()
 })
 
 billingRoutes.post('/checkout', async (c) => {
@@ -258,7 +264,31 @@ billingRoutes.post('/manual/checkout', async (c) => {
   }
 
   const plan = body.data.plan
-  const order = createManualOrder({ email: verifiedEmail, plan })
+  const listUsd = MANUAL_PLAN_PRICES_USD[plan]
+  let amountUsd = listUsd
+  let discountUsd = 0
+  let voucherCode: string | undefined
+  let affiliateId: string | undefined
+
+  if (body.data.voucherCode?.trim()) {
+    const applied = applyVoucherToPrice(listUsd, body.data.voucherCode)
+    if (!applied.ok) return c.json({ error: applied.error }, 400)
+    amountUsd = applied.finalUsd
+    discountUsd = applied.discountUsd
+    voucherCode = applied.code
+    affiliateId = applied.affiliateId
+  }
+
+  const order = createManualOrder({
+    email: verifiedEmail,
+    plan,
+    listUsd,
+    amountUsd,
+    discountUsd,
+    voucherCode,
+    affiliateId,
+    displayCurrency: body.data.displayCurrency?.toUpperCase()
+  })
   const instructions = paymentInstructionsFor(order)
 
   upsertLead(verifiedEmail, {
@@ -269,7 +299,15 @@ billingRoutes.post('/manual/checkout', async (c) => {
   })
   recordEvent('manual_order_created', {
     email: verifiedEmail,
-    meta: { orderId: order.id, ref: order.ref, plan, amountUsd: order.amountUsd }
+    meta: {
+      orderId: order.id,
+      ref: order.ref,
+      plan,
+      amountUsd: order.amountUsd,
+      listUsd,
+      discountUsd,
+      voucherCode: voucherCode || null
+    }
   })
 
   const appUrl = publicSiteUrl()
@@ -290,11 +328,17 @@ billingRoutes.post('/manual/checkout', async (c) => {
   })
   void sendAppEmail({
     to: wise.notifyEmail,
-    subject: `[Kalfi] New Wise order ${order.ref} — $${order.amountUsd} ${plan}`,
+    subject: `[Kalfi] New Wise order ${order.ref} — $${order.amountUsd} ${plan}${
+      voucherCode ? ` (${voucherCode})` : ''
+    }`,
     text:
       `New manual/Wise order\n\n` +
-      `Ref: ${order.ref}\nEmail: ${verifiedEmail}\nPlan: ${plan}\nAmount: $${order.amountUsd} USD\n` +
-      `Activate in admin → Wise payments (or Overview queue).\n` +
+      `Ref: ${order.ref}\nEmail: ${verifiedEmail}\nPlan: ${plan}\n` +
+      `Amount: $${order.amountUsd} USD` +
+      (discountUsd
+        ? ` (list $${listUsd}, −$${discountUsd} via ${voucherCode})`
+        : '') +
+      `\nActivate in admin → Wise payments (or Overview queue).\n` +
       `Admin: ${appUrl}/admin/\n`
   })
 
