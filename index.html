@@ -918,6 +918,48 @@
             </div>
           </div>
 
+          <div class="affiliate-bar" id="affiliate-bar" data-reveal>
+            <div class="affiliate-bar__row">
+              <label class="affiliate-bar__field">
+                <span data-i18n="aff.codeLabel">Partner / voucher code</span>
+                <span class="affiliate-bar__input-wrap">
+                  <input
+                    type="text"
+                    id="voucher-code"
+                    maxlength="24"
+                    placeholder="e.g. DINAR15"
+                    autocomplete="off"
+                    spellcheck="false"
+                  />
+                  <button type="button" class="btn btn--line btn--sm" id="voucher-apply" data-i18n="aff.apply">
+                    Apply
+                  </button>
+                </span>
+              </label>
+              <label class="affiliate-bar__field">
+                <span data-i18n="aff.currencyLabel">Show prices in</span>
+                <select id="display-currency" aria-label="Display currency">
+                  <option value="USD">USD $</option>
+                  <option value="IDR">IDR Rp</option>
+                  <option value="SGD">SGD S$</option>
+                  <option value="MYR">MYR RM</option>
+                  <option value="EUR">EUR €</option>
+                  <option value="GBP">GBP £</option>
+                  <option value="AUD">AUD A$</option>
+                  <option value="PHP">PHP ₱</option>
+                  <option value="INR">INR ₹</option>
+                  <option value="BRL">BRL R$</option>
+                  <option value="VND">VND ₫</option>
+                  <option value="JPY">JPY ¥</option>
+                </select>
+              </label>
+            </div>
+            <p class="affiliate-bar__msg" id="voucher-msg" hidden></p>
+            <p class="affiliate-bar__hint" data-i18n="aff.hint">
+              Checkout settles in USD via Wise. Other currencies are estimates for planning.
+            </p>
+          </div>
+
           <div class="plans" data-reveal data-reveal-stagger data-billing="monthly" id="plans">
             <article
               class="plan"
@@ -933,6 +975,7 @@
               </div>
               <div class="plan__price">
                 $<span data-price-main>14</span><span data-price-suffix> / month</span>
+                <span data-price-local hidden></span>
               </div>
               <p class="plan__billed" data-price-billed hidden>Billed $120 / year</p>
               <span class="plan__save" data-price-save hidden>Save ~29%</span>
@@ -971,6 +1014,7 @@
               </div>
               <div class="plan__price">
                 $<span data-price-main>19</span><span data-price-suffix> / month</span>
+                <span data-price-local hidden></span>
               </div>
               <p class="plan__billed" data-price-billed hidden>Billed $180 / year</p>
               <span class="plan__save" data-price-save hidden>Save ~21%</span>
@@ -1000,7 +1044,10 @@
                 <h3>Team</h3>
                 <span class="chip">3 seats</span>
               </div>
-              <div class="plan__price">$49<span> / month</span></div>
+              <div class="plan__price">
+                $<span data-price-main data-fixed-usd="49">49</span><span> / month</span>
+                <span data-price-local hidden></span>
+              </div>
               <p class="plan__desc" data-i18n="plan.team.desc">
                 Three Hosted seats on one invoice — for agencies and interview coaches.
               </p>
@@ -1022,7 +1069,10 @@
                   <h3>Single Session Pass</h3>
                   <span class="chip">One call</span>
                 </div>
-                <div class="plan__price">$9<span> one-time</span></div>
+                <div class="plan__price">
+                  $<span data-price-main data-fixed-usd="9">9</span><span> one-time</span>
+                  <span data-price-local hidden></span>
+                </div>
                 <p class="plan__desc" style="margin-bottom: 0" data-i18n="plan.pass.desc">
                   Only need it for one call? No subscription. Access for 2 hours / 1 session —
                   expires in 30 days if unused.
@@ -1437,9 +1487,9 @@
         }
       }
     </script>
-    <script src="js/i18n.js?v=1.0.9" defer></script>
+    <script src="js/i18n.js?v=1.1.0" defer></script>
     <script src="js/demo.js?v=1.0.8" defer></script>
-    <script src="js/main.js?v=1.0.9" defer></script>
+    <script src="js/main.js?v=1.1.0" defer></script>
     <script
       src="https://chatlm.tech/widget/widget.js"
       data-api-key="c2c4fe3020681f0625b7835c3d7a105ade36199f7bd58a9d32d1e39465d2aafa"
