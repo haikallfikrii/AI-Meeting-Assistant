@@ -526,6 +526,15 @@
 
   /* ---------- Polar billing (OTP gate → API checkout session; Lemon fallback) ---------- */
 
+  function tr(key, vars) {
+    try {
+      if (window.KalfiI18n && typeof window.KalfiI18n.t === 'function') {
+        return window.KalfiI18n.t(key, vars)
+      }
+    } catch (e) {}
+    return key
+  }
+
   var CHECKOUT_PROOF_KEY = 'kalfi_checkout_proof'
   var CHECKOUT_INTENT_KEY = 'kalfi_checkout_intent'
   var ORDER_TRACK_KEY = 'kalfi_order_track'
@@ -596,20 +605,20 @@
   function statusMeta(status) {
     if (status === 'awaiting_payment') {
       return {
-        label: 'Awaiting payment',
-        hint: 'Send Wise with your reference, then tap I’ve paid.'
+        label: tr('status.awaiting'),
+        hint: tr('status.awaiting.hint')
       }
     }
     if (status === 'reported_paid') {
       return {
-        label: 'Under review',
-        hint: 'Queued for activation — usually within a few hours. This page updates automatically.'
+        label: tr('status.review'),
+        hint: tr('status.review.hint')
       }
     }
     if (status === 'activated') {
       return {
-        label: 'Active',
-        hint: 'Plan is live. Claim / Log in in the app with the same email.'
+        label: tr('status.active'),
+        hint: tr('status.active.hint')
       }
     }
     return { label: status || 'Unknown', hint: '' }
@@ -646,15 +655,17 @@
     }
     existing.innerHTML =
       '<div class="order-track-banner__inner">' +
-      '<div><strong>Order ' +
-      (track.ref || '') +
+      '<div><strong>' +
+      tr('track.order', { ref: track.ref || '' }) +
       '</strong> · ' +
       meta.label +
       '<span class="order-track-banner__hint">' +
       meta.hint +
       '</span></div>' +
       '<div class="order-track-banner__actions">' +
-      '<button type="button" class="btn btn--accent btn--sm" data-track-open>View status</button>' +
+      '<button type="button" class="btn btn--accent btn--sm" data-track-open>' +
+      tr('track.view') +
+      '</button>' +
       '<button type="button" class="btn btn--line btn--sm" data-track-dismiss aria-label="Dismiss">×</button>' +
       '</div></div>'
     existing.querySelector('[data-track-open]').onclick = function () {
@@ -873,8 +884,8 @@
       if (note) {
         note.textContent =
           (CONFIG.paymentProvider || 'wise') === 'wise'
-            ? 'Verify your email, pay with Wise (USD), then Claim in the app with the same email — no license key.'
-            : 'Before checkout we verify your email with a one-time code, then open payment with that address locked.'
+            ? tr('checkout.note.wise')
+            : tr('checkout.note.polar')
       }
     }
 
@@ -960,9 +971,9 @@
 
     function progressHtml(status) {
       var steps = [
-        { key: 'awaiting_payment', label: 'Pay' },
-        { key: 'reported_paid', label: 'Review' },
-        { key: 'activated', label: 'Active' }
+        { key: 'awaiting_payment', label: tr('wise.progress.pay') },
+        { key: 'reported_paid', label: tr('wise.progress.review') },
+        { key: 'activated', label: tr('wise.progress.active') }
       ]
       var rank = { awaiting_payment: 0, reported_paid: 1, activated: 2 }
       var cur = rank[status] != null ? rank[status] : 0
@@ -1003,14 +1014,14 @@
       ensureOrderTrackBanner()
       card.innerHTML =
         '<button type="button" class="email-gate__close" data-gate-close aria-label="Close">×</button>' +
-        '<p class="email-gate__eyebrow">Status · Active</p>' +
-        '<h3 id="email-gate-title">You’re in</h3>' +
+        '<p class="email-gate__eyebrow">' + tr('wise.status.active') + '</p>' +
+        '<h3 id="email-gate-title">' + tr('wise.active.title') + '</h3>' +
         progressHtml('activated') +
         '<p class="email-gate__ready">Plan activated for <strong>' +
         email +
         '</strong>. No license key.</p>' +
         '<p class="email-gate__lead">Open Kalfi → Settings → Claim / Log in with that email (set a password first time), then Sync plan.</p>' +
-        '<p style="text-align:center;margin-top:14px"><button type="button" class="btn btn--accent" id="wise-download">Download Kalfi</button></p>'
+        '<p style="text-align:center;margin-top:14px"><button type="button" class="btn btn--accent" id="wise-download">' + tr('wise.download') + '</button></p>'
       bindClose()
       var dl = card.querySelector('#wise-download')
       if (dl) {
@@ -1111,8 +1122,8 @@
 
     card.innerHTML =
       '<button type="button" class="email-gate__close" data-gate-close aria-label="Close">×</button>' +
-      '<p class="email-gate__eyebrow">Status · Awaiting payment</p>' +
-      '<h3 id="email-gate-title">Pay with Wise</h3>' +
+      '<p class="email-gate__eyebrow">' + tr('wise.status.pay') + '</p>' +
+      '<h3 id="email-gate-title">' + tr('wise.title') + '</h3>' +
       progressHtml('awaiting_payment') +
       '<p class="email-gate__lead">Send <strong>$' +
       ins.amountUsd +
@@ -1122,7 +1133,7 @@
       '<p class="email-gate__ref">Payment reference (put in Wise memo):<br><code id="wise-ref">' +
       (ins.ref || '') +
       '</code> ' +
-      '<button type="button" class="btn btn--line btn--sm" id="wise-copy-ref">Copy</button></p>' +
+      '<button type="button" class="btn btn--line btn--sm" id="wise-copy-ref">' + tr('wise.copy') + '</button></p>' +
       '<p class="email-gate__meta">Wise recipient: <strong>' +
       (ins.wiseEmail || 'hello@kalfi.app') +
       '</strong>' +
@@ -1130,7 +1141,7 @@
       '</p>' +
       payLink +
       (steps ? '<ol class="email-gate__steps">' + steps + '</ol>' : '') +
-      '<button type="button" class="btn btn--accent" id="wise-mark-paid">I’ve paid — notify Kalfi</button>' +
+      '<button type="button" class="btn btn--accent" id="wise-mark-paid">' + tr('wise.markPaid') + '</button>' +
       '<p class="email-gate__msg" id="wise-msg" hidden></p>' +
       '<p class="email-gate__hint">After you notify us, status becomes <strong>Under review</strong> here (and by email). Then Claim / Log in in the app with <strong>' +
       email +
@@ -1144,7 +1155,7 @@
         if (navigator.clipboard && navigator.clipboard.writeText) {
           navigator.clipboard.writeText(ref)
         }
-        copyBtn.textContent = 'Copied'
+        copyBtn.textContent = tr('wise.copied')
       })
     }
     var markBtn = card.querySelector('#wise-mark-paid')
@@ -1152,7 +1163,7 @@
     if (markBtn) {
       markBtn.addEventListener('click', function () {
         markBtn.disabled = true
-        markBtn.textContent = 'Sending…'
+        markBtn.textContent = tr('wise.sending')
         fetch(apiBase + '/v1/billing/manual/mark-paid', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -1177,11 +1188,11 @@
               msg.textContent = (result.data && result.data.error) || 'Could not notify.'
             }
             markBtn.disabled = false
-            markBtn.textContent = 'I’ve paid — notify Kalfi'
+            markBtn.textContent = tr('wise.markPaid')
           })
           .catch(function () {
             markBtn.disabled = false
-            markBtn.textContent = 'I’ve paid — notify Kalfi'
+            markBtn.textContent = tr('wise.markPaid')
             if (msg) {
               msg.hidden = false
               msg.textContent = 'Network error — email hello@kalfi.app with your reference.'
@@ -1222,28 +1233,24 @@
     root.innerHTML =
       '<div class="email-gate__card" role="dialog" aria-modal="true" aria-labelledby="email-gate-title">' +
       '<button type="button" class="email-gate__close" data-gate-close aria-label="Close">×</button>' +
-      '<p class="email-gate__eyebrow">Checkout</p>' +
+      '<p class="email-gate__eyebrow">' + tr('gate.eyebrow') + '</p>' +
       '<h3 id="email-gate-title">' +
-      (skipOtp ? 'Continue checkout' : 'Confirm email for payment') +
+      (skipOtp ? tr('gate.title.continue') : tr('gate.title')) +
       '</h3>' +
       '<p class="email-gate__lead">' +
       (skipOtp
-        ? 'Email already verified — continuing as <strong>' +
-          proof.email +
-          '</strong> (no new code for ~48 hours).'
-        : 'We lock this inbox to your <strong>' +
-          planLabel +
-          '</strong> checkout — the same email you will use in the Kalfi app.') +
+        ? tr('gate.lead.skip', { email: proof.email })
+        : tr('gate.lead', { plan: planLabel })) +
       '</p>' +
       '<div data-gate-step="email"' +
       (skipOtp ? ' hidden' : '') +
       '>' +
-      '<label class="email-gate__label">Email' +
+      '<label class="email-gate__label">' + tr('gate.email') +
       '<input type="email" data-gate-email placeholder="you@email.com" autocomplete="email" /></label>' +
       '</div>' +
       '<div class="email-gate__otp" data-gate-step="code" hidden>' +
       '<p class="email-gate__sent" data-gate-sent></p>' +
-      '<label class="email-gate__label">Code from email' +
+      '<label class="email-gate__label">' + tr('gate.code') +
       '<input type="text" inputmode="numeric" maxlength="6" data-gate-code placeholder="6-digit code" autocomplete="one-time-code" /></label>' +
       '<div class="email-gate__codebox" data-gate-codebox hidden>' +
       '<p class="email-gate__codebox-label">Test mode code</p>' +
@@ -1252,11 +1259,15 @@
       '</div>' +
       '<p class="email-gate__msg" data-gate-msg hidden></p>' +
       '<button type="button" class="btn btn--accent email-gate__primary" data-gate-primary>' +
-      (skipOtp ? 'Continue to payment' : 'Send code') +
+      (skipOtp ? tr('gate.continue') : tr('gate.send')) +
       '</button>' +
-      '<button type="button" class="email-gate__resend" data-gate-resend hidden>Resend code</button>' +
+      '<button type="button" class="email-gate__resend" data-gate-resend hidden>' +
+      tr('gate.resend') +
+      '</button>' +
       (skipOtp
-        ? '<button type="button" class="email-gate__resend" data-gate-use-other>Use a different email</button>'
+        ? '<button type="button" class="email-gate__resend" data-gate-use-other>' +
+          tr('gate.otherEmail') +
+          '</button>'
         : '') +
       '</div>'
 
@@ -1321,7 +1332,7 @@
         sentEl.textContent =
           'Code sent to ' + email + '. Paste it below, or tap Verify & continue in the email.'
       }
-      primaryBtn.textContent = 'Continue to payment'
+      primaryBtn.textContent = tr('gate.continue')
       resendBtn.hidden = false
       if (devCode && codeEl) {
         codeEl.value = devCode
@@ -1362,7 +1373,7 @@
     function requestCode() {
       var email = (emailEl && emailEl.value || '').trim()
       if (!email || email.indexOf('@') < 1) {
-        setMsg('Enter a valid email address.', true)
+        setMsg(tr('gate.invalidEmail'), true)
         return
       }
       if (!apiBase) {
@@ -1372,7 +1383,7 @@
       if (busy) return
       busy = true
       primaryBtn.disabled = true
-      primaryBtn.textContent = 'Sending code…'
+      primaryBtn.textContent = tr('gate.sending')
       setMsg('')
       fetch(apiBase + '/v1/auth/otp/request', {
         method: 'POST',
@@ -1401,7 +1412,7 @@
           }
           showCodeStep(email, result.data && result.data.devCode)
           if (!result.data || !result.data.devCode) {
-            setMsg('Check your inbox — tap Verify & continue, or paste the code here.')
+            setMsg(tr('gate.checkInbox'))
           }
         })
         .catch(function (err) {
@@ -1414,8 +1425,8 @@
         .finally(function () {
           busy = false
           primaryBtn.disabled = false
-          if (stage === 'email') primaryBtn.textContent = 'Send code'
-          else primaryBtn.textContent = 'Continue to payment'
+          if (stage === 'email') primaryBtn.textContent = tr('gate.send')
+          else primaryBtn.textContent = tr('gate.continue')
         })
     }
 
@@ -1500,7 +1511,7 @@
         busy = true
         autoPayStarted = true
         primaryBtn.disabled = true
-        primaryBtn.textContent = 'Opening payment…'
+        primaryBtn.textContent = tr('gate.opening')
         setMsg('')
         afterProof(email, cachedProof)
           .catch(function () {
@@ -1510,26 +1521,26 @@
             } catch (e) {}
             stage = 'email'
             if (stepEmail) stepEmail.hidden = false
-            primaryBtn.textContent = 'Send code'
+            primaryBtn.textContent = tr('gate.send')
           })
           .finally(function () {
             busy = false
             primaryBtn.disabled = false
             autoPayStarted = false
-            if (stage === 'verified') primaryBtn.textContent = 'Continue to payment'
+            if (stage === 'verified') primaryBtn.textContent = tr('gate.continue')
           })
         return
       }
 
       var code = (codeEl && codeEl.value || '').trim()
       if (!email || code.length < 6) {
-        setMsg('Paste the 6-digit code from your email.', true)
+        setMsg(tr('gate.pasteCode'), true)
         return
       }
       busy = true
       autoPayStarted = true
       primaryBtn.disabled = true
-      primaryBtn.textContent = 'Opening payment…'
+      primaryBtn.textContent = tr('gate.opening')
       setMsg('')
 
       fetch(apiBase + '/v1/auth/otp/verify', {
@@ -1557,7 +1568,7 @@
         .finally(function () {
           busy = false
           primaryBtn.disabled = false
-          primaryBtn.textContent = 'Continue to payment'
+          primaryBtn.textContent = tr('gate.continue')
           autoPayStarted = false
         })
     }
@@ -1584,7 +1595,7 @@
         cachedProof = ''
         if (stepEmail) stepEmail.hidden = false
         if (stepCode) stepCode.hidden = true
-        primaryBtn.textContent = 'Send code'
+        primaryBtn.textContent = tr('gate.send')
         useOtherBtn.hidden = true
         setMsg('')
         if (emailEl) {
@@ -1623,13 +1634,13 @@
       stage = 'code'
       if (stepEmail) stepEmail.hidden = true
       if (stepCode) stepCode.hidden = false
-      primaryBtn.textContent = 'Continue to payment'
-      setMsg('Verifying code from your email…')
+      primaryBtn.textContent = tr('gate.continue')
+      setMsg(tr('gate.verifying'))
       setTimeout(function () {
         continueToPayment()
       }, 200)
     } else if (skipOtp) {
-      setMsg('Verified recently — no new code needed for ~48 hours.')
+      setMsg(tr('gate.skipMsg'))
       setTimeout(function () {
         continueToPayment()
       }, 350)
@@ -2258,6 +2269,19 @@
     pollOrderTrackBanner()
     setInterval(pollOrderTrackBanner, 20000)
     handleCheckoutDeepLinks()
+    document.addEventListener('kalfi:lang', function () {
+      // Refresh billing note + order banner copy after language change
+      try {
+        var note = document.getElementById('pro-note')
+        if (note && window.CONFIG) {
+          note.textContent =
+            (CONFIG.paymentProvider || 'wise') === 'wise'
+              ? tr('checkout.note.wise')
+              : tr('checkout.note.polar')
+        }
+      } catch (e) {}
+      ensureOrderTrackBanner()
+    })
   }
 
   function handleCheckoutDeepLinks() {
