@@ -5,6 +5,24 @@
   )
   var TOKEN_KEY = 'kalfi_partner_token'
 
+  var METHOD_HINTS = {
+    wise: 'Wise email or @tag',
+    bank: 'Account number',
+    dana: 'Phone number linked to DANA',
+    ovo: 'Phone number linked to OVO',
+    qris: 'Merchant / phone / QR note',
+    duitnow: 'DuitNow ID / phone / QR note'
+  }
+
+  var METHOD_LABELS = {
+    wise: 'Wise',
+    bank: 'Bank transfer',
+    dana: 'DANA',
+    ovo: 'OVO',
+    qris: 'QRIS',
+    duitnow: 'QR DuitNow'
+  }
+
   var loginView = document.getElementById('login-view')
   var appView = document.getElementById('app-view')
   var form = document.getElementById('login-form')
@@ -14,6 +32,7 @@
   var loginBtn = document.getElementById('login-btn')
   var resendBtn = document.getElementById('resend-btn')
   var loginMsg = document.getElementById('login-msg')
+  var payoutForm = document.getElementById('payout-form')
 
   var state = {
     token: localStorage.getItem(TOKEN_KEY) || '',
@@ -59,6 +78,18 @@
     loginMsg.className = 'banner ' + (ok ? 'banner--ok' : 'banner--error')
   }
 
+  function setPayoutMsg(text, ok) {
+    var el = document.getElementById('payout-msg')
+    if (!el) return
+    if (!text) {
+      el.hidden = true
+      return
+    }
+    el.hidden = false
+    el.textContent = text
+    el.className = 'banner ' + (ok ? 'banner--ok' : 'banner--error')
+  }
+
   function fmtDate(ms) {
     if (!ms) return '—'
     try {
@@ -76,6 +107,54 @@
       .replace(/"/g, '&quot;')
   }
 
+  function selectedMethod() {
+    var el = document.querySelector('input[name="payoutMethod"]:checked')
+    return el ? el.value : ''
+  }
+
+  function syncPayoutFields() {
+    var method = selectedMethod() || 'wise'
+    var bankWrap = document.getElementById('payout-bank-wrap')
+    var accountLabel = document.getElementById('payout-account-label')
+    var account = document.getElementById('payout-account')
+    if (bankWrap) bankWrap.hidden = method !== 'bank'
+    if (accountLabel) accountLabel.textContent = METHOD_HINTS[method] || 'Account / phone / email'
+    if (account) account.placeholder = METHOD_HINTS[method] || ''
+  }
+
+  function fillPayoutForm(aff) {
+    aff = aff || {}
+    var method = aff.payoutMethod || 'wise'
+    var radio = document.querySelector('input[name="payoutMethod"][value="' + method + '"]')
+    if (radio) radio.checked = true
+    var account = document.getElementById('payout-account')
+    var name = document.getElementById('payout-name')
+    var bank = document.getElementById('payout-bank')
+    var note = document.getElementById('payout-note')
+    if (account) account.value = aff.payoutAccount || ''
+    if (name) name.value = aff.payoutAccountName || ''
+    if (bank) bank.value = aff.payoutBankName || ''
+    if (note) note.value = aff.payoutNote || ''
+    syncPayoutFields()
+    renderPayoutSummary(aff)
+  }
+
+  function renderPayoutSummary(aff) {
+    var el = document.getElementById('payout-summary')
+    if (!el) return
+    if (!aff || !aff.payoutMethod || !aff.payoutAccount) {
+      el.textContent = 'No payout method saved yet — pick one above so we can pay you.'
+      return
+    }
+    var bits = [
+      METHOD_LABELS[aff.payoutMethod] || aff.payoutMethod,
+      aff.payoutAccountName || null,
+      aff.payoutBankName || null,
+      aff.payoutAccount
+    ].filter(Boolean)
+    el.textContent = 'Saved: ' + bits.join(' · ')
+  }
+
   function showLogin() {
     loginView.hidden = false
     appView.hidden = true
@@ -84,6 +163,78 @@
   function showApp() {
     loginView.hidden = true
     appView.hidden = false
+  }
+
+  function statusLabel(s) {
+    if (s === 'paid') return 'Paid'
+    if (s === 'owed') return 'Owed'
+    return s || '—'
+  }
+
+  function renderSales(conversions) {
+    var meta = document.getElementById('sales-meta')
+    var body = document.getElementById('sales-body')
+    var list = document.getElementById('sales-list')
+    meta.textContent =
+      conversions.length === 0
+        ? 'No sales yet — share your link to get started.'
+        : conversions.length + ' recent conversion' + (conversions.length === 1 ? '' : 's')
+
+    body.innerHTML = conversions.length
+      ? conversions
+          .map(function (c) {
+            return (
+              '<tr><td>' +
+              fmtDate(c.createdAt) +
+              '</td><td>' +
+              escapeHtml(c.customer) +
+              '</td><td>' +
+              escapeHtml(String(c.plan || '').replace(/_/g, ' ')) +
+              '</td><td>$' +
+              c.paidUsd +
+              '</td><td>$' +
+              c.commissionUsd +
+              '</td><td>' +
+              escapeHtml(statusLabel(c.commissionStatus)) +
+              '</td></tr>'
+            )
+          })
+          .join('')
+      : '<tr><td colspan="6" class="muted" style="padding:20px;text-align:center">No conversions yet.</td></tr>'
+
+    if (list) {
+      list.innerHTML = conversions.length
+        ? conversions
+            .map(function (c) {
+              var st = c.commissionStatus || ''
+              return (
+                '<article class="sale-card">' +
+                '<div class="sale-card__when">' +
+                escapeHtml(fmtDate(c.createdAt)) +
+                '</div>' +
+                '<div class="sale-card__row"><span>Customer</span><strong>' +
+                escapeHtml(c.customer) +
+                '</strong></div>' +
+                '<div class="sale-card__row"><span>Plan</span><strong>' +
+                escapeHtml(String(c.plan || '').replace(/_/g, ' ')) +
+                '</strong></div>' +
+                '<div class="sale-card__row"><span>Paid</span><strong>$' +
+                c.paidUsd +
+                '</strong></div>' +
+                '<div class="sale-card__row"><span>Your cut</span><strong>$' +
+                c.commissionUsd +
+                '</strong></div>' +
+                '<div class="sale-card__row"><span>Status</span><span class="sale-card__status' +
+                (st === 'owed' ? ' is-owed' : st === 'paid' ? ' is-paid' : '') +
+                '">' +
+                escapeHtml(statusLabel(st)) +
+                '</span></div>' +
+                '</article>'
+              )
+            })
+            .join('')
+        : '<p class="muted" style="text-align:center;padding:12px 0">No conversions yet.</p>'
+    }
   }
 
   function renderDash(data) {
@@ -115,44 +266,14 @@
     var link = aff.link || 'https://kalfi.app/?ref=' + encodeURIComponent(aff.code || '') + '#pricing'
     document.getElementById('share-link').textContent = link
     document.getElementById('code-chip').innerHTML =
-      'Voucher code: <strong>' + escapeHtml(aff.code || '') + '</strong> · ' +
+      'Voucher code: <strong>' +
+      escapeHtml(aff.code || '') +
+      '</strong> · ' +
       (aff.discountPercent || 0) +
       '% off for customers'
 
-    var meta = document.getElementById('sales-meta')
-    var body = document.getElementById('sales-body')
-    meta.textContent =
-      conversions.length === 0
-        ? 'No sales yet — share your link to get started.'
-        : conversions.length + ' recent conversion' + (conversions.length === 1 ? '' : 's')
-
-    body.innerHTML = conversions.length
-      ? conversions
-          .map(function (c) {
-            var status =
-              c.commissionStatus === 'paid'
-                ? 'Paid'
-                : c.commissionStatus === 'owed'
-                  ? 'Owed'
-                  : c.commissionStatus || '—'
-            return (
-              '<tr><td>' +
-              fmtDate(c.createdAt) +
-              '</td><td>' +
-              escapeHtml(c.customer) +
-              '</td><td>' +
-              escapeHtml(String(c.plan || '').replace(/_/g, ' ')) +
-              '</td><td>$' +
-              c.paidUsd +
-              '</td><td>$' +
-              c.commissionUsd +
-              '</td><td>' +
-              escapeHtml(status) +
-              '</td></tr>'
-            )
-          })
-          .join('')
-      : '<tr><td colspan="6" class="muted" style="padding:20px;text-align:center">No conversions yet.</td></tr>'
+    fillPayoutForm(aff)
+    renderSales(conversions)
   }
 
   function loadMe() {
@@ -174,6 +295,8 @@
         document.getElementById('sales-meta').textContent =
           res.data.message || 'Your partner code is paused.'
         document.getElementById('sales-body').innerHTML = ''
+        var list = document.getElementById('sales-list')
+        if (list) list.innerHTML = ''
         document.getElementById('share-link').textContent = ''
         return true
       }
@@ -284,6 +407,60 @@
       btn.textContent = 'Copy'
     }, 1200)
   })
+
+  document.querySelectorAll('input[name="payoutMethod"]').forEach(function (radio) {
+    radio.addEventListener('change', syncPayoutFields)
+  })
+
+  if (payoutForm) {
+    payoutForm.addEventListener('submit', function (ev) {
+      ev.preventDefault()
+      var method = selectedMethod()
+      var account = (document.getElementById('payout-account').value || '').trim()
+      var name = (document.getElementById('payout-name').value || '').trim()
+      var bank = (document.getElementById('payout-bank').value || '').trim()
+      var note = (document.getElementById('payout-note').value || '').trim()
+      if (!method) {
+        setPayoutMsg('Choose a payout method.', false)
+        return
+      }
+      if (!account) {
+        setPayoutMsg('Enter your account / phone / ID.', false)
+        return
+      }
+      if (method === 'bank' && !bank) {
+        setPayoutMsg('Enter the bank name.', false)
+        return
+      }
+      var saveBtn = document.getElementById('payout-save')
+      saveBtn.disabled = true
+      saveBtn.textContent = 'Saving…'
+      setPayoutMsg('')
+      api('/v1/affiliates/partner/payout', {
+        method: 'POST',
+        auth: true,
+        body: {
+          payoutMethod: method,
+          payoutAccount: account,
+          payoutAccountName: name || undefined,
+          payoutBankName: bank || undefined,
+          payoutNote: note || undefined
+        }
+      })
+        .then(function (res) {
+          if (!res.ok) {
+            setPayoutMsg((res.data && res.data.error) || 'Could not save.', false)
+            return
+          }
+          setPayoutMsg('Saved. We’ll use this for your next commission payout.', true)
+          renderDash(res.data)
+        })
+        .finally(function () {
+          saveBtn.disabled = false
+          saveBtn.textContent = 'Save payout details'
+        })
+    })
+  }
 
   // Deep link from email: ?otp=123456&email=a@b.com
   try {
