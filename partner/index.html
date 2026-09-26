@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>Kalfi Partner</title>
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../admin/admin.css" />
+    <link rel="stylesheet" href="./partner.css" />
+  </head>
+  <body>
+    <div id="login-view" class="login">
+      <form id="login-form" class="login__card">
+        <p class="login__brand">Kalfi Partner</p>
+        <h1>Partner dashboard</h1>
+        <p class="login__lead">
+          Sign in with the email we registered for your affiliate code. We’ll send a one-time code.
+        </p>
+        <label>
+          Partner email
+          <input type="email" id="partner-email" autocomplete="email" required />
+        </label>
+        <div id="code-step" hidden>
+          <label>
+            6-digit code
+            <input
+              type="text"
+              id="partner-code"
+              inputmode="numeric"
+              autocomplete="one-time-code"
+              maxlength="6"
+              placeholder="123456"
+            />
+          </label>
+        </div>
+        <button type="submit" class="btn btn--primary" id="login-btn">Send code</button>
+        <button type="button" class="btn" id="resend-btn" hidden>Resend code</button>
+        <p id="login-msg" class="banner" hidden></p>
+        <p class="muted" style="margin:8px 0 0;font-size:12px">
+          Need a code? Ask hello@kalfi.app ·
+          <a href="https://kalfi.app/" style="color:var(--accent)">kalfi.app</a>
+        </p>
+      </form>
+    </div>
+
+    <div id="app-view" class="app" hidden>
+      <header class="top">
+        <div>
+          <p class="top__brand">Kalfi Partner</p>
+          <h1 id="partner-name">Dashboard</h1>
+          <p id="partner-meta" class="muted"></p>
+        </div>
+        <div class="top__actions">
+          <button type="button" class="btn" id="btn-refresh">Refresh</button>
+          <button type="button" class="btn" id="btn-logout">Sign out</button>
+        </div>
+      </header>
+
+      <main class="partner-main">
+        <div class="cards" id="stats-cards"></div>
+
+        <div class="card link-card">
+          <h2>Your share link</h2>
+          <p class="muted">Customers who use this link (or your code) get your discount.</p>
+          <div class="link-row">
+            <code id="share-link"></code>
+            <button type="button" class="btn btn--primary btn--sm" id="btn-copy-link">Copy</button>
+          </div>
+          <p id="code-chip" class="code-chip"></p>
+        </div>
+
+        <div class="card">
+          <h2>Sales through your code</h2>
+          <p id="sales-meta" class="muted">Loading…</p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>When</th>
+                  <th>Customer</th>
+                  <th>Plan</th>
+                  <th>Paid</th>
+                  <th>Your cut</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="sales-body"></tbody>
+            </table>
+          </div>
+          <p class="muted" style="margin-top:12px;font-size:12px">
+            Customer emails are masked for privacy. Payouts are marked Paid after we send your commission
+            via Wise.
+          </p>
+        </div>
+      </main>
+    </div>
+
+    <script>
+      window.KALFI_PARTNER_API = 'https://api.srv835792.hstgr.cloud'
+    </script>
+    <script src="./partner.js?v=1"></script>
+  </body>
+</html>
