@@ -20,10 +20,14 @@ import {
 import {
   createManualOrder,
   findManualOrder,
+  isCheckoutPayMethod,
+  listCheckoutPayMethods,
   MANUAL_PLAN_PRICES_USD,
+  merchantPayConfig,
   paymentInstructionsFor,
   updateManualOrder,
-  wisePayConfig
+  wisePayConfig,
+  type CheckoutPayMethod
 } from '../lib/manual-orders.js'
 import { applyVoucherToPrice } from '../lib/affiliates.js'
 import { createPolarCheckout, getPolar, polarConfigured } from '../lib/polarService.js'
@@ -70,8 +74,10 @@ const checkoutSchema = z.object({
   embed: z.boolean().optional(),
   /** Affiliate / promo voucher (e.g. DINAR15). */
   voucherCode: z.string().min(2).max(32).optional(),
-  /** Display currency hint only — Wise still settles USD. */
-  displayCurrency: z.string().min(3).max(3).optional()
+  /** Display currency hint only — settlement depends on pay method. */
+  displayCurrency: z.string().min(3).max(3).optional(),
+  /** Buyer payment rail. */
+  payMethod: z.enum(['wise', 'bank', 'dana', 'ovo', 'qris', 'duitnow']).optional()
 })
 
 billingRoutes.post('/checkout', async (c) => {
@@ -242,10 +248,23 @@ billingRoutes.post('/checkout-return', async (c) => {
  * Wise / manual checkout — no license key.
  * After payment + admin activate (or mark-paid queue), user Claims with email in the app.
  */
+billingRoutes.get('/manual/pay-methods', async (c) => {
+  const wise = wisePayConfig()
+  if (!wise.enabled && listCheckoutPayMethods().length === 0) {
+    return c.json({ error: 'Manual checkout is not enabled.' }, 503)
+  }
+  return c.json({
+    ok: true,
+    methods: listCheckoutPayMethods(),
+    note: 'Local rails (DANA/OVO/QRIS/bank/DuitNow) use FX estimates; include your payment reference.'
+  })
+})
+
 billingRoutes.post('/manual/checkout', async (c) => {
   const wise = wisePayConfig()
-  if (!wise.enabled) {
-    return c.json({ error: 'Manual Wise checkout is not enabled.' }, 503)
+  const methods = listCheckoutPayMethods()
+  if (!wise.enabled && methods.length === 0) {
+    return c.json({ error: 'Manual checkout is not enabled.' }, 503)
   }
 
   const body = checkoutSchema.safeParse(await c.req.json())
@@ -261,6 +280,21 @@ billingRoutes.post('/manual/checkout', async (c) => {
   }
   if (verifiedEmail !== body.data.email.trim().toLowerCase()) {
     return c.json({ error: 'Email does not match the verified address.' }, 400)
+  }
+
+  const requested = (body.data.payMethod || 'wise') as CheckoutPayMethod
+  if (!isCheckoutPayMethod(requested)) {
+    return c.json({ error: 'Unsupported payment method.' }, 400)
+  }
+  const available = methods.find((m) => m.id === requested)
+  if (!available) {
+    return c.json(
+      {
+        error: `${requested} is not available right now. Choose another method.`,
+        methods
+      },
+      400
+    )
   }
 
   const plan = body.data.plan
@@ -287,15 +321,17 @@ billingRoutes.post('/manual/checkout', async (c) => {
     discountUsd,
     voucherCode,
     affiliateId,
-    displayCurrency: body.data.displayCurrency?.toUpperCase()
+    displayCurrency: body.data.displayCurrency?.toUpperCase(),
+    payMethod: requested
   })
   const instructions = paymentInstructionsFor(order)
+  const merchant = merchantPayConfig()
 
   upsertLead(verifiedEmail, {
     status: 'checkout_opened',
     plan,
     sku: plan,
-    source: 'wise'
+    source: requested
   })
   recordEvent('manual_order_created', {
     email: verifiedEmail,
@@ -304,6 +340,9 @@ billingRoutes.post('/manual/checkout', async (c) => {
       ref: order.ref,
       plan,
       amountUsd: order.amountUsd,
+      amountLocal: order.amountLocal,
+      localCurrency: order.localCurrency,
+      payMethod: requested,
       listUsd,
       discountUsd,
       voucherCode: voucherCode || null
@@ -315,10 +354,12 @@ billingRoutes.post('/manual/checkout', async (c) => {
     email: verifiedEmail,
     plan,
     amountUsd: order.amountUsd,
+    amountLabel: instructions.amountLabel,
     ref: order.ref,
-    wiseEmail: wise.email,
-    accountName: wise.accountName,
-    payLink: wise.payLink || null
+    payMethodLabel: instructions.payMethodLabel,
+    steps: instructions.steps,
+    payLink: instructions.payLink || null,
+    qrImageUrl: instructions.qrImageUrl || null
   })
   void sendAppEmail({
     to: verifiedEmail,
@@ -327,14 +368,15 @@ billingRoutes.post('/manual/checkout', async (c) => {
     html: userPayMail.html
   })
   void sendAppEmail({
-    to: wise.notifyEmail,
-    subject: `[Kalfi] New Wise order ${order.ref} — $${order.amountUsd} ${plan}${
+    to: merchant.notifyEmail,
+    subject: `[Kalfi] New ${instructions.payMethodLabel} order ${order.ref} — ${instructions.amountLabel} ${plan}${
       voucherCode ? ` (${voucherCode})` : ''
     }`,
     text:
-      `New manual/Wise order\n\n` +
+      `New manual order\n\n` +
       `Ref: ${order.ref}\nEmail: ${verifiedEmail}\nPlan: ${plan}\n` +
-      `Amount: $${order.amountUsd} USD` +
+      `Method: ${instructions.payMethodLabel}\n` +
+      `Amount: ${instructions.amountLabel}` +
       (discountUsd
         ? ` (list $${listUsd}, −$${discountUsd} via ${voucherCode})`
         : '') +
@@ -344,7 +386,7 @@ billingRoutes.post('/manual/checkout', async (c) => {
 
   return c.json({
     ok: true,
-    via: 'wise',
+    via: requested,
     orderId: order.id,
     instructions
   })

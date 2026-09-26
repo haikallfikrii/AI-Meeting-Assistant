@@ -168,16 +168,37 @@ export function wisePaymentInstructionsEmail(input: {
   email: string
   plan: string
   amountUsd: number
+  amountLabel?: string
   ref: string
-  wiseEmail: string
+  payMethodLabel?: string
+  steps?: string[]
+  wiseEmail?: string
   accountName?: string
   payLink?: string | null
+  qrImageUrl?: string | null
 }) {
+  const method = input.payMethodLabel || 'Wise'
+  const amount = input.amountLabel || `$${input.amountUsd} USD`
   const pay = input.payLink
-    ? `<p style="margin:16px 0 0"><a href="${input.payLink}" style="color:${ACCENT};font-weight:600;text-decoration:none">Open Wise payment link →</a></p>`
+    ? `<p style="margin:16px 0 0"><a href="${input.payLink}" style="color:${ACCENT};font-weight:600;text-decoration:none">Open payment link →</a></p>`
     : ''
+  const qr = input.qrImageUrl
+    ? `<p style="margin:16px 0 0;text-align:center"><img src="${escapeHtml(input.qrImageUrl)}" alt="QRIS" width="220" style="max-width:220px;border-radius:12px;border:1px solid ${LINE}" /></p>`
+    : ''
+  const stepsHtml = (input.steps && input.steps.length
+    ? input.steps
+    : [
+        `Pay ${amount} via ${method}${input.wiseEmail ? ` to ${input.wiseEmail}` : ''}.`,
+        `Paste reference ${input.ref} in the note/memo.`,
+        `Back on the site, tap I’ve paid.`,
+        `After we confirm, open the app → Claim / Log in with ${input.email}.`
+      ]
+  )
+    .map((s) => `<li style="margin-bottom:8px">${escapeHtml(s)}</li>`)
+    .join('')
+
   const bodyHtml = `
-    <p style="margin:0 0 14px">You’re almost set. Send <strong style="color:${FG}">$${input.amountUsd} USD</strong> for <strong style="color:${FG}">${escapeHtml(planLabel(input.plan))}</strong>.</p>
+    <p style="margin:0 0 14px">You’re almost set. Pay <strong style="color:${FG}">${escapeHtml(amount)}</strong> for <strong style="color:${FG}">${escapeHtml(planLabel(input.plan))}</strong> via <strong style="color:${FG}">${escapeHtml(method)}</strong>.</p>
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 14px;background:${INK};border:1px solid ${LINE};border-radius:12px">
       <tr><td style="padding:14px 16px">
         <p style="margin:0 0 4px;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#6c7688">Payment reference</p>
@@ -185,15 +206,13 @@ export function wisePaymentInstructionsEmail(input: {
       </td></tr>
     </table>
     <ol style="margin:0;padding-left:18px;color:${FG_DIM}">
-      <li style="margin-bottom:8px">Pay via Wise to <strong style="color:${FG}">${escapeHtml(input.wiseEmail)}</strong>${input.accountName ? ` (${escapeHtml(input.accountName)})` : ''}.</li>
-      <li style="margin-bottom:8px">Paste the reference above in the Wise memo.</li>
-      <li style="margin-bottom:8px">Back on the site, tap <em>I’ve paid</em>.</li>
-      <li>After we confirm, open the app → Claim / Log in with <strong style="color:${FG}">${escapeHtml(input.email)}</strong>. No license key.</li>
+      ${stepsHtml}
     </ol>
+    ${qr}
     ${pay}
   `
   return renderEmail({
-    title: `Pay $${input.amountUsd} via Wise`,
+    title: `Pay ${amount} via ${method}`,
     preview: `Reference ${input.ref}`,
     bodyHtml,
     cta: { label: 'Open kalfi.app', url: `${SITE}/#pricing` }

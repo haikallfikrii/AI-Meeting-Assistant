@@ -127,7 +127,7 @@
       'foot.source': 'Source',
       'foot.contact': 'Contact',
       'checkout.note.wise':
-        'Verify your email, pay with Wise (USD), then Claim in the app with the same email — no license key.',
+        'Verify your email, pay with Wise / bank / DANA / OVO / QRIS / DuitNow, then Claim in the app with the same email — no license key.',
       'checkout.note.polar':
         'Before checkout we verify your email with a one-time code, then open payment with that address locked.',
       'gate.eyebrow': 'Checkout',
@@ -302,7 +302,7 @@
       'foot.source': 'Source',
       'foot.contact': 'Kontak',
       'checkout.note.wise':
-        'Verifikasi email, bayar via Wise (USD), lalu Claim di app dengan email yang sama — tanpa license key.',
+        'Verifikasi email, bayar via Wise / transfer bank / DANA / OVO / QRIS / DuitNow, lalu Claim di app dengan email yang sama — tanpa license key.',
       'checkout.note.polar':
         'Sebelum checkout kami verifikasi email dengan kode sekali pakai, lalu buka pembayaran dengan alamat itu terkunci.',
       'gate.eyebrow': 'Checkout',

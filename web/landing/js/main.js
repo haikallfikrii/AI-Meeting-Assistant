@@ -1095,6 +1095,8 @@
       ref: ins.ref,
       plan: ins.plan,
       amountUsd: ins.amountUsd,
+      amountLabel: ins.amountLabel,
+      payMethod: ins.payMethod || 'wise',
       wiseEmail: ins.wiseEmail,
       accountName: ins.accountName,
       payLink: ins.payLink || null,
@@ -1265,20 +1267,53 @@
     var payLink = ins.payLink
       ? '<p style="text-align:center;margin:0 0 12px"><a class="btn btn--accent btn--sm" href="' +
         ins.payLink +
-        '" target="_blank" rel="noopener">Open Wise payment</a></p>'
+        '" target="_blank" rel="noopener">Open payment link</a></p>'
+      : ''
+    var qrImg = ins.qrImageUrl
+      ? '<p style="text-align:center;margin:0 0 12px"><img class="pay-qr" src="' +
+        ins.qrImageUrl +
+        '" alt="QR code" width="200" height="200" /></p>'
       : ''
     var steps = (ins.steps || []).map(function (s) {
       return '<li>' + s + '</li>'
     }).join('')
+    var amountText = ins.amountLabel || '$' + ins.amountUsd + ' USD'
+    var methodLabel = ins.payMethodLabel || 'Wise'
+    var destMeta = ''
+    if (ins.payMethod === 'bank' && ins.bankName) {
+      destMeta =
+        '<p class="email-gate__meta">Bank: <strong>' +
+        ins.bankName +
+        '</strong> · ' +
+        (ins.destination || '') +
+        (ins.accountName ? ' · ' + ins.accountName : '') +
+        '</p>'
+    } else if (ins.destination) {
+      destMeta =
+        '<p class="email-gate__meta">' +
+        methodLabel +
+        ': <strong>' +
+        ins.destination +
+        '</strong>' +
+        (ins.accountName ? ' · ' + ins.accountName : '') +
+        '</p>'
+    } else {
+      destMeta =
+        '<p class="email-gate__meta">Wise recipient: <strong>' +
+        (ins.wiseEmail || 'hello@kalfi.app') +
+        '</strong>' +
+        (ins.accountName ? ' · ' + ins.accountName : '') +
+        '</p>'
+    }
 
     card.innerHTML =
       '<button type="button" class="email-gate__close" data-gate-close aria-label="Close">×</button>' +
       '<p class="email-gate__eyebrow">' + tr('wise.status.pay') + '</p>' +
-      '<h3 id="email-gate-title">' + tr('wise.title') + '</h3>' +
+      '<h3 id="email-gate-title">Pay with ' + methodLabel + '</h3>' +
       progressHtml('awaiting_payment') +
-      '<p class="email-gate__lead">Send <strong>$' +
-      ins.amountUsd +
-      ' USD</strong> for <strong>' +
+      '<p class="email-gate__lead">Send <strong>' +
+      amountText +
+      '</strong> for <strong>' +
       String(ins.plan || '').replace(/_/g, ' ') +
       '</strong>' +
       (ins.voucherCode
@@ -1288,15 +1323,12 @@
           ')</span>'
         : '') +
       '.</p>' +
-      '<p class="email-gate__ref">Payment reference (put in Wise memo):<br><code id="wise-ref">' +
+      '<p class="email-gate__ref">Payment reference (put in note/memo):<br><code id="wise-ref">' +
       (ins.ref || '') +
       '</code> ' +
       '<button type="button" class="btn btn--line btn--sm" id="wise-copy-ref">' + tr('wise.copy') + '</button></p>' +
-      '<p class="email-gate__meta">Wise recipient: <strong>' +
-      (ins.wiseEmail || 'hello@kalfi.app') +
-      '</strong>' +
-      (ins.accountName ? ' · ' + ins.accountName : '') +
-      '</p>' +
+      destMeta +
+      qrImg +
       payLink +
       (steps ? '<ol class="email-gate__steps">' + steps + '</ol>' : '') +
       '<button type="button" class="btn btn--accent" id="wise-mark-paid">' + tr('wise.markPaid') + '</button>' +
@@ -1503,10 +1535,11 @@
       if (codeEl) codeEl.focus()
     }
 
-    function startCheckoutWithProof(email, emailProof) {
+    function startCheckoutWithProof(email, emailProof, payMethod) {
       var provider = CONFIG.paymentProvider || 'wise'
       var path =
         provider === 'polar' ? '/v1/billing/checkout' : '/v1/billing/manual/checkout'
+      var currencySel = document.getElementById('display-currency')
       return fetch(apiBase + path, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1516,7 +1549,9 @@
           emailProof: emailProof,
           embed: Boolean(opts.embed),
           voucherCode: affiliateState.code || undefined,
-          displayCurrency: affiliateState.currency || 'USD',
+          displayCurrency:
+            (currencySel && currencySel.value) || affiliateState.currency || 'USD',
+          payMethod: payMethod || 'wise',
           successUrl:
             'https://kalfi.app/?checkout=success&plan=' +
             encodeURIComponent(opts.sku) +
@@ -1636,30 +1671,118 @@
     }
 
     function afterProof(email, emailProof) {
-      return startCheckoutWithProof(email, emailProof).then(function (result) {
-        if (!result) return
-        if (result.provider !== 'polar') {
-          if (!result.ok || !result.data || !result.data.instructions) {
-            setMsg((result.data && result.data.error) || 'Could not create Wise order.', true)
+      var provider = CONFIG.paymentProvider || 'wise'
+      if (provider === 'polar') {
+        return startCheckoutWithProof(email, emailProof, 'wise').then(function (result) {
+          if (!result) return
+          var url =
+            result.ok && result.data && result.data.url ? result.data.url : opts.fallback
+          if (!url || isPlaceholderCheckout(url)) {
+            setMsg('Checkout is not ready for this plan yet.', true)
             return
           }
-          showWiseInstructions(root, result.data, email)
-          return
+          if (url.indexOf('checkout') !== -1 && url.indexOf('email') === -1) {
+            url +=
+              (url.indexOf('?') >= 0 ? '&' : '?') +
+              'checkout[email]=' +
+              encodeURIComponent(email)
+          }
+          window.location.href = url
+        })
+      }
+
+      var card = root.querySelector('.email-gate__card')
+      if (!card) return Promise.resolve()
+
+      function paintPicker(methods) {
+        var list = methods && methods.length ? methods : [{ id: 'wise', label: 'Wise', hint: 'USD' }]
+        var radios = list
+          .map(function (m, i) {
+            return (
+              '<label class="pay-method-opt">' +
+              '<input type="radio" name="payMethod" value="' +
+              m.id +
+              '"' +
+              (i === 0 ? ' checked' : '') +
+              ' />' +
+              '<span><strong>' +
+              m.label +
+              '</strong><small>' +
+              (m.hint || m.currency || '') +
+              '</small></span></label>'
+            )
+          })
+          .join('')
+        card.innerHTML =
+          '<button type="button" class="email-gate__close" data-gate-close aria-label="Close">×</button>' +
+          '<p class="email-gate__eyebrow">Checkout</p>' +
+          '<h3 id="email-gate-title">How do you want to pay?</h3>' +
+          '<p class="email-gate__lead">Choose Wise, bank transfer, DANA, OVO, QRIS, or DuitNow — whichever is available.</p>' +
+          '<div class="pay-method-grid">' +
+          radios +
+          '</div>' +
+          '<button type="button" class="btn btn--accent email-gate__primary" id="pay-method-continue">Continue</button>' +
+          '<p class="email-gate__msg" id="pay-method-msg" hidden></p>'
+
+        var closeBtn = card.querySelector('[data-gate-close]')
+        if (closeBtn) {
+          closeBtn.addEventListener('click', function () {
+            root.remove()
+          })
         }
-        var url =
-          result.ok && result.data && result.data.url ? result.data.url : opts.fallback
-        if (!url || isPlaceholderCheckout(url)) {
-          setMsg('Checkout is not ready for this plan yet.', true)
-          return
+        var cont = card.querySelector('#pay-method-continue')
+        var msg = card.querySelector('#pay-method-msg')
+        if (cont) {
+          cont.addEventListener('click', function () {
+            var picked = card.querySelector('input[name="payMethod"]:checked')
+            var method = picked ? picked.value : 'wise'
+            cont.disabled = true
+            cont.textContent = tr('gate.opening') || 'Opening…'
+            if (msg) {
+              msg.hidden = true
+            }
+            startCheckoutWithProof(email, emailProof, method)
+              .then(function (result) {
+                if (!result || !result.ok || !result.data || !result.data.instructions) {
+                  cont.disabled = false
+                  cont.textContent = 'Continue'
+                  if (msg) {
+                    msg.hidden = false
+                    msg.className = 'email-gate__msg is-error'
+                    msg.textContent =
+                      (result && result.data && result.data.error) ||
+                      'Could not create order.'
+                  }
+                  return
+                }
+                showWiseInstructions(root, result.data, email)
+              })
+              .catch(function () {
+                cont.disabled = false
+                cont.textContent = 'Continue'
+                if (msg) {
+                  msg.hidden = false
+                  msg.className = 'email-gate__msg is-error'
+                  msg.textContent = 'Network error — try again.'
+                }
+              })
+          })
         }
-        if (url.indexOf('checkout') !== -1 && url.indexOf('email') === -1) {
-          url +=
-            (url.indexOf('?') >= 0 ? '&' : '?') +
-            'checkout[email]=' +
-            encodeURIComponent(email)
-        }
-        window.location.href = url
-      })
+      }
+
+      paintPicker([{ id: 'wise', label: 'Wise', hint: 'USD via Wise' }])
+      return fetch(apiBase + '/v1/billing/manual/pay-methods')
+        .then(function (res) {
+          return res.json().then(function (data) {
+            return { ok: res.ok, data: data }
+          })
+        })
+        .then(function (result) {
+          if (result.ok && result.data && result.data.methods && result.data.methods.length) {
+            paintPicker(result.data.methods)
+          }
+        })
+        .catch(function () {})
     }
 
     function continueToPayment() {
