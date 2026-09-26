@@ -228,6 +228,7 @@
           escapeHtml(o.plan) +
           '</td><td>$' +
           o.amountUsd +
+          (o.payMethod ? ' · ' + escapeHtml(String(o.payMethod).toUpperCase()) : '') +
           (o.voucherCode
             ? ' <span class="muted" style="font-size:11px">(' +
               escapeHtml(o.voucherCode) +
