@@ -7,6 +7,7 @@ import {
   type SingleSessionState,
   type SubStatus,
   billingIntervalOf,
+  canUseHostedAi,
   createUnusedSingleSession,
   evaluateSingleSession,
   featureTierOf,
@@ -15,6 +16,7 @@ import {
   startSingleSession,
   consumeSingleSession
 } from './entitlement.js'
+import { proTokenCap } from './config.js'
 
 export type { BillingPlan, SubStatus, SingleSessionState }
 export type Plan = BillingPlan
@@ -48,6 +50,15 @@ export interface User {
   suspended?: boolean
   usageMonth: string
   tokensUsed: number
+  /** Hosted AI chat/STT calls this usageMonth */
+  aiRequestCount?: number
+  /** Last hosted AI request timestamp */
+  lastAiAt?: number
+  /**
+   * Optional per-user monthly token cap. When unset, PRO_MONTHLY_TOKEN_SOFT_CAP applies.
+   * Set to 0 to block hosted AI for this user without suspending the account.
+   */
+  tokenCapOverride?: number | null
   createdAt: number
   updatedAt: number
 }
@@ -106,6 +117,26 @@ export function createId(prefix: string): string {
 
 function monthKey(d = new Date()): string {
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`
+}
+
+export function currentMonthKey(): string {
+  return monthKey()
+}
+
+export function currentMonthTokens(user: User): number {
+  return user.usageMonth === monthKey() ? user.tokensUsed || 0 : 0
+}
+
+export function currentMonthRequests(user: User): number {
+  return user.usageMonth === monthKey() ? user.aiRequestCount || 0 : 0
+}
+
+/** Effective monthly soft cap for a user (override or global env). */
+export function effectiveTokenCap(user: User): number {
+  if (typeof user.tokenCapOverride === 'number' && Number.isFinite(user.tokenCapOverride)) {
+    return Math.max(0, Math.floor(user.tokenCapOverride))
+  }
+  return proTokenCap()
 }
 
 export function findUserByEmail(email: string): User | null {
@@ -192,8 +223,24 @@ export function bumpUsage(id: string, tokens: number): User | null {
   const user = findUserById(id)
   if (!user) return null
   const month = monthKey()
-  const tokensUsed = user.usageMonth === month ? user.tokensUsed + tokens : tokens
-  return updateUser(id, { usageMonth: month, tokensUsed })
+  const sameMonth = user.usageMonth === month
+  const tokensUsed = sameMonth ? user.tokensUsed + tokens : tokens
+  const patch: Partial<User> = { usageMonth: month, tokensUsed }
+  if (tokens > 0) {
+    patch.aiRequestCount = sameMonth ? (user.aiRequestCount || 0) + 1 : 1
+    patch.lastAiAt = Date.now()
+  } else if (!sameMonth) {
+    patch.aiRequestCount = 0
+  }
+  return updateUser(id, patch)
+}
+
+export function resetUsage(id: string): User | null {
+  return updateUser(id, {
+    usageMonth: monthKey(),
+    tokensUsed: 0,
+    aiRequestCount: 0
+  })
 }
 
 export function grantSingleSessionPass(
@@ -258,6 +305,9 @@ export function publicUser(user: User) {
   const plan = normalizeLegacyPlan(user.plan)
   const featureTier = featureTierOf(plan)
   const paid = hasPaidLicense(plan, user.subStatus, singleSession)
+  const tokensUsed = currentMonthTokens(user)
+  const tokenCap = effectiveTokenCap(user)
+  const aiRequestCount = currentMonthRequests(user)
   return {
     id: user.id,
     email: user.email,
@@ -265,8 +315,16 @@ export function publicUser(user: User) {
     featureTier,
     billingInterval: billingIntervalOf(plan),
     subStatus: user.subStatus,
-    usageMonth: user.usageMonth,
-    tokensUsed: user.tokensUsed,
+    usageMonth: monthKey(),
+    tokensUsed,
+    aiRequestCount,
+    lastAiAt: user.lastAiAt || null,
+    tokenCap,
+    tokenCapOverride:
+      typeof user.tokenCapOverride === 'number' ? user.tokenCapOverride : null,
+    tokensRemaining: Math.max(0, tokenCap - tokensUsed),
+    usagePercent: tokenCap > 0 ? Math.min(100, Math.round((tokensUsed / tokenCap) * 100)) : 100,
+    hostedAiEligible: canUseHostedAi(plan, user.subStatus, singleSession),
     singleSession: singleSession
       ? {
           status: singleSession.status,
@@ -297,6 +355,7 @@ export function listUsers(opts?: {
   q?: string
   plan?: string
   status?: string
+  sort?: string
   limit?: number
   offset?: number
 }): { users: User[]; total: number } {
@@ -323,7 +382,14 @@ export function listUsers(opts?: {
       users = users.filter((u) => u.subStatus === opts.status)
     }
   }
-  users.sort((a, b) => b.updatedAt - a.updatedAt)
+  const sort = opts?.sort || 'updated'
+  if (sort === 'tokens') {
+    users.sort((a, b) => currentMonthTokens(b) - currentMonthTokens(a))
+  } else if (sort === 'lastAi') {
+    users.sort((a, b) => (b.lastAiAt || 0) - (a.lastAiAt || 0))
+  } else {
+    users.sort((a, b) => b.updatedAt - a.updatedAt)
+  }
   const total = users.length
   const offset = Math.max(0, opts?.offset || 0)
   const limit = Math.min(200, Math.max(1, opts?.limit || 50))
@@ -373,7 +439,69 @@ export function adminOverview() {
     needsPassword,
     newThisWeek,
     byPlan,
-    byStatus
+    byStatus,
+    usage: usageOverview(users)
+  }
+}
+
+export function usageOverview(usersInput?: User[]) {
+  const users = usersInput || read().users.map(hydrateUser)
+  const month = monthKey()
+  const globalCap = proTokenCap()
+  let totalTokensThisMonth = 0
+  let totalRequestsThisMonth = 0
+  let hostedEligible = 0
+  let usersWithUsage = 0
+  let usersNearCap = 0
+  let usersAtCap = 0
+  let activeLast24h = 0
+  let activeLast7d = 0
+  const dayAgo = Date.now() - 24 * 60 * 60 * 1000
+  const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
+
+  const ranked = users.map((u) => {
+    const tokensUsed = currentMonthTokens(u)
+    const aiRequestCount = currentMonthRequests(u)
+    const tokenCap = effectiveTokenCap(u)
+    const eligible = canUseHostedAi(u.plan, u.subStatus, u.singleSession)
+    if (eligible) hostedEligible += 1
+    totalTokensThisMonth += tokensUsed
+    totalRequestsThisMonth += aiRequestCount
+    if (tokensUsed > 0) usersWithUsage += 1
+    const pct = tokenCap > 0 ? tokensUsed / tokenCap : tokensUsed > 0 ? 1 : 0
+    if (pct >= 1) usersAtCap += 1
+    else if (pct >= 0.8) usersNearCap += 1
+    if (u.lastAiAt && u.lastAiAt >= dayAgo) activeLast24h += 1
+    if (u.lastAiAt && u.lastAiAt >= weekAgo) activeLast7d += 1
+    return {
+      id: u.id,
+      email: u.email,
+      plan: normalizeLegacyPlan(u.plan),
+      subStatus: u.subStatus,
+      tokensUsed,
+      aiRequestCount,
+      tokenCap,
+      usagePercent: tokenCap > 0 ? Math.min(100, Math.round((tokensUsed / tokenCap) * 100)) : 100,
+      lastAiAt: u.lastAiAt || null,
+      hostedAiEligible: eligible,
+      suspended: Boolean(u.suspended) || u.subStatus === 'suspended'
+    }
+  })
+
+  ranked.sort((a, b) => b.tokensUsed - a.tokensUsed)
+
+  return {
+    month,
+    globalCap,
+    totalTokensThisMonth,
+    totalRequestsThisMonth,
+    hostedEligible,
+    usersWithUsage,
+    usersNearCap,
+    usersAtCap,
+    activeLast24h,
+    activeLast7d,
+    topUsers: ranked.filter((u) => u.tokensUsed > 0 || u.hostedAiEligible).slice(0, 50)
   }
 }
 

@@ -1,7 +1,12 @@
 import { Hono } from 'hono'
 import { z } from 'zod'
-import { env, proTokenCap } from '../lib/config.js'
-import { bumpUsage, publicUser } from '../lib/store.js'
+import { env } from '../lib/config.js'
+import {
+  bumpUsage,
+  currentMonthTokens,
+  effectiveTokenCap,
+  publicUser
+} from '../lib/store.js'
 import { requireAuth, requirePro, type AppVars } from '../middleware/auth.js'
 
 export const aiRoutes = new Hono<{ Variables: AppVars }>()
@@ -25,8 +30,18 @@ aiRoutes.post('/chat', async (c) => {
   if (!key) return c.json({ error: 'Hosted AI not configured' }, 503)
 
   const user = c.get('user')
-  if (user.tokensUsed >= proTokenCap()) {
-    return c.json({ error: 'Monthly Pro quota reached', code: 'QUOTA' }, 429)
+  const used = currentMonthTokens(user)
+  const cap = effectiveTokenCap(user)
+  if (used >= cap || cap <= 0) {
+    return c.json(
+      {
+        error: 'Monthly Pro quota reached',
+        code: 'QUOTA',
+        tokensUsed: used,
+        tokenCap: cap
+      },
+      429
+    )
   }
 
   const body = chatSchema.safeParse(await c.req.json())
@@ -61,13 +76,12 @@ aiRoutes.post('/chat', async (c) => {
   }
 
   const tokens = data.usage?.total_tokens || 800
-  bumpUsage(user.id, tokens)
-  const refreshed = c.get('user')
+  const updated = bumpUsage(user.id, tokens)
 
   return c.json({
     content: data.choices?.[0]?.message?.content || '',
     usage: data.usage,
-    user: publicUser(bumpUsage(refreshed.id, 0) || refreshed)
+    user: publicUser(updated || user)
   })
 })
 
@@ -82,8 +96,18 @@ aiRoutes.post('/transcribe', async (c) => {
   if (!key) return c.json({ error: 'Hosted AI not configured' }, 503)
 
   const user = c.get('user')
-  if (user.tokensUsed >= proTokenCap()) {
-    return c.json({ error: 'Monthly Pro quota reached', code: 'QUOTA' }, 429)
+  const used = currentMonthTokens(user)
+  const cap = effectiveTokenCap(user)
+  if (used >= cap || cap <= 0) {
+    return c.json(
+      {
+        error: 'Monthly Pro quota reached',
+        code: 'QUOTA',
+        tokensUsed: used,
+        tokenCap: cap
+      },
+      429
+    )
   }
 
   const body = sttSchema.safeParse(await c.req.json())
@@ -114,6 +138,6 @@ aiRoutes.post('/transcribe', async (c) => {
     return c.json({ error: data.error?.message || 'STT failed' }, 502)
   }
 
-  bumpUsage(user.id, 1200)
-  return c.json({ text: data.text || '' })
+  const updated = bumpUsage(user.id, 1200)
+  return c.json({ text: data.text || '', user: publicUser(updated || user) })
 })

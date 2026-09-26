@@ -10,6 +10,7 @@ export type AdminEventType =
   | 'admin_suspend'
   | 'admin_unsuspend'
   | 'admin_delete_user'
+  | 'admin_reset_usage'
   | 'lemon_order'
   | 'lemon_subscription'
   | 'polar_order'

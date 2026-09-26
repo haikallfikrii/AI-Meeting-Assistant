@@ -7,14 +7,17 @@ import { listLeads, markLeadSubscribed } from '../lib/leads.js'
 import {
   adminOverview,
   createUser,
+  currentMonthKey,
   deleteUser,
   findUserByEmail,
   findUserById,
   grantSingleSessionPass,
   listUsers,
   publicUser,
+  resetUsage,
   setUserPassword,
-  updateUser
+  updateUser,
+  usageOverview
 } from '../lib/store.js'
 import { sendAppEmail } from '../lib/mail.js'
 import { planActivatedEmail } from '../lib/email-templates.js'
@@ -77,14 +80,20 @@ adminRoutes.get('/users', async (c) => {
   const q = c.req.query('q') || ''
   const plan = c.req.query('plan') || 'all'
   const status = c.req.query('status') || 'all'
+  const sort = c.req.query('sort') || 'updated'
   const limit = Number(c.req.query('limit') || '50')
   const offset = Number(c.req.query('offset') || '0')
-  const { users, total } = listUsers({ q, plan, status, limit, offset })
+  const { users, total } = listUsers({ q, plan, status, sort, limit, offset })
   return c.json({
     ok: true,
     total,
     users: users.map(publicUser)
   })
+})
+
+adminRoutes.get('/usage', async (c) => {
+  if (!requireAdmin(c)) return c.json({ error: 'Forbidden' }, 403)
+  return c.json({ ok: true, usage: usageOverview() })
 })
 
 adminRoutes.get('/users/:id', async (c) => {
@@ -143,7 +152,14 @@ const patchSchema = z.object({
   suspended: z.boolean().optional(),
   adminNote: z.string().max(500).optional(),
   password: z.string().min(8).max(128).optional(),
-  needsPasswordSetup: z.boolean().optional()
+  needsPasswordSetup: z.boolean().optional(),
+  /** Set absolute tokens used this month (admin correction). */
+  tokensUsed: z.number().int().min(0).max(500_000_000).optional(),
+  /**
+   * Per-user monthly token cap. null clears override (use global).
+   * 0 blocks hosted AI for this user.
+   */
+  tokenCapOverride: z.number().int().min(0).max(500_000_000).nullable().optional()
 })
 
 adminRoutes.patch('/users/:id', async (c) => {
@@ -164,6 +180,15 @@ adminRoutes.patch('/users/:id', async (c) => {
   if (typeof body.data.adminNote === 'string') patch.adminNote = body.data.adminNote
   if (typeof body.data.needsPasswordSetup === 'boolean') {
     patch.needsPasswordSetup = body.data.needsPasswordSetup
+  }
+  if (typeof body.data.tokensUsed === 'number') {
+    patch.usageMonth = currentMonthKey()
+    patch.tokensUsed = body.data.tokensUsed
+  }
+  if (body.data.tokenCapOverride === null) {
+    patch.tokenCapOverride = null
+  } else if (typeof body.data.tokenCapOverride === 'number') {
+    patch.tokenCapOverride = body.data.tokenCapOverride
   }
   if (typeof body.data.suspended === 'boolean') {
     patch.suspended = body.data.suspended
@@ -188,6 +213,20 @@ adminRoutes.patch('/users/:id', async (c) => {
     meta: body.data
   })
 
+  return c.json({ ok: true, user: publicUser(updated) })
+})
+
+adminRoutes.post('/users/:id/reset-usage', async (c) => {
+  if (!requireAdmin(c)) return c.json({ error: 'Forbidden' }, 403)
+  const user = findUserById(c.req.param('id'))
+  if (!user) return c.json({ error: 'User not found' }, 404)
+  const updated = resetUsage(user.id)
+  if (!updated) return c.json({ error: 'Reset failed' }, 500)
+  recordEvent('admin_reset_usage', {
+    email: updated.email,
+    userId: updated.id,
+    meta: { previousTokens: user.tokensUsed, previousMonth: user.usageMonth }
+  })
   return c.json({ ok: true, user: publicUser(updated) })
 })
 

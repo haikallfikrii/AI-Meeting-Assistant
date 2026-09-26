@@ -43,6 +43,7 @@
 
       <nav class="nav">
         <button type="button" class="nav__btn is-active" data-tab="overview">Overview</button>
+        <button type="button" class="nav__btn" data-tab="usage">Usage</button>
         <button type="button" class="nav__btn" data-tab="users">Users</button>
         <button type="button" class="nav__btn" data-tab="leads">Leads</button>
         <button type="button" class="nav__btn" data-tab="payments">
@@ -88,6 +89,33 @@
           </div>
         </section>
 
+        <section id="tab-usage" class="panel" hidden>
+          <div class="cards" id="usage-cards"></div>
+          <p class="muted" id="usage-meta" style="margin:4px 0 12px"></p>
+          <div class="card">
+            <div class="toolbar" style="margin-bottom:12px">
+              <h2 style="margin:0;flex:1">Hosted AI consumption</h2>
+              <button type="button" class="btn btn--primary" id="btn-refresh-usage">Refresh</button>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Email</th>
+                    <th>Plan</th>
+                    <th>Tokens</th>
+                    <th>Quota</th>
+                    <th>Requests</th>
+                    <th>Last AI</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="usage-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
         <section id="tab-users" class="panel" hidden>
           <div class="toolbar">
             <input type="search" id="user-q" placeholder="Search email, id, Lemon…" />
@@ -110,6 +138,11 @@
               <option value="expired">expired</option>
               <option value="past_due">past_due</option>
             </select>
+            <select id="user-sort">
+              <option value="updated">Sort: updated</option>
+              <option value="tokens">Sort: tokens used</option>
+              <option value="lastAi">Sort: last AI</option>
+            </select>
             <button type="button" class="btn btn--primary" id="btn-search-users">Search</button>
           </div>
           <p id="users-meta" class="muted"></p>
@@ -120,6 +153,7 @@
                   <th>Email</th>
                   <th>Plan</th>
                   <th>Status</th>
+                  <th>Tokens</th>
                   <th>Updated</th>
                   <th></th>
                 </tr>
@@ -324,6 +358,6 @@
       </div>
     </aside>
 
-    <script src="./admin.js?v=aff3"></script>
+    <script src="./admin.js?v=usage1"></script>
   </body>
 </html>
