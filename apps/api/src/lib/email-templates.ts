@@ -109,7 +109,7 @@ export function renderEmail(opts: {
 }
 
 export function otpEmail(
-  purpose: 'checkout' | 'reset' | 'register',
+  purpose: 'checkout' | 'reset' | 'register' | 'partner',
   code: string,
   opts?: { email?: string }
 ) {
@@ -118,26 +118,32 @@ export function otpEmail(
       ? 'reset your password'
       : purpose === 'checkout'
         ? 'continue to checkout'
-        : 'create your account'
+        : purpose === 'partner'
+          ? 'open your partner dashboard'
+          : 'create your account'
   const title =
     purpose === 'reset'
       ? 'Reset your Kalfi password'
       : purpose === 'checkout'
         ? 'Your Kalfi checkout code'
-        : 'Verify your email for Kalfi'
+        : purpose === 'partner'
+          ? 'Your Kalfi partner login code'
+          : 'Verify your email for Kalfi'
 
   const email = (opts?.email || '').trim().toLowerCase()
   const verifyUrl =
     purpose === 'checkout' && email
       ? `${SITE}/#otp=${encodeURIComponent(code)}&email=${encodeURIComponent(email)}`
-      : ''
+      : purpose === 'partner' && email
+        ? `${SITE}/partner/?otp=${encodeURIComponent(code)}&email=${encodeURIComponent(email)}`
+        : ''
 
   const bodyHtml = `
     <p style="margin:0 0 18px;color:${FG_DIM}">Use this code to ${action}. It expires in <strong style="color:${FG}">10 minutes</strong>.</p>
     <div style="margin:0 0 12px;text-align:center">
       <div style="display:inline-block;background:${INK};border:1px solid ${LINE};border-radius:14px;padding:18px 24px;font-size:36px;font-weight:700;letter-spacing:0.32em;color:${FG};font-variant-numeric:tabular-nums;-webkit-user-select:all;user-select:all">${code}</div>
     </div>
-    <p style="margin:0 0 ${verifyUrl ? '16' : '0'}px;text-align:center;font-size:13px;color:#6c7688">Select the code above, then copy${verifyUrl ? ' — or tap Verify below to confirm on the site' : ''}.</p>
+    <p style="margin:0 0 ${verifyUrl ? '16' : '0'}px;text-align:center;font-size:13px;color:#6c7688">Select the code above, then copy${verifyUrl ? ' — or tap Verify below to open the dashboard' : ''}.</p>
     ${
       verifyUrl
         ? `<p style="margin:0;text-align:center;font-size:12px;color:#6c7688">The button opens kalfi.app and confirms this code automatically.</p>`
@@ -148,7 +154,12 @@ export function otpEmail(
     title,
     preview: `Your code is ${code}`,
     bodyHtml,
-    cta: verifyUrl ? { label: 'Verify & continue', url: verifyUrl } : undefined,
+    cta: verifyUrl
+      ? {
+          label: purpose === 'partner' ? 'Open partner dashboard' : 'Verify & continue',
+          url: verifyUrl
+        }
+      : undefined,
     footerNote: `If you didn’t ask for this, you can ignore this email. Support: <a href="mailto:${SUPPORT}" style="color:${ACCENT};text-decoration:none">${SUPPORT}</a>.`
   })
 }
