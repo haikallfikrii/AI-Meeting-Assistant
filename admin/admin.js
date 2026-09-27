@@ -746,14 +746,15 @@
         escapeAttr(u.adminNote || '') +
         '" /></label>' +
         '<label>Set new password<input id="edit-password" type="text" minlength="8" placeholder="Optional" /></label>' +
-        '<div class="drawer__actions">' +
+        '<p id="drawer-msg" class="banner" hidden></p>' +
+        '<div class="drawer__actions drawer__actions--footer">' +
         '<button type="button" class="btn btn--primary" id="btn-save-user">Save changes</button>' +
         (u.suspended
           ? '<button type="button" class="btn btn--ok" id="btn-unsuspend">Unsuspend</button>'
           : '<button type="button" class="btn btn--danger" id="btn-suspend">Suspend</button>') +
         '<button type="button" class="btn btn--danger" id="btn-delete-user">Delete</button>' +
-        '</div>' +
-        '<p id="drawer-msg" class="banner" hidden></p>'
+        '</div>'
+      drawerBody.scrollTop = 0
     })
   }
 
@@ -973,6 +974,9 @@
   })
   drawer.addEventListener('click', function (ev) {
     if (ev.target === drawer) drawer.hidden = true
+  })
+  document.addEventListener('keydown', function (ev) {
+    if (ev.key === 'Escape' && !drawer.hidden) drawer.hidden = true
   })
 
   drawerBody.addEventListener('click', function (ev) {
