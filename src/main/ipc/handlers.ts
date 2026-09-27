@@ -23,7 +23,12 @@ import { ScreenshotService } from '../services/screenshotService'
 import { SessionManager } from '../services/sessionManager'
 import { SessionMode } from '../services/promptBuilder'
 import { AppSettings, SettingsManager } from '../services/settingsManager'
-import { hasPaidAccess, consumeSingleSession, startSingleSession } from '../services/entitlement'
+import {
+  hasPaidAccess,
+  consumeSingleSession,
+  featureTierOf,
+  startSingleSession
+} from '../services/entitlement'
 import { WorkSession, whisperLanguageCode } from '../services/sessionTypes'
 import { VisionService } from '../services/visionService'
 import { WhisperService } from '../services/whisperService'
@@ -160,21 +165,70 @@ function wireOpenAIServiceEvents(service: OpenAIService): void {
   })
 }
 
-function ensureOpenAIService(): OpenAIService {
+function kalfiApiBase(): string {
+  return (
+    process.env.KALFI_API_URL ||
+    process.env.API_PUBLIC_URL ||
+    'https://api.srv835792.hstgr.cloud'
+  ).replace(/\/$/, '')
+}
+
+interface AiConnection {
+  hosted: boolean
+  apiKey: string
+  provider: LlmProvider
+  baseUrl?: string
+  chatModel: string
+  sttModel: string
+  visionModel: string
+}
+
+/** Hosted / Team / Single Session use Kalfi's proxy (no user key); BYOK uses Settings key. */
+function isHostedPlan(settings: AppSettings | undefined | null): boolean {
+  if (!settings?.authToken?.trim()) return false
+  const tier = featureTierOf(settings.membershipPlan)
+  return tier === 'hosted' || tier === 'team' || tier === 'single_session'
+}
+
+function resolveAiConnection(): AiConnection {
   const settings = settingsManager?.getSettings()
+  if (settings && isHostedPlan(settings)) {
+    return {
+      hosted: true,
+      apiKey: settings.authToken.trim(),
+      provider: 'openrouter',
+      baseUrl: `${kalfiApiBase()}/v1/ai/openai`,
+      chatModel: DEFAULT_CHAT_MODELS.openrouter,
+      sttModel: DEFAULT_STT_MODELS.openrouter,
+      visionModel: DEFAULT_VISION_MODELS.openrouter
+    }
+  }
+
   if (!settings?.openaiApiKey) {
     throw new Error('API key not configured. Please add it in Settings.')
   }
-
   const provider = settings.llmProvider || 'openai'
+  return {
+    hosted: false,
+    apiKey: settings.openaiApiKey,
+    provider,
+    baseUrl: settings.apiBaseUrl,
+    chatModel: settings.openaiModel || DEFAULT_CHAT_MODELS[provider],
+    sttModel: DEFAULT_STT_MODELS[provider],
+    visionModel: DEFAULT_VISION_MODELS[provider]
+  }
+}
+
+function ensureOpenAIService(): OpenAIService {
+  const conn = resolveAiConnection()
   const activeSession = sessionManager?.getActiveSession() || null
 
   if (!openaiService) {
     openaiService = new OpenAIService({
-      apiKey: settings.openaiApiKey,
-      provider,
-      baseUrl: settings.apiBaseUrl,
-      model: settings.openaiModel || DEFAULT_CHAT_MODELS[provider],
+      apiKey: conn.apiKey,
+      provider: conn.provider,
+      baseUrl: conn.baseUrl,
+      model: conn.chatModel,
       session: activeSession
     })
     wireOpenAIServiceEvents(openaiService)
@@ -235,11 +289,7 @@ export function initializeIpcHandlers(window: BrowserWindow): void {
         token?: string
       }
     ) => {
-      const base = (
-        process.env.KALFI_API_URL ||
-        process.env.API_PUBLIC_URL ||
-        'https://api.srv835792.hstgr.cloud'
-      ).replace(/\/$/, '')
+      const base = kalfiApiBase()
       const path = opts.path.startsWith('/') ? opts.path : `/${opts.path}`
       const method = (opts.method || 'GET').toUpperCase()
       try {
@@ -334,7 +384,7 @@ export function initializeIpcHandlers(window: BrowserWindow): void {
   })
 
   ipcMain.handle('has-api-keys', () => {
-    return settingsManager?.hasApiKeys()
+    return isHostedPlan(settingsManager?.getSettings()) || settingsManager?.hasApiKeys()
   })
 
   // ---- Sessions (ChatGPT-style workspaces) ----
@@ -528,18 +578,14 @@ export function initializeIpcHandlers(window: BrowserWindow): void {
     captureAudioSource =
       source === 'microphone' || source === 'system' || source === 'both' ? source : 'both'
 
-    // Debug: Log API key status (not the actual keys)
-    console.log('API Keys configured:', {
-      provider: settings?.llmProvider || 'openai',
-      openai: settings?.openaiApiKey ? `Yes (${settings.openaiApiKey.length} chars)` : 'No',
-      baseUrl: settings?.apiBaseUrl || '(provider default)'
+    const conn = resolveAiConnection()
+    console.log('AI connection:', {
+      mode: conn.hosted ? 'hosted' : 'byok',
+      provider: conn.provider,
+      baseUrl: conn.baseUrl || '(provider default)'
     })
 
-    if (!settings?.openaiApiKey) {
-      throw new Error('API key not configured. Please add it in Settings.')
-    }
-
-    if (settings.membershipPlan === 'single_session') {
+    if (settings?.membershipPlan === 'single_session') {
       const pass = settings.singleSession
       if (!pass) {
         throw new Error('Single Session Pass missing. Purchase a pass or upgrade.')
@@ -567,24 +613,22 @@ export function initializeIpcHandlers(window: BrowserWindow): void {
       }
       questionDetector?.removeAllListeners()
 
-      const provider = settings.llmProvider || 'openai'
-
       // Initialize Whisper service for transcription (language from active session)
       const activeSession = sessionManager?.getActiveSession() || null
       whisperService = new WhisperService({
-        apiKey: settings.openaiApiKey,
-        provider,
-        baseUrl: settings.apiBaseUrl,
-        model: DEFAULT_STT_MODELS[provider],
+        apiKey: conn.apiKey,
+        provider: conn.provider,
+        baseUrl: conn.baseUrl,
+        model: conn.sttModel,
         language: whisperLanguageCode(activeSession?.context.meetingLanguage)
       })
 
       // Initialize OpenAI-compatible service for answer generation (bound to active session)
       openaiService = new OpenAIService({
-        apiKey: settings.openaiApiKey,
-        provider,
-        baseUrl: settings.apiBaseUrl,
-        model: settings.openaiModel || DEFAULT_CHAT_MODELS[provider],
+        apiKey: conn.apiKey,
+        provider: conn.provider,
+        baseUrl: conn.baseUrl,
+        model: conn.chatModel,
         session: activeSession
       })
 
@@ -891,32 +935,31 @@ export function initializeIpcHandlers(window: BrowserWindow): void {
       }
     }
 
-    const settings = settingsManager?.getSettings()
-
-    if (!settings?.openaiApiKey) {
+    let conn: AiConnection
+    try {
+      conn = resolveAiConnection()
+    } catch (error) {
       return {
         success: false,
-        error: 'API key not configured. Please add it in Settings.'
+        error: error instanceof Error ? error.message : 'API key not configured'
       }
     }
 
     try {
-      const provider = settings.llmProvider || 'openai'
-
       // Always rebuild vision client from current settings (provider/key may change)
       visionService = new VisionService({
-        apiKey: settings.openaiApiKey,
-        provider,
-        baseUrl: settings.apiBaseUrl,
-        model: DEFAULT_VISION_MODELS[provider]
+        apiKey: conn.apiKey,
+        provider: conn.provider,
+        baseUrl: conn.baseUrl,
+        model: conn.visionModel
       })
 
       if (!openaiService) {
         openaiService = new OpenAIService({
-          apiKey: settings.openaiApiKey,
-          provider,
-          baseUrl: settings.apiBaseUrl,
-          model: settings.openaiModel || DEFAULT_CHAT_MODELS[provider],
+          apiKey: conn.apiKey,
+          provider: conn.provider,
+          baseUrl: conn.baseUrl,
+          model: conn.chatModel,
           session: sessionManager?.getActiveSession() || null
         })
 

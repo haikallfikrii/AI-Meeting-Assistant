@@ -918,6 +918,14 @@ export function SettingsModal(): React.ReactNode | null {
 
           {/* API Key */}
           <div className="space-y-2">
+            {localSettings.authToken &&
+            ['hosted_monthly', 'hosted_annual', 'team', 'single_session'].includes(
+              localSettings.membershipPlan
+            ) ? (
+              <p className="text-xs rounded-lg border border-emerald-700/50 bg-emerald-900/20 px-3 py-2 text-emerald-300">
+                Your plan includes Hosted AI. No API key needed: Kalfi runs the models for you.
+              </p>
+            ) : null}
             <label className="block text-sm font-medium text-dark-200">
               {PROVIDER_LABELS[provider]} API Key
               {keyHelp.href ? (
