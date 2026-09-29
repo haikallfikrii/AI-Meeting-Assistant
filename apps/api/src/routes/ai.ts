@@ -5,6 +5,7 @@ import {
   bumpUsage,
   currentMonthTokens,
   effectiveTokenCap,
+  isOnTrial,
   publicUser
 } from '../lib/store.js'
 import { requireAuth, requirePro, type AppVars } from '../middleware/auth.js'
@@ -158,6 +159,13 @@ function quotaExceeded(user: AppVars['user']): Response | null {
   const used = currentMonthTokens(user)
   const cap = effectiveTokenCap(user)
   if (used >= cap || cap <= 0) {
+    if (isOnTrial(user)) {
+      return openaiError(
+        'Free trial AI limit reached. Pick a plan on kalfi.app to keep using Kalfi.',
+        'TRIAL_QUOTA',
+        429
+      )
+    }
     return openaiError(
       `Monthly Hosted AI quota reached (${used}/${cap} tokens). Contact support to extend.`,
       'QUOTA',

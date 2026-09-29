@@ -51,6 +51,10 @@ export interface AppSettings {
   /** Derived for display — not authoritative */
   billingInterval?: BillingInterval
   singleSession?: SingleSessionState | null
+  /** End of the free Hosted trial (ms). Null when not on trial. */
+  trialEndsAt: number | null
+  /** Server says this account already used its free trial */
+  trialUsed: boolean
   /** First-run product tour completed */
   onboardingCompleted: boolean
 }
@@ -137,8 +141,13 @@ const DEFAULT_SETTINGS: AppSettings = {
   membershipStatus: 'inactive',
   billingInterval: 'none',
   singleSession: null,
+  trialEndsAt: null,
+  trialUsed: false,
   onboardingCompleted: false
 }
+
+const trialExpired = (s: Pick<AppSettings, 'trialEndsAt'>): boolean =>
+  typeof s.trialEndsAt === 'number' && Date.now() >= s.trialEndsAt
 
 export class SettingsManager {
   private settingsPath: string
@@ -267,6 +276,9 @@ export class SettingsManager {
           membershipPlan: normalizeBillingPlan(savedSettings.membershipPlan),
           membershipStatus: normalizeMembershipStatus(savedSettings.membershipStatus),
           singleSession: normalizeSingleSession(savedSettings.singleSession),
+          trialEndsAt:
+            typeof savedSettings.trialEndsAt === 'number' ? savedSettings.trialEndsAt : null,
+          trialUsed: Boolean(savedSettings.trialUsed),
           onboardingCompleted:
             typeof (savedSettings as { onboardingCompleted?: unknown }).onboardingCompleted ===
             'boolean'
@@ -347,6 +359,16 @@ export class SettingsManager {
         membershipStatus: 'expired',
         billingInterval: 'none',
         singleSession
+      }
+      this.saveSettings()
+    }
+
+    if (trialExpired(this.settings) && this.settings.membershipStatus !== 'expired') {
+      this.settings = {
+        ...this.settings,
+        membershipPlan: 'free',
+        membershipStatus: 'expired',
+        billingInterval: 'none'
       }
       this.saveSettings()
     }

@@ -10,6 +10,7 @@ import { StatusBar } from './components/StatusBar'
 import { TranscriptPanel } from './components/TranscriptPanel'
 import { useInterviewEvents } from './hooks/useInterviewEvents'
 import { hasPaidAccess } from './lib/access'
+import { refreshCloudUser } from './lib/cloudUser'
 import { WorkSession, useInterviewStore } from './store/interviewStore'
 
 function App(): React.JSX.Element {
@@ -26,8 +27,13 @@ function App(): React.JSX.Element {
   useEffect(() => {
     const bootstrap = async (): Promise<void> => {
       try {
-        const saved = await window.api.getSettings()
+        let saved = await window.api.getSettings()
         useInterviewStore.getState().setSettings(saved)
+        const refreshed = await refreshCloudUser(saved)
+        if (refreshed) {
+          saved = refreshed
+          useInterviewStore.getState().setSettings(saved)
+        }
 
         const entitled = hasPaidAccess(saved)
         if (!entitled) {

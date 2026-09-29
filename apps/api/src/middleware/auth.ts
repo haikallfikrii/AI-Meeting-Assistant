@@ -1,7 +1,14 @@
 import { createMiddleware } from 'hono/factory'
 import { verifyAccessToken } from '../lib/auth-token.js'
 import { canUseHostedAi } from '../lib/entitlement.js'
-import { findUserById, publicUser, type User } from '../lib/store.js'
+import {
+  beginSingleSession,
+  findUserById,
+  isOnTrial,
+  isTrialActive,
+  publicUser,
+  type User
+} from '../lib/store.js'
 
 export type AppVars = {
   user: User
@@ -26,6 +33,16 @@ export const requireAuth = createMiddleware<{ Variables: AppVars }>(async (c, ne
 export const requirePro = createMiddleware<{ Variables: AppVars }>(async (c, next) => {
   const user = c.get('user')
   if (!canUseHostedAi(user.plan, user.subStatus, user.singleSession)) {
+    if (isOnTrial(user) && !isTrialActive(user)) {
+      return c.json(
+        {
+          error: 'Your free trial has ended. Pick a plan on kalfi.app to keep using Kalfi.',
+          code: 'TRIAL_EXPIRED',
+          user: publicUser(user)
+        },
+        402
+      )
+    }
     return c.json(
       {
         error: 'Hosted plan or active Single Session Pass required',
@@ -34,6 +51,10 @@ export const requirePro = createMiddleware<{ Variables: AppVars }>(async (c, nex
       },
       402
     )
+  }
+  if (user.plan === 'single_session' && user.singleSession?.status === 'unused') {
+    const started = beginSingleSession(user.id)
+    if (started.user) c.set('user', started.user)
   }
   await next()
 })

@@ -157,6 +157,7 @@ function applySubscriptionGrant(
   updateUser(user.id, {
     plan: nextPlan,
     subStatus: status === 'none' ? 'active' : status,
+    trialEndsAt: undefined,
     polarCustomerId: customerId || user.polarCustomerId,
     polarSubscriptionId: subscriptionId || user.polarSubscriptionId,
     polarProductId: nestedProductId(data) || user.polarProductId,

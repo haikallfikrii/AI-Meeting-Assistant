@@ -48,6 +48,8 @@ export interface AppSettings {
     expiresAt: number
     sessionStartedAt?: number
   } | null
+  trialEndsAt: number | null
+  trialUsed: boolean
   onboardingCompleted: boolean
 }
 
@@ -139,6 +141,8 @@ const DEFAULT_SETTINGS: AppSettings = {
   membershipStatus: 'inactive',
   billingInterval: 'none',
   singleSession: null,
+  trialEndsAt: null,
+  trialUsed: false,
   onboardingCompleted: false
 }
 

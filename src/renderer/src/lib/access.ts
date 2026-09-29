@@ -13,10 +13,12 @@ export function hasPaidAccess(
   settings: Pick<
     AppSettings,
     'authToken' | 'membershipPlan' | 'membershipStatus' | 'singleSession' | 'accountEmail'
-  >
+  > &
+    Partial<Pick<AppSettings, 'trialEndsAt'>>
 ): boolean {
   if (!settings.authToken?.trim()) return false
   if (isTestAllowlisted(settings.accountEmail)) return true
+  if (typeof settings.trialEndsAt === 'number' && Date.now() >= settings.trialEndsAt) return false
 
   const status = settings.membershipStatus
   if (status !== 'active' && status !== 'trial') return false

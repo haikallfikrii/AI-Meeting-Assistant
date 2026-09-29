@@ -8,6 +8,8 @@ import {
   shell,
   systemPreferences
 } from 'electron'
+import { createHash } from 'node:crypto'
+import os from 'node:os'
 import { AnswerEntry } from '../../preload/index'
 import { HistoryManager } from '../services/historyManager'
 import { OpenAIService } from '../services/openaiService'
@@ -58,6 +60,22 @@ let isCapturing = false
 let forceNextTranscriptAsQuestion = false
 /** Current capture mix — used to decide interviewer vs self speech. */
 let captureAudioSource: 'microphone' | 'system' | 'both' = 'both'
+
+/** Stable per-machine id (not persisted, survives reinstall) used to limit free trials. */
+function deviceId(): string {
+  const cpus = os.cpus()
+  const parts = [
+    os.platform(),
+    os.arch(),
+    os.hostname(),
+    os.userInfo().username,
+    os.homedir(),
+    cpus[0]?.model || '',
+    String(cpus.length),
+    String(os.totalmem())
+  ]
+  return `d1_${createHash('sha256').update(parts.join('|')).digest('hex').slice(0, 32)}`
+}
 
 function assertEntitled(): void {
   const s = settingsManager?.getSettings()
@@ -292,6 +310,12 @@ export function initializeIpcHandlers(window: BrowserWindow): void {
       const base = kalfiApiBase()
       const path = opts.path.startsWith('/') ? opts.path : `/${opts.path}`
       const method = (opts.method || 'GET').toUpperCase()
+      if (
+        (path === '/v1/auth/register' || path === '/v1/auth/trial/start') &&
+        (opts.body === undefined || (typeof opts.body === 'object' && opts.body !== null))
+      ) {
+        opts = { ...opts, body: { ...(opts.body as object), deviceId: deviceId() } }
+      }
       try {
         const res = await fetch(`${base}${path}`, {
           method,

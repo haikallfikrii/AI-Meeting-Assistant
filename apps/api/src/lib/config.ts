@@ -36,3 +36,14 @@ export function proTokenCap(): number {
   const n = Number(env('PRO_MONTHLY_TOKEN_SOFT_CAP', '2000000'))
   return Number.isFinite(n) ? n : 2_000_000
 }
+
+export function trialDays(): number {
+  const n = Number(env('TRIAL_DAYS', '3'))
+  return Number.isFinite(n) && n >= 0 ? n : 3
+}
+
+/** Hosted AI tokens included in the free trial (~60 min of live use). */
+export function trialTokenCap(): number {
+  const n = Number(env('TRIAL_TOKEN_CAP', '200000'))
+  return Number.isFinite(n) && n >= 0 ? n : 200_000
+}

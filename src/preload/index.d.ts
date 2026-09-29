@@ -113,6 +113,8 @@ export interface AppSettings {
     expiresAt: number
     sessionStartedAt?: number
   } | null
+  trialEndsAt: number | null
+  trialUsed: boolean
   onboardingCompleted: boolean
 }
 

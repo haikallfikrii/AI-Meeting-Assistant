@@ -22,6 +22,8 @@ export type AdminEventType =
   | 'otp_checkout'
   | 'otp_reset'
   | 'checkout_return'
+  | 'register'
+  | 'trial_started'
 
 export interface AdminEvent {
   id: string

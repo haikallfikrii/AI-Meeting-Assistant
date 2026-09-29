@@ -16,7 +16,7 @@ import {
   startSingleSession,
   consumeSingleSession
 } from './entitlement.js'
-import { proTokenCap } from './config.js'
+import { proTokenCap, trialDays, trialTokenCap } from './config.js'
 
 export type { BillingPlan, SubStatus, SingleSessionState }
 export type Plan = BillingPlan
@@ -59,6 +59,16 @@ export interface User {
    * Set to 0 to block hosted AI for this user without suspending the account.
    */
   tokenCapOverride?: number | null
+  /**
+   * Set while the account is on the free Hosted trial. Cleared on any paid activation.
+   * After this time the user is read back as free/expired (see hydrateUser).
+   */
+  trialEndsAt?: number
+  /** Permanent markers so a person gets one trial (per email and per device). */
+  trialStartedAt?: number
+  trialDeviceId?: string
+  trialIp?: string
+  trialTokensUsed?: number
   createdAt: number
   updatedAt: number
 }
@@ -94,7 +104,19 @@ function hydrateUser(raw: User): User {
   if (singleSession) {
     singleSession = evaluateSingleSession(singleSession)
   }
+  if (typeof raw.trialEndsAt === 'number' && Date.now() >= raw.trialEndsAt) {
+    const subStatus = raw.subStatus === 'suspended' ? 'suspended' : 'expired'
+    return { ...raw, plan: 'free', subStatus, singleSession }
+  }
   return { ...raw, plan, singleSession }
+}
+
+export function isOnTrial(user: User): boolean {
+  return typeof user.trialEndsAt === 'number'
+}
+
+export function isTrialActive(user: User): boolean {
+  return typeof user.trialEndsAt === 'number' && Date.now() < user.trialEndsAt
 }
 
 export function hashPassword(password: string): string {
@@ -123,7 +145,9 @@ export function currentMonthKey(): string {
   return monthKey()
 }
 
+/** Tokens counted against the user's cap: whole-trial total on trial, else this month. */
 export function currentMonthTokens(user: User): number {
+  if (isOnTrial(user)) return user.trialTokensUsed || 0
   return user.usageMonth === monthKey() ? user.tokensUsed || 0 : 0
 }
 
@@ -136,6 +160,7 @@ export function effectiveTokenCap(user: User): number {
   if (typeof user.tokenCapOverride === 'number' && Number.isFinite(user.tokenCapOverride)) {
     return Math.max(0, Math.floor(user.tokenCapOverride))
   }
+  if (isOnTrial(user)) return trialTokenCap()
   return proTokenCap()
 }
 
@@ -226,6 +251,7 @@ export function bumpUsage(id: string, tokens: number): User | null {
   const sameMonth = user.usageMonth === month
   const tokensUsed = sameMonth ? user.tokensUsed + tokens : tokens
   const patch: Partial<User> = { usageMonth: month, tokensUsed }
+  if (isOnTrial(user)) patch.trialTokensUsed = (user.trialTokensUsed || 0) + tokens
   if (tokens > 0) {
     patch.aiRequestCount = sameMonth ? (user.aiRequestCount || 0) + 1 : 1
     patch.lastAiAt = Date.now()
@@ -240,6 +266,51 @@ export function resetUsage(id: string): User | null {
     usageMonth: monthKey(),
     tokensUsed: 0,
     aiRequestCount: 0
+  })
+}
+
+export type TrialDenied = 'used' | 'paid' | 'device' | 'ip' | 'disabled' | 'email'
+
+const TRIALS_PER_IP_PER_DAY = 3
+
+export function trialEligibility(
+  user: User,
+  opts: { deviceId?: string; ip?: string }
+): { ok: true } | { ok: false; reason: TrialDenied } {
+  if (trialDays() <= 0 || trialTokenCap() <= 0) return { ok: false, reason: 'disabled' }
+  if (user.trialStartedAt) return { ok: false, reason: 'used' }
+  if (
+    user.plan !== 'free' ||
+    user.polarCustomerId ||
+    user.polarOrderId ||
+    user.lemonCustomerId ||
+    user.lemonOrderId ||
+    user.needsPasswordSetup
+  ) {
+    return { ok: false, reason: 'paid' }
+  }
+  const others = read().users.filter((u) => u.id !== user.id && u.trialStartedAt)
+  if (opts.deviceId && others.some((u) => u.trialDeviceId === opts.deviceId)) {
+    return { ok: false, reason: 'device' }
+  }
+  if (opts.ip) {
+    const dayAgo = Date.now() - 24 * 60 * 60 * 1000
+    const recent = others.filter((u) => u.trialIp === opts.ip && (u.trialStartedAt || 0) >= dayAgo)
+    if (recent.length >= TRIALS_PER_IP_PER_DAY) return { ok: false, reason: 'ip' }
+  }
+  return { ok: true }
+}
+
+export function grantTrial(userId: string, opts: { deviceId?: string; ip?: string }): User | null {
+  const now = Date.now()
+  return updateUser(userId, {
+    plan: 'hosted_monthly',
+    subStatus: 'active',
+    trialStartedAt: now,
+    trialEndsAt: now + trialDays() * 24 * 60 * 60 * 1000,
+    trialDeviceId: opts.deviceId || undefined,
+    trialIp: opts.ip || undefined,
+    trialTokensUsed: 0
   })
 }
 
@@ -261,6 +332,7 @@ export function grantSingleSessionPass(
   return updateUser(userId, {
     plan: 'single_session',
     subStatus: 'active',
+    trialEndsAt: undefined,
     lemonOrderId: lemonOrderId || undefined,
     polarOrderId: polarOrderId || undefined,
     singleSession: createUnusedSingleSession(purchasedAt, {
@@ -333,6 +405,16 @@ export function publicUser(user: User) {
           sessionStartedAt: singleSession.sessionStartedAt
         }
       : null,
+    trial: isOnTrial(user)
+      ? {
+          active: isTrialActive(user),
+          startedAt: user.trialStartedAt || null,
+          endsAt: user.trialEndsAt!,
+          tokenCap,
+          tokensUsed
+        }
+      : null,
+    trialUsed: Boolean(user.trialStartedAt),
     needsPasswordSetup: Boolean(user.needsPasswordSetup),
     suspended: Boolean(user.suspended) || user.subStatus === 'suspended',
     adminNote: user.adminNote || '',

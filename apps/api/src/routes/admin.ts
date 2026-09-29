@@ -159,7 +159,9 @@ const patchSchema = z.object({
    * Per-user monthly token cap. null clears override (use global).
    * 0 blocks hosted AI for this user.
    */
-  tokenCapOverride: z.number().int().min(0).max(500_000_000).nullable().optional()
+  tokenCapOverride: z.number().int().min(0).max(500_000_000).nullable().optional(),
+  /** Convert a trial account into a normal paid one (keeps plan/status as sent). */
+  endTrial: z.boolean().optional()
 })
 
 adminRoutes.patch('/users/:id', async (c) => {
@@ -177,6 +179,9 @@ adminRoutes.patch('/users/:id', async (c) => {
   const patch: Parameters<typeof updateUser>[1] = {}
   if (body.data.plan) patch.plan = normalizeLegacyPlan(body.data.plan) as BillingPlan
   if (body.data.subStatus) patch.subStatus = body.data.subStatus
+  if (body.data.endTrial || (patch.plan && patch.plan !== user.plan)) {
+    patch.trialEndsAt = undefined
+  }
   if (typeof body.data.adminNote === 'string') patch.adminNote = body.data.adminNote
   if (typeof body.data.needsPasswordSetup === 'boolean') {
     patch.needsPasswordSetup = body.data.needsPasswordSetup
@@ -319,6 +324,7 @@ adminRoutes.post('/grant', async (c) => {
   const patch: Parameters<typeof updateUser>[1] = {
     plan,
     subStatus: 'active',
+    trialEndsAt: undefined,
     suspended: false,
     needsPasswordSetup: body.data.password ? false : user.needsPasswordSetup
   }
@@ -368,6 +374,7 @@ adminRoutes.post('/manual-orders/:id/activate', async (c) => {
     updateUser(user.id, {
       plan: order.plan,
       subStatus: 'active',
+      trialEndsAt: undefined,
       suspended: false,
       singleSession: undefined
     })

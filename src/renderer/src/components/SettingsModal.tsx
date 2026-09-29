@@ -13,7 +13,8 @@ import {
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { AppSettings, useInterviewStore } from '../store/interviewStore'
-import { planLabel, statusLabel, testEntitlementPatch } from '../lib/access'
+import { planLabel, statusLabel } from '../lib/access'
+import { CloudUser, cloudUserPatch, trialDaysLeft } from '../lib/cloudUser'
 
 interface ModelOption {
   id: string
@@ -250,32 +251,11 @@ export function SettingsModal(): React.ReactNode | null {
     }
   }
 
-  const applyCloudUser = async (payload: {
-    token: string
-    user: {
-      email: string
-      plan: AppSettings['membershipPlan']
-      subStatus: string
-      singleSession?: AppSettings['singleSession']
-      needsPasswordSetup?: boolean
-    }
-  }): Promise<void> => {
-    const statusMap: Record<string, AppSettings['membershipStatus']> = {
-      none: 'inactive',
-      active: 'active',
-      past_due: 'past_due',
-      canceled: 'canceled',
-      expired: 'expired'
-    }
-    const next: Partial<AppSettings> = {
-      accountEmail: payload.user.email,
-      authToken: payload.token,
-      membershipPlan: payload.user.plan || 'free',
-      membershipStatus: statusMap[payload.user.subStatus] || 'inactive',
-      singleSession: payload.user.singleSession || null
-    }
-    const testPatch = testEntitlementPatch(payload.user.email)
-    const updated = await window.api.updateSettings({ ...localSettings, ...next, ...testPatch })
+  const applyCloudUser = async (payload: { token: string; user: CloudUser }): Promise<void> => {
+    const updated = await window.api.updateSettings({
+      ...localSettings,
+      ...cloudUserPatch(payload.token, payload.user)
+    })
     setLocalSettings(updated as AppSettings)
     setSettings(updated as AppSettings)
   }
@@ -617,8 +597,26 @@ export function SettingsModal(): React.ReactNode | null {
                 </span>
               </div>
               <p className="text-base font-semibold text-dark-50">
-                {planLabel(localSettings.membershipPlan)}
+                {typeof localSettings.trialEndsAt === 'number' &&
+                localSettings.membershipStatus === 'active'
+                  ? 'Free trial (Hosted AI)'
+                  : planLabel(localSettings.membershipPlan)}
               </p>
+              {typeof localSettings.trialEndsAt === 'number' ? (
+                <p className="text-[11px] text-amber-300/90 leading-relaxed">
+                  {trialDaysLeft(localSettings.trialEndsAt)
+                    ? `Trial ends in ${trialDaysLeft(localSettings.trialEndsAt)} day(s), on ${new Date(localSettings.trialEndsAt).toLocaleDateString()}. `
+                    : 'Your free trial has ended. '}
+                  <a
+                    href="https://kalfi.app/#pricing"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-400 hover:underline"
+                  >
+                    Pick a plan
+                  </a>
+                </p>
+              ) : null}
               {localSettings.authToken ? (
                 <p className="text-[11px] text-emerald-400/90">Signed in · cloud account linked</p>
               ) : (

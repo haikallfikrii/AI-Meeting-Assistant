@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
 import { z } from 'zod'
-import { signAccessToken } from '../lib/auth-token.js'
+import { signAccessToken, verifyAccessToken } from '../lib/auth-token.js'
 import {
   canSendOtp,
   generateOtpCode,
@@ -14,10 +14,15 @@ import {
 import {
   createUser,
   findUserByEmail,
+  findUserById,
+  grantTrial,
   publicUser,
   setUserPassword,
+  trialEligibility,
   updateUser,
-  verifyPassword
+  verifyPassword,
+  type TrialDenied,
+  type User
 } from '../lib/store.js'
 import { recordEvent } from '../lib/events.js'
 import { upsertLead } from '../lib/leads.js'
@@ -27,11 +32,78 @@ const TEST_PLAN_ALLOWLIST = new Set(['muhamadfikrih29@gmail.com'])
 const emailSchema = z.string().email()
 const passwordSchema = z.string().min(8).max(128)
 
+const deviceIdSchema = z.string().min(8).max(128).optional()
+
 const registerSchema = z.object({
   email: emailSchema,
   password: passwordSchema,
-  emailProof: z.string().min(20)
+  emailProof: z.string().min(20),
+  deviceId: deviceIdSchema,
+  startTrial: z.boolean().optional()
 })
+
+const trialStartSchema = z.object({ deviceId: deviceIdSchema })
+
+const DISPOSABLE_DOMAINS = new Set([
+  'mailinator.com',
+  'guerrillamail.com',
+  'guerrillamail.net',
+  'sharklasers.com',
+  '10minutemail.com',
+  'temp-mail.org',
+  'tempmail.com',
+  'tempmail.net',
+  'tempmailo.com',
+  'yopmail.com',
+  'getnada.com',
+  'trashmail.com',
+  'dispostable.com',
+  'maildrop.cc',
+  'mailnesia.com',
+  'throwawaymail.com',
+  'fakeinbox.com',
+  'emailondeck.com',
+  'mohmal.com',
+  'minuteinbox.com',
+  'moakt.com',
+  'tmail.ws',
+  'tmpmail.org',
+  'burnermail.io'
+])
+
+function isDisposableEmail(email: string): boolean {
+  const domain = email.split('@')[1]?.toLowerCase() || ''
+  return DISPOSABLE_DOMAINS.has(domain)
+}
+
+function clientIp(c: { req: { header: (name: string) => string | undefined } }): string | undefined {
+  const forwarded = c.req.header('cf-connecting-ip') || c.req.header('x-forwarded-for')
+  if (!forwarded) return undefined
+  return forwarded.split(',')[0]?.trim() || undefined
+}
+
+const TRIAL_DENIED_MESSAGE: Record<TrialDenied, string> = {
+  used: 'This account already used its free trial.',
+  paid: 'This account already has a plan, so the free trial does not apply.',
+  device: 'This device already used a free trial. Pick a plan on kalfi.app to continue.',
+  ip: 'Too many free trials from this network today. Try again tomorrow or pick a plan on kalfi.app.',
+  disabled: 'Free trials are paused right now. Pick a plan on kalfi.app.',
+  email: 'Use a permanent email address to start the free trial.'
+}
+
+function tryGrantTrial(
+  user: User,
+  opts: { deviceId?: string; ip?: string }
+): { user: User; trialError?: string; trialCode?: TrialDenied } {
+  if (isDisposableEmail(user.email)) {
+    return { user, trialError: TRIAL_DENIED_MESSAGE.email, trialCode: 'email' }
+  }
+  const gate = trialEligibility(user, opts)
+  if (!gate.ok) return { user, trialError: TRIAL_DENIED_MESSAGE[gate.reason], trialCode: gate.reason }
+  const granted = grantTrial(user.id, opts)
+  if (granted) recordEvent('trial_started', { email: granted.email, userId: granted.id })
+  return { user: granted || user }
+}
 
 const loginSchema = z.object({
   email: emailSchema,
@@ -77,6 +149,18 @@ authRoutes.post('/otp/request', async (c) => {
       ok: true,
       message: 'If that email has an account, a code is on the way.'
     })
+  }
+
+  if (purpose === 'register') {
+    if (findUserByEmail(email)) {
+      return c.json(
+        { error: 'This email already has an account. Sign in instead.', code: 'EMAIL_EXISTS' },
+        409
+      )
+    }
+    if (isDisposableEmail(email)) {
+      return c.json({ error: TRIAL_DENIED_MESSAGE.email, code: 'DISPOSABLE_EMAIL' }, 400)
+    }
   }
 
   const gate = canSendOtp(email)
@@ -174,16 +258,55 @@ authRoutes.post('/register', async (c) => {
     return c.json({ error: 'Email does not match the verified address.' }, 400)
   }
 
+  let user: User
   try {
-    let user = createUser(body.data.email, body.data.password, { needsPasswordSetup: false })
-    if (TEST_PLAN_ALLOWLIST.has(user.email)) {
-      user = updateUser(user.id, { plan: 'byok_monthly', subStatus: 'active' }) || user
-    }
-    const token = await signAccessToken(user.id, user.email)
-    return c.json({ token, user: publicUser(user) })
+    user = createUser(body.data.email, body.data.password, { needsPasswordSetup: false })
   } catch (err) {
     return c.json({ error: err instanceof Error ? err.message : 'Register failed' }, 400)
   }
+  recordEvent('register', { email: user.email, userId: user.id })
+
+  let trialError: string | undefined
+  let trialCode: TrialDenied | undefined
+  if (TEST_PLAN_ALLOWLIST.has(user.email)) {
+    user = updateUser(user.id, { plan: 'byok_monthly', subStatus: 'active' }) || user
+  } else if (body.data.startTrial !== false) {
+    ;({ user, trialError, trialCode } = tryGrantTrial(user, {
+      deviceId: body.data.deviceId,
+      ip: clientIp(c)
+    }))
+  }
+  const token = await signAccessToken(user.id, user.email)
+  return c.json({ token, user: publicUser(user), trialError, trialCode })
+})
+
+authRoutes.post('/trial/start', async (c) => {
+  const header = c.req.header('authorization') || ''
+  const token = header.startsWith('Bearer ') ? header.slice(7) : ''
+  if (!token) return c.json({ error: 'Unauthorized' }, 401)
+  let userId: string
+  try {
+    ;({ userId } = await verifyAccessToken(token))
+  } catch {
+    return c.json({ error: 'Unauthorized' }, 401)
+  }
+  const user = findUserById(userId)
+  if (!user) return c.json({ error: 'Unauthorized' }, 401)
+  if (user.suspended || user.subStatus === 'suspended') {
+    return c.json({ error: 'This account is suspended. Contact support.', code: 'SUSPENDED' }, 403)
+  }
+
+  const body = trialStartSchema.safeParse(await c.req.json().catch(() => ({})))
+  if (!body.success) return c.json({ error: 'Invalid payload' }, 400)
+
+  const result = tryGrantTrial(user, { deviceId: body.data.deviceId, ip: clientIp(c) })
+  if (result.trialError) {
+    return c.json(
+      { error: result.trialError, code: result.trialCode, user: publicUser(result.user) },
+      403
+    )
+  }
+  return c.json({ ok: true, user: publicUser(result.user) })
 })
 
 authRoutes.post('/login', async (c) => {

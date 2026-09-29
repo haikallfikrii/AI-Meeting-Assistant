@@ -674,6 +674,7 @@ export async function handleLemonWebhook(
     updateUser(user.id, {
       plan: nextPlan,
       subStatus: active ? 'active' : pastDue ? 'past_due' : 'canceled',
+      trialEndsAt: undefined,
       lemonCustomerId: customerId || user.lemonCustomerId,
       lemonSubscriptionId: subscriptionId || user.lemonSubscriptionId,
       lemonVariantId: variantId != null ? String(variantId) : user.lemonVariantId,
