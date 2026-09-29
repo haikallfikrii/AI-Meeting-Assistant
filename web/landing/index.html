@@ -6,7 +6,7 @@
     <title>Kalfi — live answers in interviews and client calls, on your own API key</title>
     <meta
       name="description"
-      content="Kalfi is a macOS overlay that listens to your call, catches the question, and writes a line you can say out loud. BYOK $14/mo or Hosted AI $19/mo — vs ~$150 tools."
+      content="Kalfi is a desktop overlay for Mac and Windows that listens to your call, catches the question, and writes a line you can say out loud. Free 3-day trial, then BYOK $14/mo or Hosted AI $19/mo, vs ~$150 tools."
     />
     <link rel="canonical" href="https://kalfi.app/" />
     <link rel="alternate" hreflang="en" href="https://kalfi.app/" />
@@ -29,7 +29,7 @@
     <meta property="og:title" content="Kalfi — live answers in interviews and client calls" />
     <meta
       property="og:description"
-      content="Stealth desktop copilot with custom branding. $14 BYOK or $19 hosted — a fraction of Final Round at ~$150/mo."
+      content="Stealth desktop copilot for Mac and Windows. Free 3-day trial, then $14 BYOK or $19 hosted, a fraction of Final Round at ~$150/mo."
     />
     <meta property="og:url" content="https://kalfi.app/" />
     <meta property="og:image" content="https://kalfi.app/assets/brand/og-icon.png" />
@@ -41,7 +41,7 @@
     <meta name="twitter:title" content="Kalfi — live answers in interviews and client calls" />
     <meta
       name="twitter:description"
-      content="Stealth desktop copilot with custom branding. $14 BYOK or $19 hosted."
+      content="Stealth desktop copilot for Mac and Windows. Free 3-day trial, then $14 BYOK or $19 hosted."
     />
     <meta name="twitter:image" content="https://kalfi.app/assets/brand/og-icon.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -50,7 +50,7 @@
       href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="css/styles.css?v=1.1.3" />
+    <link rel="stylesheet" href="css/styles.css?v=1.1.4" />
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -212,12 +212,12 @@
         <div class="hero-pin" id="hero-stage">
           <div class="hero-sticky">
             <div class="shell hero-copy" id="hero-copy">
-              <span class="tagline hero-in" data-i18n="hero.tag">macOS overlay · $14 BYOK</span>
+              <span class="tagline hero-in" data-i18n="hero.tag">Desktop overlay · $14 BYOK</span>
               <h1 class="hero-in" style="--d: 1" data-i18n="hero.title">
                 The answer is on screen before the pause gets awkward.
               </h1>
               <p class="hero__lead hero-in" style="--d: 2" data-i18n="hero.lead">
-                Kalfi listens to your call from your own Mac, catches the question, and writes one line
+                Kalfi listens to your call from your own computer, catches the question, and writes one line
                 you can actually say out loud. BYOK is $14/mo with your OpenAI or OpenRouter key — or $19
                 if we host the models. Final Round lists around $150.
               </p>
@@ -283,6 +283,11 @@
               </div>
               <p class="download-meta download-meta--hero hero-in" style="--d: 3" data-download-meta>
                 Detecting your system…
+              </p>
+              <p class="hero-trial hero-in" style="--d: 3">
+                <span class="trial-pill" data-i18n="hero.trial">
+                  Free 3-day trial · Hosted AI included · no card needed
+                </span>
               </p>
               <dl class="facts hero-in" style="--d: 4">
                 <div>
@@ -902,6 +907,14 @@
             <a class="btn btn--accent btn--sm" href="#download" data-i18n="pricing.dl">Download Kalfi</a>
           </div>
 
+          <div class="trial-strip" data-reveal>
+            <p data-i18n-html="pricing.trial">
+              <strong>Not sure yet?</strong> Download Kalfi and start a 3-day free trial in the app. Hosted
+              AI included (about 60 minutes of live answers), no card needed.
+            </p>
+            <a class="btn btn--accent btn--sm" href="#download" data-i18n="pricing.trial.cta">Try free</a>
+          </div>
+
           <div class="billing-toggle-wrap" data-reveal>
             <div
               class="billing-toggle"
@@ -1487,7 +1500,7 @@
         }
       }
     </script>
-    <script src="js/i18n.js?v=1.1.1" defer></script>
+    <script src="js/i18n.js?v=1.1.2" defer></script>
     <script src="js/demo.js?v=1.0.8" defer></script>
     <script src="js/main.js?v=1.1.3" defer></script>
     <script
