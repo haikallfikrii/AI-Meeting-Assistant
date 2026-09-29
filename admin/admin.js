@@ -551,6 +551,7 @@
             '</td>' +
             '<td>' +
             escapeHtml(u.plan) +
+            (u.trial ? ' <span class="pill">trial</span>' : '') +
             '</td>' +
             '<td><span class="pill ' +
             (bad ? 'pill--bad' : u.subStatus === 'active' ? 'pill--ok' : '') +
@@ -698,6 +699,15 @@
         escapeHtml(u.subStatus) +
         (u.suspended ? ' · suspended' : '') +
         '</strong></div>' +
+        (u.trial
+          ? '<div class="kv"><span>Free trial</span><strong>' +
+            (u.trial.active ? 'active' : 'ended') +
+            ' · until ' +
+            fmtDate(u.trial.endsAt) +
+            '</strong></div>'
+          : u.trialUsed
+            ? '<div class="kv"><span>Free trial</span>used</div>'
+            : '') +
         '<div class="kv"><span>Created</span>' +
         fmtDate(u.createdAt) +
         '</div>' +
