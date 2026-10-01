@@ -1,10 +1,16 @@
 import { electronAPI } from '@electron-toolkit/preload'
 import { contextBridge, ipcRenderer } from 'electron'
 
+export type AudioChannel = 'them' | 'me' | 'mixed'
+export type TranscriptSpeaker = 'them' | 'me' | 'unknown'
+
 export interface TranscriptEvent {
   text: string
   isFinal: boolean
   confidence: number
+  speaker?: TranscriptSpeaker
+  /** The user's line captured after arming Mic Ask. */
+  micAsk?: boolean
 }
 
 export interface DetectedQuestion {
@@ -189,7 +195,8 @@ const api = {
     ipcRenderer.invoke('start-capture', source),
   stopCapture: (): Promise<{ success: boolean }> => ipcRenderer.invoke('stop-capture'),
   getCaptureStatus: (): Promise<boolean> => ipcRenderer.invoke('get-capture-status'),
-  sendAudioData: (audioData: ArrayBuffer): void => ipcRenderer.send('audio-data', audioData),
+  sendAudioData: (audioData: ArrayBuffer, channel: AudioChannel): void =>
+    ipcRenderer.send('audio-data', audioData, channel),
   getAudioSources: (): Promise<AudioSource[]> => ipcRenderer.invoke('get-audio-sources'),
   getDemoRecordMode: (): Promise<boolean> => ipcRenderer.invoke('get-demo-record-mode'),
   getScreenRecordingStatus: (): Promise<{ status: string }> =>

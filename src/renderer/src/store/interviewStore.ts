@@ -1,11 +1,13 @@
 import { create } from 'zustand'
-import type { SessionMode, WorkSession } from '../../../preload/index'
+import type { SessionMode, TranscriptSpeaker, WorkSession } from '../../../preload/index'
 
 export interface TranscriptEntry {
   id: string
   text: string
   timestamp: number
   isFinal: boolean
+  speaker?: TranscriptSpeaker
+  micAsk?: boolean
 }
 
 export interface AnswerEntry {

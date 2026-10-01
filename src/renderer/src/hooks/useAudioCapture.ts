@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { AudioCaptureService } from '../services/audioCapture'
+import { AudioCaptureService, CaptureMode } from '../services/audioCapture'
 
 export type AudioSource = 'microphone' | 'system' | 'both'
 
@@ -7,9 +7,13 @@ interface UseAudioCaptureReturn {
   isCapturing: boolean
   error: string | null
   audioSource: AudioSource
+  /** Mode actually running (differs from audioSource after a mic fallback). */
+  captureMode: CaptureMode | null
   startCapture: (source?: AudioSource, sourceId?: string) => Promise<void>
   stopCapture: () => Promise<void>
   setAudioSource: (source: AudioSource) => void
+  openMicLane: () => Promise<void>
+  closeMicLane: () => void
 }
 
 export function useAudioCapture(): UseAudioCaptureReturn {
@@ -17,6 +21,7 @@ export function useAudioCapture(): UseAudioCaptureReturn {
   const [error, setError] = useState<string | null>(null)
   // Default Both; demo-record / denied screen switches to Mic
   const [audioSource, setAudioSource] = useState<AudioSource>('both')
+  const [captureMode, setCaptureMode] = useState<CaptureMode | null>(null)
   const audioServiceRef = useRef<AudioCaptureService | null>(null)
 
   useEffect(() => {
@@ -66,34 +71,31 @@ export function useAudioCapture(): UseAudioCaptureReturn {
 
         await window.api.startCapture(source)
 
-        audioServiceRef.current = new AudioCaptureService({
+        const service = new AudioCaptureService({
           sampleRate: 16000,
           channelCount: 1
         })
+        audioServiceRef.current = service
 
         if (source === 'microphone') {
           console.log('Starting microphone capture')
-          await audioServiceRef.current.startMicrophoneCapture()
-        } else if (source === 'system') {
-          try {
-            const targetSourceId = await resolveSystemSourceId(sourceId)
-            console.log('Starting system audio capture with source:', targetSourceId)
-            await audioServiceRef.current.startSystemAudioCapture(targetSourceId)
-          } catch (screenErr) {
-            console.warn('System audio unavailable, falling back to microphone:', screenErr)
-            await audioServiceRef.current.startMicrophoneCapture()
-          }
+          await service.startMicrophoneCapture()
         } else {
           try {
             const targetSourceId = await resolveSystemSourceId(sourceId)
-            console.log('Starting mixed mic + system capture:', targetSourceId)
-            await audioServiceRef.current.startMixedCapture(targetSourceId)
+            console.log(`Starting ${source} capture with source:`, targetSourceId)
+            if (source === 'system') {
+              await service.startSystemAudioCapture(targetSourceId)
+            } else {
+              await service.startMixedCapture(targetSourceId)
+            }
           } catch (screenErr) {
             console.warn('System audio unavailable, falling back to microphone:', screenErr)
-            await audioServiceRef.current.startMicrophoneCapture()
+            await service.startMicrophoneCapture()
           }
         }
 
+        setCaptureMode(service.getMode())
         setIsCapturing(true)
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Failed to start capture'
@@ -104,6 +106,7 @@ export function useAudioCapture(): UseAudioCaptureReturn {
           await audioServiceRef.current.stop()
           audioServiceRef.current = null
         }
+        setCaptureMode(null)
 
         try {
           await window.api.stopCapture()
@@ -125,6 +128,7 @@ export function useAudioCapture(): UseAudioCaptureReturn {
       await window.api.stopCapture()
 
       setIsCapturing(false)
+      setCaptureMode(null)
       setError(null)
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to stop capture'
@@ -133,12 +137,23 @@ export function useAudioCapture(): UseAudioCaptureReturn {
     }
   }, [])
 
+  const openMicLane = useCallback(async () => {
+    await audioServiceRef.current?.openMicLane()
+  }, [])
+
+  const closeMicLane = useCallback(() => {
+    audioServiceRef.current?.closeMicLane()
+  }, [])
+
   return {
     isCapturing,
     error,
     audioSource,
+    captureMode,
     startCapture,
     stopCapture,
-    setAudioSource
+    setAudioSource,
+    openMicLane,
+    closeMicLane
   }
 }

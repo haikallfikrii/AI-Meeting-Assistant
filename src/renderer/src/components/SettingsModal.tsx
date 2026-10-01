@@ -1041,12 +1041,14 @@ export function SettingsModal(): React.ReactNode | null {
           <div className="space-y-2">
             <label className="block text-sm font-medium text-dark-200">
               Silence Detection
-              <span className="ml-2 text-xs text-dark-400">{localSettings.pauseThreshold}ms</span>
+              <span className="ml-2 text-xs text-dark-400">
+                {(localSettings.pauseThreshold / 1000).toFixed(1)}s
+              </span>
             </label>
             <input
               type="range"
               min="500"
-              max="3000"
+              max="4000"
               step="100"
               value={localSettings.pauseThreshold}
               onChange={(e) =>
@@ -1055,7 +1057,10 @@ export function SettingsModal(): React.ReactNode | null {
               className="w-full accent-blue-500"
             />
             <p className="text-xs text-dark-500">
-              How long to wait detecting the question for transcription (Recommended : 1500ms)
+              Pause to wait after someone stops talking before Kalfi transcribes and answers.
+              Lower = faster answers but long questions may be cut in half. Higher = waits for
+              slow speakers. Applies immediately after Save, even while listening. Recommended:
+              1.5s.
             </p>
           </div>
 

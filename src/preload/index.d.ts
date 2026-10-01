@@ -63,10 +63,16 @@ export interface WorkSession {
   answers: SessionAnswer[]
 }
 
+export type AudioChannel = 'them' | 'me' | 'mixed'
+export type TranscriptSpeaker = 'them' | 'me' | 'unknown'
+
 export interface TranscriptEvent {
   text: string
   isFinal: boolean
   confidence: number
+  speaker?: TranscriptSpeaker
+  /** The user's line captured after arming Mic Ask. */
+  micAsk?: boolean
 }
 
 export interface DetectedQuestion {
@@ -174,7 +180,7 @@ export interface Api {
   startCapture: (source?: 'microphone' | 'system' | 'both') => Promise<{ success: boolean }>
   stopCapture: () => Promise<{ success: boolean }>
   getCaptureStatus: () => Promise<boolean>
-  sendAudioData: (audioData: ArrayBuffer) => void
+  sendAudioData: (audioData: ArrayBuffer, channel: AudioChannel) => void
   getAudioSources: () => Promise<AudioSource[]>
   getDemoRecordMode: () => Promise<boolean>
   getScreenRecordingStatus: () => Promise<{ status: string }>

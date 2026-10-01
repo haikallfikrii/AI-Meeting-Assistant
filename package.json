@@ -1,6 +1,6 @@
 {
   "name": "kalfi",
-  "version": "1.0.12",
+  "version": "1.0.13",
   "description": "Kalfi - AI-powered interview help",
   "main": "./out/main/index.js",
   "author": "Kalfi",

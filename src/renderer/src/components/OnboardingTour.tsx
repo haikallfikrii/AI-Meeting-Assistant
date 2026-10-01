@@ -31,7 +31,7 @@ const STEPS = [
   },
   {
     title: 'Ask & Mic Ask',
-    body: 'Missed a line? Ask forces an answer on the latest transcript. Mic Ask arms your next spoken line to be answered.',
+    body: "Missed a line? Ask forces an answer on the latest transcript. Didn't catch the question? Press Mic Ask, repeat it in your own words, and Kalfi answers what the interviewer asked. Works in System, Both, and Mic mode.",
     icon: Mic
   }
 ]

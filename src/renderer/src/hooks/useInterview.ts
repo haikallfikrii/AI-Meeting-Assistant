@@ -5,6 +5,7 @@ import {
   TranscriptEntry,
   useInterviewStore
 } from '../store/interviewStore'
+import type { CaptureMode } from '../services/audioCapture'
 import { AudioSource, useAudioCapture } from './useAudioCapture'
 
 export interface UseInterviewReturn {
@@ -20,11 +21,14 @@ export interface UseInterviewReturn {
   settings: AppSettings
   error: string | null
   audioSource: AudioSource
+  captureMode: CaptureMode | null
   isSessionActive: boolean
   startInterview: (source?: AudioSource) => Promise<void>
   stopInterview: () => Promise<void>
   clearHistory: () => Promise<void>
   setAudioSource: (source: AudioSource) => void
+  openMicLane: () => Promise<void>
+  closeMicLane: () => void
   captureAndAnalyzeScreenshot: () => Promise<void>
 }
 
@@ -56,9 +60,12 @@ export function useInterview(): UseInterviewReturn {
     isCapturing: audioCapturing,
     error: audioError,
     audioSource,
+    captureMode,
     startCapture: startAudioCapture,
     stopCapture: stopAudioCapture,
-    setAudioSource
+    setAudioSource,
+    openMicLane,
+    closeMicLane
   } = useAudioCapture()
 
   // Sync audio capture state with store
@@ -138,6 +145,7 @@ export function useInterview(): UseInterviewReturn {
     settings,
     error: error || audioError,
     audioSource,
+    captureMode,
     isSessionActive,
 
     // Actions
@@ -145,6 +153,8 @@ export function useInterview(): UseInterviewReturn {
     stopInterview,
     clearHistory,
     setAudioSource,
+    openMicLane,
+    closeMicLane,
     captureAndAnalyzeScreenshot
   }
 }

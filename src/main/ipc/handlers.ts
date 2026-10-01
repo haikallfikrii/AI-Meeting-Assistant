@@ -12,7 +12,7 @@ import { createHash } from 'node:crypto'
 import os from 'node:os'
 import { AnswerEntry } from '../../preload/index'
 import { HistoryManager } from '../services/historyManager'
-import { OpenAIService } from '../services/openaiService'
+import { OpenAIService, otherPartyLabel } from '../services/openaiService'
 import {
   DEFAULT_CHAT_MODELS,
   DEFAULT_STT_MODELS,
@@ -33,7 +33,7 @@ import {
 } from '../services/entitlement'
 import { WorkSession, whisperLanguageCode } from '../services/sessionTypes'
 import { VisionService } from '../services/visionService'
-import { WhisperService } from '../services/whisperService'
+import { TranscriptEvent, WhisperService } from '../services/whisperService'
 import { applyOverlayWindowBehavior } from '../windowOverlay'
 import {
   applyDockVisibility,
@@ -46,7 +46,32 @@ import {
 /** Global + in-app Shot hotkey (⌘⇧S / Ctrl+Shift+S) */
 export const SHOT_ACCELERATOR = 'CommandOrControl+Shift+S'
 
-let whisperService: WhisperService | null = null
+/**
+ * Renderer audio lanes: `them` = system/meeting audio (the other party),
+ * `me` = the user's microphone kept separate, `mixed` = a single mic stream
+ * where speakers cannot be told apart (Mic-only source or system fallback).
+ */
+type AudioChannel = 'them' | 'me' | 'mixed'
+type Speaker = 'them' | 'me' | 'unknown'
+
+interface LiveLine {
+  speaker: Speaker
+  text: string
+  at: number
+  micAsk?: boolean
+}
+
+const LIVE_LOG_MAX = 40
+const CONTEXT_WINDOW_MS = 3 * 60_000
+const CONTEXT_MAX_LINES = 12
+/** Mic lines wait this long so a speaker echo of the other party can be matched and dropped. */
+const ME_ECHO_HOLD_MS = 1500
+const ECHO_WINDOW_MS = 20_000
+
+let sttServices: Partial<Record<AudioChannel, WhisperService>> = {}
+let createStt: ((channel: AudioChannel) => WhisperService) | null = null
+let liveLog: LiveLine[] = []
+let micAskArmedAt = 0
 let openaiService: OpenAIService | null = null
 let questionDetector: QuestionDetector | null = null
 let settingsManager: SettingsManager | null = null
@@ -126,27 +151,124 @@ export function unregisterShotShortcut(): void {
   }
 }
 
-async function answerDetectedText(rawText: string, opts?: { force?: boolean }): Promise<void> {
+function sttList(): WhisperService[] {
+  return Object.values(sttServices).filter((s): s is WhisperService => Boolean(s))
+}
+
+function getStt(channel: AudioChannel): WhisperService | null {
+  const existing = sttServices[channel]
+  if (existing) return existing
+  if (!createStt) return null
+  const service = createStt(channel)
+  sttServices[channel] = service
+  service.start()
+  return service
+}
+
+function stopAllStt(): void {
+  for (const service of sttList()) {
+    service.stop()
+    service.removeAllListeners()
+  }
+  sttServices = {}
+}
+
+function pushLiveLine(line: LiveLine): void {
+  liveLog.push(line)
+  if (liveLog.length > LIVE_LOG_MAX) liveLog = liveLog.slice(-LIVE_LOG_MAX)
+}
+
+function emitLiveLine(line: LiveLine): void {
+  mainWindow?.webContents.send('transcript', {
+    text: line.text,
+    isFinal: true,
+    confidence: 1,
+    speaker: line.speaker,
+    micAsk: Boolean(line.micAsk)
+  })
+}
+
+/** Speaker-labelled recent transcript for the answer prompt, oldest first. */
+function transcriptContext(): string {
+  const other = otherPartyLabel(sessionManager?.getActiveSession()?.mode || 'interview')
+  const cutoff = Date.now() - CONTEXT_WINDOW_MS
+  return liveLog
+    .filter((l) => l.at >= cutoff)
+    .slice(-CONTEXT_MAX_LINES)
+    .map((l) => {
+      const who =
+        l.speaker === 'them'
+          ? other
+          : l.speaker === 'me'
+            ? l.micAsk
+              ? 'Me (restating the question)'
+              : 'Me'
+            : 'Unlabelled speaker'
+      return `${who}: ${l.text}`
+    })
+    .join('\n')
+}
+
+function words(text: string): Set<string> {
+  return new Set(
+    text
+      .toLowerCase()
+      .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+      .split(/\s+/)
+      .filter(Boolean)
+  )
+}
+
+/** True when a mic line is just the other party's voice leaking from the speakers. */
+function isEchoOfOtherParty(text: string, at: number): boolean {
+  const mine = words(text)
+  if (mine.size < 3) return false
+  return liveLog.some((l) => {
+    if (l.speaker !== 'them' || Math.abs(l.at - at) > ECHO_WINDOW_MS) return false
+    const theirs = words(l.text)
+    if (theirs.size < 3) return false
+    let shared = 0
+    mine.forEach((w) => {
+      if (theirs.has(w)) shared++
+    })
+    return shared / Math.min(mine.size, theirs.size) >= 0.7
+  })
+}
+
+function setMicAskArmed(enabled: boolean): void {
+  forceNextTranscriptAsQuestion = enabled
+  if (enabled) {
+    micAskArmedAt = Date.now()
+    sttServices.me?.resetBuffer()
+    sttServices.mixed?.resetBuffer()
+  }
+  mainWindow?.webContents.send('force-next-question-changed', enabled)
+}
+
+async function answerDetectedText(rawText: string, speaker: Speaker): Promise<void> {
   if (!openaiService || !questionDetector) return
   const text = rawText.trim()
   if (!text) return
 
   let toAnswer = text
-  const isConfirm = questionDetector.isConfirmation(text)
-  const pending = questionDetector.getLastInterviewerQuestion()
-
-  if (isConfirm && pending) {
-    console.log('[Answer] Confirmation detected — answering prior interviewer question')
-    toAnswer = pending
-  } else if (!opts?.force && questionDetector.isLikelySelfSpeech(text) && captureAudioSource !== 'system') {
-    console.log('[Answer] Skipping auto-answer for likely self speech:', text.slice(0, 80))
-    return
-  } else if (!opts?.force && captureAudioSource === 'microphone' && !forceNextTranscriptAsQuestion) {
-    // Mic-only: only answer when Mic Ask armed (handled separately) or manual Ask
-    console.log('[Answer] Mic-only capture — skip auto question detect')
-    return
-  } else if (!isConfirm && !questionDetector.isLikelySelfSpeech(text)) {
+  if (speaker === 'them') {
     questionDetector.setLastInterviewerQuestion(text)
+  } else {
+    const isConfirm = questionDetector.isConfirmation(text)
+    const pending = questionDetector.getLastInterviewerQuestion()
+    if (isConfirm && pending) {
+      console.log('[Answer] Confirmation detected — answering prior interviewer question')
+      toAnswer = pending
+    } else if (questionDetector.isLikelySelfSpeech(text) && captureAudioSource !== 'system') {
+      console.log('[Answer] Skipping auto-answer for likely self speech:', text.slice(0, 80))
+      return
+    } else if (captureAudioSource === 'microphone') {
+      // Mic-only: only answer when Mic Ask armed or on manual Ask
+      console.log('[Answer] Mic-only capture — skip auto question detect')
+      return
+    } else if (!isConfirm) {
+      questionDetector.setLastInterviewerQuestion(text)
+    }
   }
 
   mainWindow?.webContents.send('question-detected', {
@@ -154,10 +276,76 @@ async function answerDetectedText(rawText: string, opts?: { force?: boolean }): 
     confidence: 1,
     questionType: 'direct'
   })
-  await openaiService.generateAnswer(toAnswer)
+  await openaiService.generateAnswer(toAnswer, { transcript: transcriptContext() })
 }
 
-function persistExchange(meta: { sessionId: string | null; question: string; answer: string }): void {
+async function answerMicAsk(restated: string, transcript: string): Promise<void> {
+  if (!openaiService) return
+  mainWindow?.webContents.send('question-detected', {
+    text: restated,
+    confidence: 1,
+    questionType: 'direct'
+  })
+  await openaiService.generateAnswer(restated, { transcript, restated: true })
+}
+
+function handleChannelTranscript(channel: AudioChannel, event: TranscriptEvent): void {
+  const text = event.text.trim()
+  if (!text || !event.isFinal) return
+  console.log(`[Transcript:${channel}]`, text)
+
+  const micAskLine =
+    forceNextTranscriptAsQuestion && channel !== 'them' && event.startedAt >= micAskArmedAt - 500
+  if (micAskLine) {
+    setMicAskArmed(false)
+    const transcript = transcriptContext()
+    const line: LiveLine = {
+      speaker: channel === 'me' ? 'me' : 'unknown',
+      text,
+      at: event.startedAt,
+      micAsk: true
+    }
+    pushLiveLine(line)
+    emitLiveLine(line)
+    answerMicAsk(text, transcript).catch((error) => {
+      mainWindow?.webContents.send('answer-error', (error as Error).message)
+    })
+    return
+  }
+
+  if (channel === 'me') {
+    setTimeout(() => {
+      if (isEchoOfOtherParty(text, event.startedAt)) {
+        console.log('[Transcript:me] Dropped speaker echo:', text.slice(0, 80))
+        return
+      }
+      const line: LiveLine = { speaker: 'me', text, at: event.startedAt }
+      pushLiveLine(line)
+      emitLiveLine(line)
+    }, ME_ECHO_HOLD_MS)
+    return
+  }
+
+  const speaker: Speaker = channel === 'them' ? 'them' : 'unknown'
+  const line: LiveLine = { speaker, text, at: event.startedAt }
+  pushLiveLine(line)
+  emitLiveLine(line)
+
+  questionDetector?.addTranscript(text, true)
+  const early = questionDetector?.checkEarlyDetection(text)
+  if (early) {
+    console.log('Early question detection triggered:', early.text)
+    answerDetectedText(early.text, speaker).catch((error) => {
+      mainWindow?.webContents.send('answer-error', (error as Error).message)
+    })
+  }
+}
+
+function persistExchange(meta: {
+  sessionId: string | null
+  question: string
+  answer: string
+}): void {
   if (!meta.sessionId || !meta.question || !meta.answer) return
   const updated = sessionManager?.appendExchange(meta.sessionId, meta.question, meta.answer)
   if (updated) {
@@ -273,8 +461,9 @@ export function initializeIpcHandlers(window: BrowserWindow): void {
   }
 
   const bootSettings = settingsManager.getSettings()
-  const demoRecord =
-    ['1', 'true', 'yes'].includes((process.env.KALFI_DEMO_RECORD || '').trim().toLowerCase())
+  const demoRecord = ['1', 'true', 'yes'].includes(
+    (process.env.KALFI_DEMO_RECORD || '').trim().toLowerCase()
+  )
   applyRuntimeBranding(
     mainWindow,
     bootSettings.brandName,
@@ -338,8 +527,7 @@ export function initializeIpcHandlers(window: BrowserWindow): void {
         }
         return { ok: res.ok, status: res.status, data }
       } catch (error) {
-        const message =
-          error instanceof Error ? error.message : 'Could not reach Kalfi servers'
+        const message = error instanceof Error ? error.message : 'Could not reach Kalfi servers'
         return {
           ok: false,
           status: 0,
@@ -358,6 +546,10 @@ export function initializeIpcHandlers(window: BrowserWindow): void {
 
   ipcMain.handle('update-settings', (_event, updates: Partial<AppSettings>) => {
     settingsManager?.updateSettings(updates)
+
+    if (typeof updates.pauseThreshold === 'number') {
+      for (const service of sttList()) service.setSilenceMs(updates.pauseThreshold)
+    }
 
     // Apply window settings immediately
     if (updates.alwaysOnTop !== undefined && mainWindow) {
@@ -452,8 +644,8 @@ export function initializeIpcHandlers(window: BrowserWindow): void {
       const session = sessionManager?.updateSession(id, updates)
       if (session && sessionManager?.getActiveSession()?.id === id) {
         if (openaiService) openaiService.loadSession(session)
-        if (whisperService) {
-          whisperService.setLanguage(whisperLanguageCode(session.context.meetingLanguage))
+        for (const service of sttList()) {
+          service.setLanguage(whisperLanguageCode(session.context.meetingLanguage))
         }
       }
       return session
@@ -464,8 +656,8 @@ export function initializeIpcHandlers(window: BrowserWindow): void {
     const session = sessionManager?.setActiveSession(id)
     if (session) {
       if (openaiService) openaiService.loadSession(session)
-      if (whisperService) {
-        whisperService.setLanguage(whisperLanguageCode(session.context.meetingLanguage))
+      for (const service of sttList()) {
+        service.setLanguage(whisperLanguageCode(session.context.meetingLanguage))
       }
     }
     return session
@@ -515,7 +707,7 @@ export function initializeIpcHandlers(window: BrowserWindow): void {
         confidence: 1,
         questionType: 'direct'
       })
-      await service.generateAnswer(toAnswer)
+      await service.generateAnswer(toAnswer, { transcript: transcriptContext() })
       return { success: true }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to answer'
@@ -525,8 +717,7 @@ export function initializeIpcHandlers(window: BrowserWindow): void {
   })
 
   ipcMain.handle('set-force-next-question', (_event, enabled: boolean) => {
-    forceNextTranscriptAsQuestion = Boolean(enabled)
-    mainWindow?.webContents.send('force-next-question-changed', forceNextTranscriptAsQuestion)
+    setMicAskArmed(Boolean(enabled))
     return forceNextTranscriptAsQuestion
   })
 
@@ -560,11 +751,7 @@ export function initializeIpcHandlers(window: BrowserWindow): void {
   // Fetch chat models from the configured OpenAI-compatible provider
   ipcMain.handle(
     'fetch-openai-models',
-    async (
-      _event,
-      apiKey: string,
-      options?: { provider?: LlmProvider; baseUrl?: string }
-    ) => {
+    async (_event, apiKey: string, options?: { provider?: LlmProvider; baseUrl?: string }) => {
       try {
         if (!apiKey || apiKey.trim().length === 0) {
           throw new Error('API key is required')
@@ -594,9 +781,7 @@ export function initializeIpcHandlers(window: BrowserWindow): void {
   )
 
   // Audio capture handlers
-  ipcMain.handle(
-    'start-capture',
-    async (_event, source?: 'microphone' | 'system' | 'both') => {
+  ipcMain.handle('start-capture', async (_event, source?: 'microphone' | 'system' | 'both') => {
     assertEntitled()
     const settings = settingsManager?.getSettings()
     captureAudioSource =
@@ -618,7 +803,10 @@ export function initializeIpcHandlers(window: BrowserWindow): void {
       settingsManager?.updateSettings({
         singleSession: started.state,
         membershipStatus: started.ok ? 'active' : 'expired',
-        membershipPlan: started.state.status === 'expired' || started.state.status === 'consumed' ? 'free' : 'single_session'
+        membershipPlan:
+          started.state.status === 'expired' || started.state.status === 'consumed'
+            ? 'free'
+            : 'single_session'
       })
       if (!started.ok) {
         throw new Error(started.reason)
@@ -627,25 +815,54 @@ export function initializeIpcHandlers(window: BrowserWindow): void {
 
     try {
       // IMPORTANT: Clean up any existing services/listeners first to prevent duplicates
-      if (whisperService) {
-        whisperService.removeAllListeners()
-        whisperService = null
-      }
+      stopAllStt()
       if (openaiService) {
         openaiService.removeAllListeners()
         openaiService = null
       }
       questionDetector?.removeAllListeners()
+      questionDetector?.clearBuffer()
+      liveLog = []
+      forceNextTranscriptAsQuestion = false
 
-      // Initialize Whisper service for transcription (language from active session)
       const activeSession = sessionManager?.getActiveSession() || null
-      whisperService = new WhisperService({
-        apiKey: conn.apiKey,
-        provider: conn.provider,
-        baseUrl: conn.baseUrl,
-        model: conn.sttModel,
-        language: whisperLanguageCode(activeSession?.context.meetingLanguage)
-      })
+      /** Speaker of the lane whose utterance the question detector is evaluating. */
+      let detectorSpeaker: Speaker = 'unknown'
+
+      createStt = (channel) => {
+        const live = settingsManager?.getSettings()
+        const service = new WhisperService({
+          apiKey: conn.apiKey,
+          provider: conn.provider,
+          baseUrl: conn.baseUrl,
+          model: conn.sttModel,
+          language: whisperLanguageCode(
+            sessionManager?.getActiveSession()?.context.meetingLanguage
+          ),
+          silenceMs: live?.pauseThreshold,
+          minWords: channel === 'me' ? 2 : 3
+        })
+
+        service.on('transcript', (event: TranscriptEvent) => {
+          handleChannelTranscript(channel, event)
+        })
+
+        if (channel !== 'me') {
+          service.on('utteranceEnd', () => {
+            detectorSpeaker = channel === 'them' ? 'them' : 'unknown'
+            questionDetector?.onUtteranceEnd()
+            mainWindow?.webContents.send('utterance-end')
+          })
+        }
+
+        service.on('error', (error) => {
+          const errorMessage = error instanceof Error ? error.message : 'Unknown capture error'
+          console.error(`Whisper error (${channel}):`, errorMessage)
+          mainWindow?.webContents.send('capture-error', errorMessage)
+        })
+
+        return service
+      }
 
       // Initialize OpenAI-compatible service for answer generation (bound to active session)
       openaiService = new OpenAIService({
@@ -658,68 +875,15 @@ export function initializeIpcHandlers(window: BrowserWindow): void {
 
       wireOpenAIServiceEvents(openaiService)
 
-      // Set up Whisper event listeners
-      whisperService.on('transcript', async (event) => {
-        console.log('Transcript received:', event.text)
-        questionDetector?.addTranscript(event.text, event.isFinal)
-        mainWindow?.webContents.send('transcript', event)
-
-        if (!event.isFinal || !openaiService) return
-
-        // Manual safety net: next utterance after Mic Ask is always answered
-        if (forceNextTranscriptAsQuestion) {
-          forceNextTranscriptAsQuestion = false
-          mainWindow?.webContents.send('force-next-question-changed', false)
-          try {
-            await answerDetectedText(event.text, { force: true })
-          } catch (error) {
-            mainWindow?.webContents.send('answer-error', (error as Error).message)
-          }
-          return
-        }
-
-        // Auto early detection for high-confidence questions
-        if (questionDetector) {
-          const earlyDetection = questionDetector.checkEarlyDetection(event.text)
-          if (earlyDetection) {
-            console.log('Early question detection triggered:', earlyDetection.text)
-            try {
-              await answerDetectedText(earlyDetection.text)
-            } catch (error) {
-              mainWindow?.webContents.send('answer-error', (error as Error).message)
-            }
-          }
-        }
-      })
-
-      whisperService.on('utteranceEnd', () => {
-        console.log('Processing utterance...')
-        questionDetector?.onUtteranceEnd()
-        mainWindow?.webContents.send('utterance-end')
-      })
-
-      whisperService.on('speechStarted', () => {
-        mainWindow?.webContents.send('speech-started')
-      })
-
-      whisperService.on('error', (error) => {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown capture error'
-        console.error('Whisper error:', errorMessage)
-        mainWindow?.webContents.send('capture-error', errorMessage)
-      })
-
-      // Set up question detector listener ONCE
       questionDetector?.on('questionDetected', async (detection) => {
         console.log('Question detected:', detection.text)
         try {
-          await answerDetectedText(detection.text)
+          await answerDetectedText(detection.text, detectorSpeaker)
         } catch (error) {
           mainWindow?.webContents.send('answer-error', (error as Error).message)
         }
       })
 
-      // Start Whisper service
-      whisperService.start()
       isCapturing = true
       console.log('Audio capture started successfully')
 
@@ -733,14 +897,9 @@ export function initializeIpcHandlers(window: BrowserWindow): void {
 
   ipcMain.handle('stop-capture', async () => {
     isCapturing = false
-    forceNextTranscriptAsQuestion = false
-    mainWindow?.webContents.send('force-next-question-changed', false)
-
-    if (whisperService) {
-      whisperService.stop()
-      whisperService.removeAllListeners()
-      whisperService = null
-    }
+    setMicAskArmed(false)
+    stopAllStt()
+    createStt = null
 
     // Keep openaiService alive so manual Ask / Summarize still work after Stop
     // (listeners remain wired)
@@ -771,10 +930,11 @@ export function initializeIpcHandlers(window: BrowserWindow): void {
   })
 
   // Audio data from renderer
-  ipcMain.on('audio-data', (_event, audioData: ArrayBuffer) => {
-    if (whisperService && isCapturing) {
-      whisperService.addAudioData(audioData)
-    }
+  ipcMain.on('audio-data', (_event, audioData: ArrayBuffer, channel?: AudioChannel) => {
+    if (!isCapturing) return
+    const lane: AudioChannel =
+      channel === 'them' || channel === 'me' || channel === 'mixed' ? channel : 'mixed'
+    getStt(lane)?.addAudioData(audioData)
   })
 
   // Get audio sources for system audio capture (needs macOS Screen Recording)
@@ -1104,8 +1264,9 @@ export function initializeIpcHandlers(window: BrowserWindow): void {
 }
 
 export function reapplyDockPreference(): void {
-  const demoRecord =
-    ['1', 'true', 'yes'].includes((process.env.KALFI_DEMO_RECORD || '').trim().toLowerCase())
+  const demoRecord = ['1', 'true', 'yes'].includes(
+    (process.env.KALFI_DEMO_RECORD || '').trim().toLowerCase()
+  )
   if (demoRecord) {
     applyDockVisibility(false)
     return
@@ -1116,10 +1277,8 @@ export function reapplyDockPreference(): void {
 
 export function cleanupIpcHandlers(): void {
   unregisterShotShortcut()
-  if (whisperService) {
-    whisperService.stop()
-    whisperService = null
-  }
+  stopAllStt()
+  createStt = null
   if (openaiService) {
     openaiService.removeAllListeners()
     openaiService = null

@@ -1,3 +1,5 @@
+import type { AudioChannel } from '../../../preload/index'
+
 export interface AudioCaptureOptions {
   sampleRate?: number
   channelCount?: number
@@ -16,13 +18,22 @@ const DEFAULT_OPTIONS: AudioCaptureOptions = {
 
 export type CaptureMode = 'microphone' | 'system' | 'both'
 
+interface Lane {
+  stream: MediaStream
+  source: MediaStreamAudioSourceNode
+  worklet: AudioWorkletNode
+}
+
+/**
+ * Each audio source is transcribed on its own lane so the main process knows
+ * who is speaking: `them` = meeting/system audio, `me` = the user's mic,
+ * `mixed` = Mic-only capture where speakers cannot be separated.
+ */
 export class AudioCaptureService {
   private audioContext: AudioContext | null = null
-  private mediaStreams: MediaStream[] = []
-  private workletNode: AudioWorkletNode | null = null
-  private sourceNodes: MediaStreamAudioSourceNode[] = []
-  private mixerNode: GainNode | null = null
+  private lanes: Partial<Record<AudioChannel, Lane>> = {}
   private isCapturing = false
+  private mode: CaptureMode | null = null
   private options: AudioCaptureOptions
   private workletUrl: string | null = null
 
@@ -42,24 +53,43 @@ export class AudioCaptureService {
     await this.startCapture('both', systemSourceId)
   }
 
+  getMode(): CaptureMode | null {
+    return this.mode
+  }
+
+  hasMicLane(): boolean {
+    return Boolean(this.lanes.me || this.lanes.mixed)
+  }
+
+  /** System-only capture: open the mic on demand (Mic Ask). */
+  async openMicLane(): Promise<void> {
+    if (!this.isCapturing || this.lanes.me || this.lanes.mixed) return
+    await this.addLane('me', await this.openMicrophoneStream())
+  }
+
+  /** Close an on-demand mic lane; Both / Mic captures keep their mic open. */
+  closeMicLane(): void {
+    if (this.mode !== 'system') return
+    this.removeLane('me')
+  }
+
   private async startCapture(mode: CaptureMode, systemSourceId?: string): Promise<void> {
     if (this.isCapturing) return
 
+    const pending: Array<[AudioChannel, MediaStream]> = []
     try {
-      const streams: MediaStream[] = []
-
-      if (mode === 'microphone' || mode === 'both') {
-        streams.push(await this.openMicrophoneStream())
-      }
-
       if (mode === 'system' || mode === 'both') {
         if (!systemSourceId) {
           throw new Error('System audio source id is required')
         }
-        streams.push(await this.openSystemStream(systemSourceId))
+        pending.push(['them', await this.openSystemStream(systemSourceId)])
       }
-
-      this.mediaStreams = streams
+      if (mode === 'microphone') {
+        pending.push(['mixed', await this.openMicrophoneStream()])
+      }
+      if (mode === 'both') {
+        pending.push(['me', await this.openMicrophoneStream()])
+      }
 
       this.audioContext = new AudioContext({
         sampleRate: this.options.sampleRate
@@ -73,30 +103,43 @@ export class AudioCaptureService {
       this.workletUrl = this.createWorkletBlobUrl()
       await this.audioContext.audioWorklet.addModule(this.workletUrl)
 
-      this.workletNode = new AudioWorkletNode(this.audioContext, 'audio-processor')
-      this.workletNode.port.onmessage = (event) => {
-        if (event.data.audioData) {
-          this.handleAudioData(event.data.audioData)
-        }
-      }
-
-      // Mix all sources into one node before the worklet
-      this.mixerNode = this.audioContext.createGain()
-      this.mixerNode.gain.value = 1
-
-      this.sourceNodes = streams.map((stream) => {
-        const source = this.audioContext!.createMediaStreamSource(stream)
-        source.connect(this.mixerNode!)
-        return source
-      })
-
-      this.mixerNode.connect(this.workletNode)
       this.isCapturing = true
+      this.mode = mode
+      for (const [channel, stream] of pending) {
+        await this.addLane(channel, stream)
+      }
     } catch (error) {
+      pending.forEach(([, stream]) => stream.getTracks().forEach((track) => track.stop()))
       await this.stop()
       console.error('Failed to start audio capture:', error)
       throw error
     }
+  }
+
+  private async addLane(channel: AudioChannel, stream: MediaStream): Promise<void> {
+    if (!this.audioContext) {
+      stream.getTracks().forEach((track) => track.stop())
+      return
+    }
+    const worklet = new AudioWorkletNode(this.audioContext, 'audio-processor')
+    worklet.port.onmessage = (event) => {
+      if (event.data.audioData && window.api) {
+        window.api.sendAudioData(event.data.audioData, channel)
+      }
+    }
+    const source = this.audioContext.createMediaStreamSource(stream)
+    source.connect(worklet)
+    this.lanes[channel] = { stream, source, worklet }
+  }
+
+  private removeLane(channel: AudioChannel): void {
+    const lane = this.lanes[channel]
+    if (!lane) return
+    lane.source.disconnect()
+    lane.worklet.port.onmessage = null
+    lane.worklet.disconnect()
+    lane.stream.getTracks().forEach((track) => track.stop())
+    delete this.lanes[channel]
   }
 
   private async openMicrophoneStream(): Promise<MediaStream> {
@@ -194,30 +237,9 @@ export class AudioCaptureService {
     return URL.createObjectURL(blob)
   }
 
-  private handleAudioData(audioData: ArrayBuffer): void {
-    if (window.api) {
-      window.api.sendAudioData(audioData)
-    }
-  }
-
   async stop(): Promise<void> {
-    if (this.workletNode) {
-      this.workletNode.disconnect()
-      this.workletNode = null
-    }
-
-    if (this.mixerNode) {
-      this.mixerNode.disconnect()
-      this.mixerNode = null
-    }
-
-    this.sourceNodes.forEach((node) => node.disconnect())
-    this.sourceNodes = []
-
-    this.mediaStreams.forEach((stream) => {
-      stream.getTracks().forEach((track) => track.stop())
-    })
-    this.mediaStreams = []
+    ;(Object.keys(this.lanes) as AudioChannel[]).forEach((channel) => this.removeLane(channel))
+    this.lanes = {}
 
     if (this.audioContext) {
       try {
@@ -234,6 +256,7 @@ export class AudioCaptureService {
     }
 
     this.isCapturing = false
+    this.mode = null
   }
 
   getIsCapturing(): boolean {

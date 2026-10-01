@@ -1,10 +1,6 @@
 import { EventEmitter } from 'events'
 import OpenAI from 'openai'
-import {
-  DEFAULT_CHAT_MODELS,
-  LlmProvider,
-  createOpenAIClient
-} from './providerConfig'
+import { DEFAULT_CHAT_MODELS, LlmProvider, createOpenAIClient } from './providerConfig'
 import { buildSystemPromptFromSession } from './promptBuilder'
 import { SessionMessage, WorkSession } from './sessionTypes'
 
@@ -89,6 +85,40 @@ function userPromptForMode(mode: WorkSession['mode'], question: string): string 
   return `Interview question: "${question}"\n\nProvide a professional answer:`
 }
 
+export function otherPartyLabel(mode: WorkSession['mode']): string {
+  if (mode === 'client-meeting') return 'Client'
+  if (mode === 'random-chat') return 'Other person'
+  return 'Interviewer'
+}
+
+export interface AnswerOptions {
+  /** Recent speaker-labelled live transcript, oldest first. */
+  transcript?: string
+  /**
+   * The line is the user restating the other party's question after pressing
+   * Mic Ask, not a question addressed to the assistant.
+   */
+  restated?: boolean
+}
+
+function restatedPrompt(mode: WorkSession['mode'], restated: string): string {
+  const other = otherPartyLabel(mode)
+  return `I pressed "Mic Ask" and restated, in my own words, what the ${other.toLowerCase()} just asked me: "${restated}"
+
+My restatement can be loose, partial, or in a different language than the meeting. Use it together with the recent ${other} lines above to work out what the ${other.toLowerCase()} actually asked.
+Reply with ONLY what I should say back to the ${other.toLowerCase()} now, as me, in the meeting language. Do not repeat the question, do not explain your reasoning, and do not answer my restatement as if I were asking you.`
+}
+
+function buildUserTurn(mode: WorkSession['mode'], question: string, opts?: AnswerOptions): string {
+  const core = opts?.restated ? restatedPrompt(mode, question) : userPromptForMode(mode, question)
+  const transcript = opts?.transcript?.trim()
+  if (!transcript) return core
+  return `Recent live transcript (auto-transcribed, may contain errors; "Me" is the person you are helping):
+${transcript}
+
+${core}`
+}
+
 export class OpenAIService extends EventEmitter {
   private client: OpenAI | null = null
   private config: OpenAIConfig
@@ -144,24 +174,29 @@ export class OpenAIService extends EventEmitter {
     this.applySession(session)
   }
 
-  async generateAnswer(question: string): Promise<string> {
+  async generateAnswer(question: string, opts?: AnswerOptions): Promise<string> {
     if (!this.client) {
       throw new Error('OpenAI client not initialized')
     }
 
-    this.conversationHistory.push({
+    // History keeps the compact turn; the transcript window is only sent for this request.
+    const historyTurn: Message = {
       role: 'user',
-      content: userPromptForMode(this.sessionMode, question)
-    })
-
-    if (this.conversationHistory.length > this.maxHistoryLength) {
-      this.conversationHistory = this.conversationHistory.slice(-this.maxHistoryLength)
+      content: opts?.restated
+        ? `${otherPartyLabel(this.sessionMode)} question (restated by me): "${question}"`
+        : userPromptForMode(this.sessionMode, question)
     }
 
     const messages: Message[] = [
       { role: 'system', content: this.systemPrompt },
-      ...this.conversationHistory
+      ...this.conversationHistory,
+      { role: 'user', content: buildUserTurn(this.sessionMode, question, opts) }
     ]
+
+    this.conversationHistory.push(historyTurn)
+    if (this.conversationHistory.length > this.maxHistoryLength) {
+      this.conversationHistory = this.conversationHistory.slice(-this.maxHistoryLength)
+    }
 
     try {
       let fullResponse = ''

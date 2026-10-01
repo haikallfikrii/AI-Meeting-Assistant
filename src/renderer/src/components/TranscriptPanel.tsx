@@ -1,8 +1,37 @@
 import { MessageSquare, Send } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useInterview } from '../hooks/useInterview'
-import { useInterviewStore } from '../store/interviewStore'
+import { TranscriptEntry, useInterviewStore } from '../store/interviewStore'
 import { Tooltip } from './Tooltip'
+
+function speakerBadge(
+  speaker: TranscriptEntry['speaker'],
+  micAsk: boolean | undefined,
+  otherLabel: string
+): { label: string; className: string; border: string } | null {
+  if (micAsk) {
+    return {
+      label: 'You · Mic Ask',
+      className: 'bg-amber-500/15 text-amber-300',
+      border: 'border-amber-500/50'
+    }
+  }
+  if (speaker === 'them') {
+    return {
+      label: otherLabel,
+      className: 'bg-blue-500/15 text-blue-300',
+      border: 'border-blue-500/40'
+    }
+  }
+  if (speaker === 'me') {
+    return {
+      label: 'You',
+      className: 'bg-emerald-500/15 text-emerald-300',
+      border: 'border-emerald-500/40'
+    }
+  }
+  return null
+}
 
 const MIN_H = 120
 const MAX_H = 420
@@ -21,7 +50,13 @@ function loadHeight(): number {
 
 export function TranscriptPanel(): React.JSX.Element {
   const { transcripts, currentTranscript, isCapturing, isSpeaking, isGenerating } = useInterview()
-  const { forceNextAsk, setError, setCurrentQuestion } = useInterviewStore()
+  const { forceNextAsk, setError, setCurrentQuestion, activeSession } = useInterviewStore()
+  const otherLabel =
+    activeSession?.mode === 'client-meeting'
+      ? 'Client'
+      : activeSession?.mode === 'random-chat'
+        ? 'Them'
+        : 'Interviewer'
   const scrollRef = useRef<HTMLDivElement>(null)
   const [askingId, setAskingId] = useState<string | null>(null)
   const [height, setHeight] = useState(loadHeight)
@@ -91,7 +126,10 @@ export function TranscriptPanel(): React.JSX.Element {
   }
 
   return (
-    <div className="flex flex-col bg-dark-900/50 border-t border-dark-700 shrink-0" style={{ height }}>
+    <div
+      className="flex flex-col bg-dark-900/50 border-t border-dark-700 shrink-0"
+      style={{ height }}
+    >
       <div
         role="separator"
         aria-orientation="horizontal"
@@ -114,7 +152,7 @@ export function TranscriptPanel(): React.JSX.Element {
         <div className="flex items-center gap-2 shrink-0">
           {forceNextAsk && (
             <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30 whitespace-nowrap">
-              Next speech → Answer
+              Repeat the question → Answer
             </span>
           )}
           {isSpeaking && (
@@ -136,26 +174,38 @@ export function TranscriptPanel(): React.JSX.Element {
           </p>
         ) : hasContent ? (
           <>
-            {transcripts.map((transcript, index) => (
-              <div
-                key={transcript.id}
-                className="group flex gap-2 text-sm border-l-2 border-dark-600 pl-3 py-0.5 min-w-0"
-              >
-                <span className="text-dark-500 font-mono text-xs min-w-[20px] shrink-0">
-                  {index + 1}.
-                </span>
-                <p className="text-dark-200 leading-relaxed flex-1 break-words">{transcript.text}</p>
-                <Tooltip content="Send this transcript to AI for an answer" side="left">
-                  <button
-                    onClick={() => askText(transcript.id, transcript.text)}
-                    disabled={isGenerating || askingId === transcript.id}
-                    className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-blue-500/20 text-dark-400 hover:text-blue-300 transition-opacity disabled:opacity-40 shrink-0"
-                  >
-                    <Send size={12} />
-                  </button>
-                </Tooltip>
-              </div>
-            ))}
+            {transcripts.map((transcript, index) => {
+              const badge = speakerBadge(transcript.speaker, transcript.micAsk, otherLabel)
+              return (
+                <div
+                  key={transcript.id}
+                  className={`group flex gap-2 text-sm border-l-2 pl-3 py-0.5 min-w-0 ${badge?.border || 'border-dark-600'}`}
+                >
+                  <span className="text-dark-500 font-mono text-xs min-w-[20px] shrink-0">
+                    {index + 1}.
+                  </span>
+                  <p className="text-dark-200 leading-relaxed flex-1 break-words">
+                    {badge && (
+                      <span
+                        className={`mr-1.5 inline-block align-middle text-[10px] font-semibold px-1.5 py-px rounded ${badge.className}`}
+                      >
+                        {badge.label}
+                      </span>
+                    )}
+                    {transcript.text}
+                  </p>
+                  <Tooltip content="Send this transcript to AI for an answer" side="left">
+                    <button
+                      onClick={() => askText(transcript.id, transcript.text)}
+                      disabled={isGenerating || askingId === transcript.id}
+                      className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-blue-500/20 text-dark-400 hover:text-blue-300 transition-opacity disabled:opacity-40 shrink-0"
+                    >
+                      <Send size={12} />
+                    </button>
+                  </Tooltip>
+                </div>
+              )
+            })}
 
             {currentTranscript && (
               <div className="flex gap-2 text-sm border-l-2 border-blue-500/50 pl-3 py-1 bg-blue-500/5 rounded-r min-w-0">

@@ -47,10 +47,12 @@ export function useInterviewEvents(): void {
     const unsubTranscript = window.api.onTranscript((event) => {
       if (event.isFinal) {
         addTranscript({
-          id: Date.now().toString(),
+          id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
           text: event.text,
           timestamp: Date.now(),
-          isFinal: true
+          isFinal: true,
+          speaker: event.speaker,
+          micAsk: event.micAsk
         })
         setCurrentTranscript('')
       } else {

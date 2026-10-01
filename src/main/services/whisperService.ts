@@ -14,6 +14,8 @@ export interface TranscriptEvent {
   text: string
   isFinal: boolean
   confidence: number
+  /** Wall-clock ms when the first voiced chunk of this utterance arrived. */
+  startedAt: number
 }
 
 export interface WhisperConfig {
@@ -22,6 +24,18 @@ export interface WhisperConfig {
   baseUrl?: string
   model?: string
   language?: string
+  /** Pause (ms) after the last voiced chunk before an utterance is transcribed. */
+  silenceMs?: number
+  /** Utterances with fewer words are dropped as noise. */
+  minWords?: number
+}
+
+export const MIN_SILENCE_MS = 300
+export const MAX_SILENCE_MS = 5000
+
+export function clampSilenceMs(value: unknown, fallback = 1500): number {
+  const n = typeof value === 'number' && Number.isFinite(value) ? value : fallback
+  return Math.min(MAX_SILENCE_MS, Math.max(MIN_SILENCE_MS, Math.round(n)))
 }
 
 export class WhisperService extends EventEmitter {
@@ -32,15 +46,17 @@ export class WhisperService extends EventEmitter {
   private isRunning = false
   private processInterval: NodeJS.Timeout | null = null
   private lastAudioTime = 0
+  private bufferStartedAt = 0
   private readonly SAMPLE_RATE = 16000
   private readonly BYTES_PER_SAMPLE = 2 // 16-bit audio
-  private readonly MIN_AUDIO_DURATION_MS = 1000 // Minimum 1.5 seconds of audio
-  private readonly SILENCE_THRESHOLD_MS = 1000 // 1.5 seconds of silence before processing
-  private readonly MAX_BUFFER_DURATION_MS = 20000 // Max 30 seconds before forced processing
+  private readonly MIN_AUDIO_DURATION_MS = 800
+  private readonly MAX_BUFFER_DURATION_MS = 20000
+  private silenceMs: number
 
   constructor(config: WhisperConfig) {
     super()
     this.config = config
+    this.silenceMs = clampSilenceMs(config.silenceMs)
     this.client = createOpenAIClient({
       apiKey: config.apiKey,
       provider: config.provider,
@@ -50,6 +66,16 @@ export class WhisperService extends EventEmitter {
 
   setLanguage(language?: string): void {
     this.config.language = language
+  }
+
+  setSilenceMs(ms: number): void {
+    this.silenceMs = clampSilenceMs(ms, this.silenceMs)
+  }
+
+  /** Drop audio that has not been sent for transcription yet. */
+  resetBuffer(): void {
+    this.audioBuffer = []
+    this.bufferStartedAt = 0
   }
 
   /** ISO-639-1 for Whisper, or undefined for auto-detect. */
@@ -68,13 +94,12 @@ export class WhisperService extends EventEmitter {
     if (this.isRunning) return
 
     this.isRunning = true
-    this.audioBuffer = []
+    this.resetBuffer()
     this.lastAudioTime = Date.now()
 
-    // Check for silence every 500ms
     this.processInterval = setInterval(() => {
       this.checkAndProcess()
-    }, 300)
+    }, 100)
 
     console.log('WhisperService started')
     this.emit('started')
@@ -93,7 +118,7 @@ export class WhisperService extends EventEmitter {
       this.processAudioBuffer()
     }
 
-    this.audioBuffer = []
+    this.resetBuffer()
     console.log('WhisperService stopped')
     this.emit('stopped')
   }
@@ -105,6 +130,7 @@ export class WhisperService extends EventEmitter {
 
     // Check if this chunk has actual audio (not silence)
     if (this.hasAudio(buffer)) {
+      if (this.audioBuffer.length === 0) this.bufferStartedAt = Date.now()
       this.audioBuffer.push(buffer)
       this.lastAudioTime = Date.now()
     }
@@ -143,7 +169,7 @@ export class WhisperService extends EventEmitter {
     // 1. We have enough audio AND enough silence has passed
     // 2. OR buffer is getting too large (force process)
     const hasEnoughAudio = bufferDuration >= this.MIN_AUDIO_DURATION_MS
-    const hasSilence = timeSinceLastAudio >= this.SILENCE_THRESHOLD_MS
+    const hasSilence = timeSinceLastAudio >= this.silenceMs
     const bufferTooLarge = bufferDuration >= this.MAX_BUFFER_DURATION_MS
 
     if ((hasEnoughAudio && hasSilence) || bufferTooLarge) {
@@ -159,9 +185,9 @@ export class WhisperService extends EventEmitter {
 
     this.isProcessing = true
 
-    // Combine all buffers
     const combinedBuffer = Buffer.concat(this.audioBuffer)
-    this.audioBuffer = []
+    const startedAt = this.bufferStartedAt || Date.now()
+    this.resetBuffer()
 
     // Skip if audio is too short
     const durationMs = (combinedBuffer.length / this.BYTES_PER_SAMPLE / this.SAMPLE_RATE) * 1000
@@ -227,7 +253,8 @@ export class WhisperService extends EventEmitter {
           const event: TranscriptEvent = {
             text: text,
             isFinal: true,
-            confidence: 1.0
+            confidence: 1.0,
+            startedAt
           }
 
           this.emit('transcript', event)
@@ -267,9 +294,8 @@ export class WhisperService extends EventEmitter {
       }
     }
 
-    // Filter out very short text (less than 3 words)
     const wordCount = text.split(/\s+/).length
-    if (wordCount < 3) {
+    if (wordCount < (this.config.minWords ?? 3)) {
       return true
     }
 
