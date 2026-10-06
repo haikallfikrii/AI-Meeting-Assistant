@@ -1,0 +1,542 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AI Assistant for Customer Support Calls: Answer Clients in Seconds</title>
+    <meta
+      name="description"
+      content="Kalfi listens to support and client calls, drafts accurate answers from your product docs in a few seconds, and summarizes every call. Mac and Windows, no bot joins."
+    />
+    <link rel="canonical" href="https://kalfi.app/blog/ai-customer-support-call-assistant.html" />
+    <link rel="alternate" hreflang="en" href="https://kalfi.app/blog/ai-customer-support-call-assistant.html" />
+    <link rel="alternate" hreflang="id" href="https://kalfi.app/blog/asisten-ai-customer-service.html" />
+    <link rel="alternate" hreflang="x-default" href="https://kalfi.app/blog/ai-customer-support-call-assistant.html" />
+    <meta name="theme-color" content="#080a0f" />
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="../assets/brand/favicon-32.png" type="image/png" sizes="32x32" />
+    <link rel="icon" href="../assets/brand/favicon-16.png" type="image/png" sizes="16x16" />
+    <link rel="apple-touch-icon" href="../assets/brand/apple-touch-icon.png" sizes="180x180" />
+    <meta property="og:image" content="https://kalfi.app/assets/brand/og-icon.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="512" />
+    <meta property="og:image:height" content="512" />
+    <meta name="twitter:image" content="https://kalfi.app/assets/brand/og-icon.png" />
+
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="Kalfi" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:title" content="AI Assistant for Customer Support Calls: Answer Clients in Seconds" />
+    <meta
+      property="og:description"
+      content="Live answers from your own product docs while the client is still on the line, plus a summary of every call. No bot joins."
+    />
+    <meta property="og:url" content="https://kalfi.app/blog/ai-customer-support-call-assistant.html" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="AI Assistant for Customer Support Calls" />
+    <meta
+      name="twitter:description"
+      content="Kalfi drafts technical and billing answers in seconds during live support calls, then writes the call summary."
+    />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../css/styles.css" />
+    <link rel="stylesheet" href="blog.css" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "BlogPosting",
+        "headline": "AI Assistant for Customer Support Calls: Answer Clients in Seconds",
+        "description": "Kalfi listens to support and client calls, drafts accurate answers from your product docs in a few seconds, and summarizes every call. Mac and Windows, no bot joins.",
+        "datePublished": "2026-09-29",
+        "dateModified": "2026-09-29",
+        "inLanguage": "en",
+        "author": { "@type": "Organization", "name": "Kalfi", "url": "https://kalfi.app/" },
+        "publisher": { "@type": "Organization", "name": "Kalfi", "url": "https://kalfi.app/" },
+        "mainEntityOfPage": {
+          "@type": "WebPage",
+          "@id": "https://kalfi.app/blog/ai-customer-support-call-assistant.html"
+        },
+        "about": [
+          "AI assistant for customer support",
+          "real-time agent assist",
+          "technical support call assistant",
+          "customer success meetings"
+        ]
+      }
+    </script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://kalfi.app/" },
+          { "@type": "ListItem", "position": 2, "name": "Blog", "item": "https://kalfi.app/blog/" },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "AI assistant for customer support calls",
+            "item": "https://kalfi.app/blog/ai-customer-support-call-assistant.html"
+          }
+        ]
+      }
+    </script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Can Kalfi answer technical support questions during a live call?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. Kalfi transcribes the call, detects the client's question and drafts a short answer you can say out loud, usually a few seconds after the client stops talking. Answers are grounded in the product facts, troubleshooting steps and policies you paste into the session context, so the more specific that context is, the more accurate the answer."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Does a bot join the customer call?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "No. Kalfi is a desktop app on the agent's Mac or Windows computer. It listens to the call audio locally, so no extra participant appears and the customer does not see a recorder in the meeting."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Does Kalfi work with Zoom, Google Meet, Microsoft Teams and softphones?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes, as long as the call plays through the computer. Kalfi captures system audio, so it works with Zoom, Google Meet, Microsoft Teams, WhatsApp Desktop, browser-based softphones and most other call apps without any integration."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How much does Kalfi cost for a support team?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Every account starts with a 3-day free trial with Hosted AI included and no card. After that a single seat is $19/month hosted or $14/month with your own OpenAI or OpenRouter key, and the Team plan is $49/month for three hosted seats on one invoice. Larger teams can contact hello@kalfi.app."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Does Kalfi replace our helpdesk or ticketing system?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "No. Kalfi is a live call assistant. It does not create tickets, sync with a CRM or answer emails and chats on its own. It sits next to your existing helpdesk and makes the voice and video part of support faster."
+            }
+          }
+        ]
+      }
+    </script>
+  </head>
+
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+
+    <header class="topbar blogbar" data-scrolled="true">
+      <div class="shell topbar__inner">
+        <a class="wordmark" href="../index.html">
+          <span class="wordmark__mark" aria-hidden="true">
+            <svg viewBox="0 0 64 64" width="18" height="18" focusable="false">
+              <rect x="8" y="6" width="13" height="52" rx="6.5" fill="currentColor"/>
+              <path d="M23 29.5 23 15c0-1.15 1.3-1.8 2.2-1.1l24.2 18.4c1.15.88.5 2.7-1 2.7H32.4c-.75 0-1.45-.35-1.9-.95L23 29.5Z" fill="currentColor"/>
+              <path d="M23 34.5 23 49c0 1.15 1.3 1.8 2.2 1.1l24.2-18.4c1.15-.88.5-2.7-1-2.7H32.4c-.75 0-1.45.35-1.9.95L23 34.5Z" fill="currentColor"/>
+              <rect x="23" y="27" width="23" height="10" rx="5" fill="currentColor"/>
+            </svg>
+          </span>
+          Kalfi
+        </a>
+        <nav class="topnav" aria-label="Primary">
+          <a href="index.html">Blog</a>
+          <a href="../index.html#stealth">Stealth</a>
+          <a href="../index.html#compare">Compare</a>
+          <a href="../index.html#pricing">Pricing</a>
+        </nav>
+        <div class="topbar__actions">
+          <a class="btn btn--line btn--sm" href="../index.html#download">Download</a>
+          <a class="btn btn--accent btn--sm" href="../index.html#pricing">Start free trial</a>
+        </div>
+      </div>
+    </header>
+
+    <main id="main" class="shell post">
+      <nav class="crumb" aria-label="Breadcrumb">
+        <a href="../index.html">Home</a>
+        <span aria-hidden="true">/</span>
+        <a href="index.html">Blog</a>
+        <span aria-hidden="true">/</span>
+        <span>AI for customer support calls</span>
+      </nav>
+
+      <article class="post__body">
+        <header class="post__head">
+          <span class="tagline">Use cases · Support teams</span>
+          <h1>AI Assistant for Customer Support Calls: Answer Clients in Seconds</h1>
+          <p class="post__lead">
+            Chat and email give a support agent time to look things up. A live call does not. The client
+            asks why their webhook keeps failing, or whether the annual plan can be refunded, and the
+            silence starts counting. Kalfi is a desktop assistant that listens to the call, understands the
+            question and puts a short, accurate answer on your screen while the client is still waiting.
+          </p>
+          <p class="post__meta">
+            <time datetime="2026-09-29">29 September 2026</time>
+            <span aria-hidden="true">·</span>
+            <span>9 min read</span>
+            <span aria-hidden="true">·</span>
+            <span>Kalfi team</span>
+          </p>
+        </header>
+
+        <div class="keybox">
+          <h2>The short version</h2>
+          <ul>
+            <li>Kalfi runs on the agent's <strong>Mac or Windows</strong> computer and listens to any call app: Zoom, Meet, Teams, WhatsApp Desktop or a browser softphone.</li>
+            <li>It detects the client's question and drafts an answer you can say out loud, <strong>usually a few seconds</strong> after they stop talking.</li>
+            <li>Answers come from the product facts, troubleshooting steps and policies <strong>you give it</strong>, not from guesswork.</li>
+            <li>The live transcript labels <strong>the client and you separately</strong>, and one click on Summary turns the call into key points, commitments and next steps.</li>
+            <li><strong>No bot joins the call.</strong> 3-day free trial, then $19/month per hosted seat or $49/month for a team of three.</li>
+          </ul>
+        </div>
+
+        <h2 id="why-calls">Why live calls are the hardest support channel</h2>
+        <p>
+          Most support tooling was built for asynchronous work. A ticket can wait ten minutes while an
+          agent searches the knowledge base, pings an engineer in Slack and rewrites the reply twice. Phone
+          and video support remove that buffer, and that is exactly where customers judge you hardest.
+        </p>
+        <p>Three things go wrong on calls again and again:</p>
+        <ul>
+          <li>
+            <strong>Technical depth on demand.</strong> A client on a call asks about rate limits, SSO, an
+            error code or an integration edge case. A tier-1 agent knows the answer exists somewhere but not
+            the exact wording, and "let me check and get back to you" turns a five-minute call into a
+            two-day ticket.
+          </li>
+          <li>
+            <strong>Policy questions under pressure.</strong> Refunds, upgrades mid-cycle, data deletion,
+            SLA credits. A wrong answer here is expensive because the customer remembers what you said, not
+            what the policy page says.
+          </li>
+          <li>
+            <strong>Nobody remembers the last call.</strong> The account had a call two weeks ago where
+            someone promised a fix by the next release. The agent on today's call has no idea.
+          </li>
+        </ul>
+        <p>
+          An AI assistant for support calls should fix all three without forcing the customer to talk to a
+          bot. That is the job Kalfi is designed for.
+        </p>
+
+        <h2 id="how-it-works">How Kalfi works during a support call</h2>
+        <ol>
+          <li>
+            <strong>Before the call</strong>, the agent opens a Client meeting session and fills in the
+            client name, the product area and the facts that matter: plan limits, known issues, policies,
+            escalation rules. This takes a minute when you keep a ready-made context per product.
+          </li>
+          <li>
+            <strong>During the call</strong>, Kalfi listens to the call audio (and, in Both mode, to the
+            agent's microphone on a separate lane). The live transcript shows each line labelled as
+            <em>Client</em> or <em>You</em>.
+          </li>
+          <li>
+            <strong>When the client asks something</strong>, Kalfi detects the question and writes a
+            first line you can say immediately, with two or three supporting points below it. Length and
+            tone are set per session, so a quick billing call and a formal incident review do not sound the
+            same.
+          </li>
+          <li>
+            <strong>If the line was noisy</strong> or the client rambled, press <strong>Mic Ask</strong>
+            and restate the question in your own words. Kalfi treats that as your restatement of the
+            client's question, matches it against what the client just said and answers the real question.
+          </li>
+          <li>
+            <strong>After the call</strong>, press <strong>Summary</strong>. You get an overview, key
+            points, decisions and commitments, and open questions with next steps, ready to paste into the
+            ticket or CRM.
+          </li>
+        </ol>
+
+        <h2 id="technical-questions">Technical questions: what a good answer looks like</h2>
+        <p>
+          Say a SaaS customer on a video call says: <em>"Our webhook calls started failing with 429 since
+          yesterday, did you change something?"</em> Without help, a tier-1 agent either guesses or
+          escalates. With the right context loaded, Kalfi drafts something like:
+        </p>
+        <blockquote>
+          A 429 means the webhook endpoint is hitting our rate limit. On your plan that's 100 requests per
+          minute. <strong>Nothing changed on our side yesterday</strong>, but if your traffic grew, the
+          quick fix is to batch events or enable retries with backoff. I can also check if an upgrade to
+          the next tier makes sense for your volume.
+        </blockquote>
+        <p>
+          Every fact in that answer, the limit, the "nothing changed" status, the upgrade path, came from
+          the session context the team wrote. That is the important design choice: Kalfi is not inventing
+          your product. It turns your own documentation into a sentence the agent can say in the moment.
+        </p>
+        <p>What to paste into the context for technical support:</p>
+        <ul>
+          <li>Plan limits and quotas, written as plain facts ("Pro: 100 requests/minute, 10 GB storage").</li>
+          <li>Known issues and current incidents, with the approved customer-facing wording.</li>
+          <li>Top 20 error codes or symptoms and the first fix for each.</li>
+          <li>Integration notes: supported versions, SSO providers, API authentication.</li>
+          <li>Escalation rules: when to promise a callback and who owns what.</li>
+        </ul>
+
+        <h2 id="non-technical">Billing, refunds and the uncomfortable questions</h2>
+        <p>
+          Support is not only technical. Some of the hardest moments are commercial: a client asking for a
+          refund outside the window, a discount, or why their invoice doubled. Here the value is less about
+          knowledge and more about saying the right thing calmly.
+        </p>
+        <p>
+          Put your refund policy, upgrade rules and the approved goodwill options into the Talking points
+          field. Set tone to Neutral or Formal. When the client pushes, Kalfi drafts an answer that stays
+          inside policy, acknowledges the frustration and offers the next step, instead of the agent
+          improvising a promise the finance team will have to walk back.
+        </p>
+
+        <div class="callout">
+          <p>
+            <strong>Keep a human in the loop.</strong> Kalfi suggests; the agent decides what to say. AI
+            can misunderstand a question or a transcript, so agents should read the draft before speaking,
+            especially for numbers, legal terms and anything security related.
+          </p>
+        </div>
+
+        <h2 id="languages">Support in more than one language</h2>
+        <p>
+          Set the meeting language per session and Kalfi writes the suggested reply in that language,
+          including English, Indonesian, Spanish, Portuguese, Vietnamese, Japanese and more. This is useful
+          for teams that support international clients with agents who are fluent but not native: the agent
+          understands the question, and Kalfi helps with clear, professional phrasing in the client's
+          language.
+        </p>
+
+        <h2 id="customer-success">Customer success and account calls</h2>
+        <p>
+          The same setup works for onboarding calls, quarterly business reviews and renewal conversations.
+          Sessions live in project threads, so the next call with the same account starts with the same
+          context and the summaries of earlier meetings are one click away. When a client asks
+          <em>"what did we agree last time?"</em>, the answer is in the thread instead of in someone's
+          memory. For the full client-meeting workflow, see
+          <a href="ai-assistant-for-client-meetings.html">AI assistant for client meetings</a>.
+        </p>
+
+        <h2 id="rollout">Rolling it out to a support team</h2>
+        <ol>
+          <li><strong>Start with one agent and the trial.</strong> Every account gets 3 days with Hosted AI included, no card. Run it on real calls and note where answers were wrong or vague.</li>
+          <li><strong>Write one shared context document per product.</strong> Plain facts, policies and fixes. Each agent pastes it into their session, so everyone answers from the same source.</li>
+          <li><strong>Pick answer length.</strong> Brief works best for phone support; Balanced for technical video calls.</li>
+          <li><strong>Use Summary for handoffs.</strong> Paste the summary into the ticket so the next agent knows what was promised.</li>
+          <li><strong>Move to the Team plan</strong> when it sticks: three hosted seats on one invoice for $49/month. Need more seats? Email <a href="mailto:hello@kalfi.app">hello@kalfi.app</a>.</li>
+        </ol>
+
+        <h2 id="comparison">Kalfi vs other ways to get help on calls</h2>
+        <div class="tablewrap wide">
+          <table>
+            <caption class="dim" style="text-align: left; padding: 14px 18px; font-size: 0.8rem">
+              General categories, September 2026. Check each vendor for current details.
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col">&nbsp;</th>
+                <th scope="col">Knowledge base search</th>
+                <th scope="col">Contact-center agent assist</th>
+                <th scope="col" class="is-us">Kalfi</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="row-label">Answer while the client waits</td>
+                <td class="dim">Agent searches manually</td>
+                <td>Yes</td>
+                <td class="is-us">Yes, a few seconds</td>
+              </tr>
+              <tr>
+                <td class="row-label">Works with Zoom, Meet, Teams, WhatsApp</td>
+                <td>n/a</td>
+                <td class="dim">Usually only inside its own phone system</td>
+                <td class="is-us">Any app that plays audio on the computer</td>
+              </tr>
+              <tr>
+                <td class="row-label">Setup</td>
+                <td>Already have one</td>
+                <td class="dim">Platform migration, sales-led</td>
+                <td class="is-us">Download, sign up, paste context</td>
+              </tr>
+              <tr>
+                <td class="row-label">Call summary</td>
+                <td class="dim">No</td>
+                <td>Often</td>
+                <td class="is-us">Yes, one click</td>
+              </tr>
+              <tr>
+                <td class="row-label">Bot or recorder visible to the client</td>
+                <td>No</td>
+                <td>Depends</td>
+                <td class="is-us">No</td>
+              </tr>
+              <tr>
+                <td class="row-label">Price</td>
+                <td>Included in helpdesk</td>
+                <td class="dim">Per seat on top of the contact-center license</td>
+                <td class="is-us">$19/seat, or $49 for 3 seats</td>
+              </tr>
+              <tr>
+                <td class="row-label">Ticketing and CRM sync</td>
+                <td>Yes</td>
+                <td>Yes</td>
+                <td class="is-us dim">No, paste the summary</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2 id="privacy">Privacy and what the customer sees</h2>
+        <p>
+          Kalfi runs on the agent's computer and listens to the call audio locally. No bot joins, and the
+          overlay window is protected from screen capture on supported systems, so it should not show up
+          when the agent shares their screen. Kalfi does not save audio recordings: short chunks of audio
+          are sent to the speech-to-text model to be transcribed. On the BYOK plan your own OpenAI or
+          OpenRouter key is stored encrypted on the device.
+        </p>
+        <p>
+          Follow your company's rules and local law about transcribing calls, and do not paste customer data
+          into the context that your policy says must not go to an AI provider.
+        </p>
+
+        <h2 id="limits">What Kalfi does not do</h2>
+        <ul>
+          <li>It does not create tickets, update a CRM or reply to emails and chats on its own.</li>
+          <li>It does not keep a full verbatim recording of the call. The summary is built from the questions and answers captured during the session.</li>
+          <li>It does not have a shared team knowledge base yet; each agent pastes the team's context document into their own session.</li>
+          <li>It is a desktop app. Calls on a mobile phone are not captured unless they play through the computer.</li>
+        </ul>
+
+        <h2 id="pricing">Pricing</h2>
+        <dl class="pricecard">
+          <div class="is-us">
+            <dt>Hosted seat</dt>
+            <dd>$19 / mo</dd>
+            <p>AI included, nothing to configure. $180/year.</p>
+          </div>
+          <div class="is-us">
+            <dt>Team</dt>
+            <dd>$49 / mo</dd>
+            <p>Three hosted seats on one invoice.</p>
+          </div>
+        </dl>
+        <p>
+          Prefer your own AI account? The BYOK plan is $14/month with your OpenAI or OpenRouter key. One
+          important call only? A Single Session pass is $9. Every new account starts with a 3-day free trial
+          with Hosted AI included, no card required. See <a href="../index.html#pricing">all plans</a>.
+        </p>
+
+        <h2 id="faq">Questions</h2>
+        <div class="faq">
+          <details open>
+            <summary>Can Kalfi answer technical support questions during a live call?</summary>
+            <p>
+              Yes. It detects the client's question and drafts a short answer you can say out loud, usually
+              a few seconds after they stop talking. Accuracy depends on the context you give it, so paste
+              real limits, fixes and policies rather than marketing copy.
+            </p>
+          </details>
+          <details>
+            <summary>Does a bot join the customer call?</summary>
+            <p>No. Kalfi listens to the call audio on the agent's computer. The customer does not see an extra participant.</p>
+          </details>
+          <details>
+            <summary>Which call apps does it work with?</summary>
+            <p>
+              Anything that plays audio on the computer: Zoom, Google Meet, Microsoft Teams, WhatsApp
+              Desktop, Slack huddles and browser softphones. No integration is needed.
+            </p>
+          </details>
+          <details>
+            <summary>What if the client speaks too fast or the audio is bad?</summary>
+            <p>
+              Press Mic Ask and restate the question in your own words. Kalfi combines your restatement with
+              what the client said and answers the actual question.
+            </p>
+          </details>
+          <details>
+            <summary>Does it replace our helpdesk?</summary>
+            <p>No. It sits next to your helpdesk and speeds up the voice and video part of support.</p>
+          </details>
+          <details>
+            <summary>How much does it cost for a team?</summary>
+            <p>
+              $49/month for three hosted seats, or $19/month per seat. Start with the 3-day free trial; for
+              larger teams email <a href="mailto:hello@kalfi.app">hello@kalfi.app</a>.
+            </p>
+          </details>
+        </div>
+
+        <div class="post__cta">
+          <h2>Answer the next support call without the awkward pause</h2>
+          <p>
+            Live answers from your own docs, a labelled transcript and a summary after every call. Mac and
+            Windows, no bot, 3 days free.
+          </p>
+          <div class="hero__cta">
+            <a class="btn btn--solid" href="https://kalfi.app/#download">Download Kalfi free</a>
+            <a class="btn btn--line" href="https://kalfi.app/#pricing">See team pricing</a>
+          </div>
+        </div>
+      </article>
+
+      <aside class="related">
+        <h2>Keep reading</h2>
+        <ul>
+          <li>
+            <a href="ai-meeting-assistant-notes-summary.html">
+              AI Meeting Assistant for Notes and Summaries (No Bot Joins)
+              <span>Summaries, decisions and next steps after every meeting.</span>
+            </a>
+          </li>
+          <li>
+            <a href="ai-assistant-for-client-meetings.html">
+              AI Assistant for Client Meetings and Sales Calls
+              <span>Answer fast, stay inside scope, remember what was agreed.</span>
+            </a>
+          </li>
+          <li>
+            <a href="asisten-ai-customer-service.html">
+              Asisten AI untuk Customer Service (Bahasa Indonesia)
+              <span>Versi Indonesia artikel ini.</span>
+            </a>
+          </li>
+        </ul>
+      </aside>
+    </main>
+
+    <footer class="foot">
+      <div class="shell foot__row">
+        <span>&copy; 2026 Kalfi · desktop AI for meetings, client calls and interviews.</span>
+        <span>
+          <a href="../index.html">Home</a> ·
+          <a href="index.html">Blog</a> ·
+          <a href="https://github.com/haikallfikrii/AI-Meeting-Assistant" target="_blank" rel="noopener">Source</a>
+          · <a href="mailto:hello@kalfi.app">Contact</a>
+        </span>
+      </div>
+    </footer>
+    <script
+      src="https://chatlm.tech/widget/widget.js"
+      data-api-key="c2c4fe3020681f0625b7835c3d7a105ade36199f7bd58a9d32d1e39465d2aafa"
+      data-base-url="https://chatlm.tech"
+      defer
+    ></script>
+  </body>
+</html>
