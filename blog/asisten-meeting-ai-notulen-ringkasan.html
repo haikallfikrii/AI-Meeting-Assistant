@@ -1,0 +1,473 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Asisten Meeting AI: Notulen dan Ringkasan Rapat Otomatis Tanpa Bot</title>
+    <meta
+      name="description"
+      content="Kalfi adalah asisten meeting AI yang mentranskrip rapat secara live, membantu menjawab pertanyaan saat itu juga, dan membuat ringkasan berisi keputusan dan langkah berikutnya. Zoom, Meet, Teams, tanpa bot."
+    />
+    <link rel="canonical" href="https://kalfi.app/blog/asisten-meeting-ai-notulen-ringkasan.html" />
+    <link rel="alternate" hreflang="id" href="https://kalfi.app/blog/asisten-meeting-ai-notulen-ringkasan.html" />
+    <link rel="alternate" hreflang="en" href="https://kalfi.app/blog/ai-meeting-assistant-notes-summary.html" />
+    <link rel="alternate" hreflang="x-default" href="https://kalfi.app/blog/ai-meeting-assistant-notes-summary.html" />
+    <meta name="theme-color" content="#080a0f" />
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="../assets/brand/favicon-32.png" type="image/png" sizes="32x32" />
+    <link rel="icon" href="../assets/brand/favicon-16.png" type="image/png" sizes="16x16" />
+    <link rel="apple-touch-icon" href="../assets/brand/apple-touch-icon.png" sizes="180x180" />
+    <meta property="og:image" content="https://kalfi.app/assets/brand/og-icon.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="512" />
+    <meta property="og:image:height" content="512" />
+    <meta name="twitter:image" content="https://kalfi.app/assets/brand/og-icon.png" />
+
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="Kalfi" />
+    <meta property="og:locale" content="id_ID" />
+    <meta property="og:title" content="Asisten Meeting AI: Notulen dan Ringkasan Rapat Otomatis Tanpa Bot" />
+    <meta
+      property="og:description"
+      content="Transkrip live, bantuan jawaban saat rapat, dan ringkasan rapi setelahnya. Tidak ada bot di daftar peserta."
+    />
+    <meta property="og:url" content="https://kalfi.app/blog/asisten-meeting-ai-notulen-ringkasan.html" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Asisten Meeting AI: Notulen dan Ringkasan Rapat" />
+    <meta
+      name="twitter:description"
+      content="Kalfi membantu saat meeting berlangsung dan merangkumnya setelah selesai. Tanpa bot."
+    />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../css/styles.css" />
+    <link rel="stylesheet" href="blog.css" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "BlogPosting",
+        "headline": "Asisten Meeting AI: Notulen dan Ringkasan Rapat Otomatis Tanpa Bot",
+        "description": "Kalfi adalah asisten meeting AI yang mentranskrip rapat secara live, membantu menjawab pertanyaan saat itu juga, dan membuat ringkasan berisi keputusan dan langkah berikutnya.",
+        "datePublished": "2026-09-29",
+        "dateModified": "2026-09-29",
+        "inLanguage": "id",
+        "author": { "@type": "Organization", "name": "Kalfi", "url": "https://kalfi.app/" },
+        "publisher": { "@type": "Organization", "name": "Kalfi", "url": "https://kalfi.app/" },
+        "mainEntityOfPage": {
+          "@type": "WebPage",
+          "@id": "https://kalfi.app/blog/asisten-meeting-ai-notulen-ringkasan.html"
+        },
+        "about": ["asisten meeting AI", "notulen rapat otomatis", "ringkasan rapat AI", "AI pencatat meeting"]
+      }
+    </script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "Beranda", "item": "https://kalfi.app/" },
+          { "@type": "ListItem", "position": 2, "name": "Blog", "item": "https://kalfi.app/blog/" },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "Asisten meeting AI",
+            "item": "https://kalfi.app/blog/asisten-meeting-ai-notulen-ringkasan.html"
+          }
+        ]
+      }
+    </script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Apakah Kalfi bisa membuat notulen rapat otomatis?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Bisa. Selama rapat Kalfi menampilkan transkrip live yang memisahkan pembicara, dan membantu menjawab pertanyaan. Setelah rapat, tombol Summary membuat ringkasan berisi gambaran umum, poin penting, keputusan dan komitmen, serta pertanyaan terbuka dan langkah berikutnya. Kalfi tidak menyimpan rekaman audio atau arsip transkrip kata per kata."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Apakah Kalfi masuk ke meeting sebagai bot?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Tidak. Kalfi adalah aplikasi desktop untuk Mac dan Windows yang mendengarkan audio meeting di komputer Anda. Peserta lain tidak melihat bot atau pemberitahuan rekaman dari bot."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Aplikasi meeting apa saja yang didukung?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Semua aplikasi yang suaranya keluar dari komputer, termasuk Zoom, Google Meet, Microsoft Teams, Webex, Slack huddle dan WhatsApp Desktop. Tidak perlu menghubungkan kalender atau integrasi apa pun."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Apakah ringkasan bisa dalam bahasa Indonesia?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Bisa. Atur bahasa meeting di sesi, dan Kalfi mentranskrip serta menulis dalam bahasa itu, termasuk bahasa Indonesia dan bahasa Inggris."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Berapa harga Kalfi?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Akun baru dapat trial gratis 3 hari dengan Hosted AI, tanpa kartu. Setelah itu 19 dolar per bulan untuk Hosted (sekitar Rp 300 ribu), 14 dolar per bulan dengan API key sendiri, atau 49 dolar per bulan untuk tim 3 orang."
+            }
+          }
+        ]
+      }
+    </script>
+  </head>
+
+  <body>
+    <a class="skip" href="#main">Langsung ke konten</a>
+
+    <header class="topbar blogbar" data-scrolled="true">
+      <div class="shell topbar__inner">
+        <a class="wordmark" href="../index.html">
+          <span class="wordmark__mark" aria-hidden="true">
+            <svg viewBox="0 0 64 64" width="18" height="18" focusable="false">
+              <rect x="8" y="6" width="13" height="52" rx="6.5" fill="currentColor"/>
+              <path d="M23 29.5 23 15c0-1.15 1.3-1.8 2.2-1.1l24.2 18.4c1.15.88.5 2.7-1 2.7H32.4c-.75 0-1.45-.35-1.9-.95L23 29.5Z" fill="currentColor"/>
+              <path d="M23 34.5 23 49c0 1.15 1.3 1.8 2.2 1.1l24.2-18.4c1.15-.88.5-2.7-1-2.7H32.4c-.75 0-1.45.35-1.9.95L23 34.5Z" fill="currentColor"/>
+              <rect x="23" y="27" width="23" height="10" rx="5" fill="currentColor"/>
+            </svg>
+          </span>
+          Kalfi
+        </a>
+        <nav class="topnav" aria-label="Utama">
+          <a href="index.html">Blog</a>
+          <a href="../index.html#stealth">Stealth</a>
+          <a href="../index.html#compare">Bandingkan</a>
+          <a href="../index.html#pricing">Harga</a>
+        </nav>
+        <div class="topbar__actions">
+          <a class="btn btn--line btn--sm" href="../index.html#download">Download</a>
+          <a class="btn btn--accent btn--sm" href="../index.html#pricing">Coba gratis</a>
+        </div>
+      </div>
+    </header>
+
+    <main id="main" class="shell post">
+      <nav class="crumb" aria-label="Breadcrumb">
+        <a href="../index.html">Beranda</a>
+        <span aria-hidden="true">/</span>
+        <a href="index.html">Blog</a>
+        <span aria-hidden="true">/</span>
+        <span>Asisten meeting AI</span>
+      </nav>
+
+      <article class="post__body">
+        <header class="post__head">
+          <span class="tagline">Use case · Meeting</span>
+          <h1>Asisten Meeting AI: Notulen dan Ringkasan Rapat Otomatis Tanpa Bot</h1>
+          <p class="post__lead">
+            Kebanyakan AI pencatat meeting bekerja setelah rapat selesai: bot ikut masuk, merekam semuanya,
+            lalu mengirim ringkasan satu jam kemudian. Berguna, tapi tidak membantu di momen yang paling
+            menentukan, yaitu saat seseorang bertanya ke Anda dan semua peserta menunggu jawaban. Kalfi
+            mengerjakan keduanya: membantu Anda menjawab saat rapat berlangsung, lalu mengubah rapat itu jadi
+            notulen yang siap dikirim.
+          </p>
+          <p class="post__meta">
+            <time datetime="2026-09-29">29 September 2026</time>
+            <span aria-hidden="true">·</span>
+            <span>9 menit baca</span>
+            <span aria-hidden="true">·</span>
+            <span>Tim Kalfi</span>
+          </p>
+        </header>
+
+        <div class="keybox">
+          <h2>Ringkasnya</h2>
+          <ul>
+            <li>Kalfi adalah <strong>asisten meeting di desktop</strong> untuk Mac dan Windows. Kalfi mendengarkan audio meeting di komputer Anda, jadi <strong>tidak ada bot yang masuk</strong>.</li>
+            <li><strong>Saat rapat:</strong> transkrip live yang memisahkan pembicara, plus saran jawaban setiap kali ada yang bertanya ke Anda.</li>
+            <li><strong>Setelah rapat:</strong> satu klik di Summary menghasilkan gambaran umum, poin penting, keputusan dan komitmen, serta langkah berikutnya.</li>
+            <li><strong>Antar rapat:</strong> thread proyek menyimpan konteks, jadi rapat kedua sudah tahu apa yang diputuskan di rapat pertama.</li>
+            <li>Bisa di Zoom, Meet, Teams, Webex dan WhatsApp. <strong>Trial gratis 3 hari</strong>, lalu mulai 14 dolar per bulan.</li>
+          </ul>
+        </div>
+
+        <h2 id="dua-jenis">Dua jenis asisten meeting AI</h2>
+        <p>
+          Istilah "asisten meeting AI" sebenarnya mencakup dua jenis produk yang sangat berbeda. Penting untuk
+          tahu mana yang Anda butuhkan sebelum membeli.
+        </p>
+        <h3>1. Bot pencatat meeting</h3>
+        <p>
+          Tools di kelompok ini (contoh yang terkenal: Otter, Fireflies dan Fathom) terhubung ke kalender dan
+          mengirim bot ke dalam meeting. Bot merekam panggilan, membuat transkrip lengkap, lalu mengirim
+          ringkasan setelahnya. Cocok untuk tim yang butuh arsip semua meeting dan sinkron ke CRM. Kekurangannya:
+          semua peserta melihat bot itu, sebagian klien minta bot dikeluarkan, dan bantuannya baru datang
+          setelah meeting selesai.
+        </p>
+        <h3>2. Copilot meeting live</h3>
+        <p>
+          Copilot live ada di layar Anda sendiri dan membantu selagi percakapan berlangsung: menangkap
+          pertanyaan, menyusun jawaban dan menjaga Anda tetap di jalur. Kalfi termasuk di sini, dan ditambah
+          bagian setelah meeting: ringkasan terstruktur dan memori antar meeting dalam proyek yang sama.
+        </p>
+        <p>
+          Kalau masalah Anda adalah <em>"saya blank waktu klien tanya soal timeline"</em> atau <em>"saya lupa
+          minggu lalu janji apa"</em>, Anda butuh jenis yang kedua.
+        </p>
+
+        <h2 id="saat-rapat">Yang dilakukan Kalfi saat rapat</h2>
+        <ul>
+          <li>
+            <strong>Transkrip live per pembicara.</strong> Di mode Both, Kalfi mendengarkan audio meeting dan mic
+            Anda di jalur terpisah, jadi setiap kalimat diberi label lawan bicara (Client, Interviewer atau Them,
+            sesuai jenis sesi) atau <em>You</em>.
+          </li>
+          <li>
+            <strong>Saran jawaban.</strong> Saat ada yang bertanya, Kalfi menyusun kalimat pertama yang bisa
+            langsung diucapkan dan beberapa poin pendukung, berdasarkan konteks yang Anda atur untuk meeting itu.
+          </li>
+          <li>
+            <strong>Mic Ask.</strong> Tidak menangkap pertanyaannya? Tekan Mic Ask, ulangi pertanyaannya dengan
+            kata-kata Anda sendiri, dan Kalfi menjawab apa yang sebenarnya ditanyakan.
+          </li>
+          <li>
+            <strong>Tanya dari kalimat mana pun.</strong> Kirim kalimat apa pun di transkrip ke AI untuk dijawab,
+            walaupun bukan berbentuk pertanyaan.
+          </li>
+          <li>
+            <strong>Gaya jawaban per meeting.</strong> Singkat, seimbang atau detail; formal, netral atau santai;
+            dan bahasa jawaban, dari Inggris sampai Indonesia, Spanyol atau Jepang.
+          </li>
+        </ul>
+
+        <h2 id="contoh-ringkasan">Contoh ringkasan rapat</h2>
+        <p>
+          Tekan <strong>Summary</strong> setelah meeting selesai. Kalfi menulis rangkuman singkat dalam empat
+          bagian. Contoh dari meeting proyek dengan klien:
+        </p>
+        <blockquote>
+          <strong>Gambaran umum.</strong> Check-in mingguan redesign halaman checkout. Tahap pembayaran selesai;
+          opsi pengiriman masih menunggu API logistik dari klien.<br />
+          <strong>Poin penting.</strong> Konversi mobile naik setelah form alamat baru. Klien ingin Apple Pay
+          sebelum launch.<br />
+          <strong>Keputusan dan komitmen.</strong> Kami menyelesaikan Apple Pay paling lambat 24 Oktober. Klien
+          mengirim API key hari Jumat.<br />
+          <strong>Pertanyaan terbuka dan langkah berikutnya.</strong> Siapa yang menangani alur refund? Jadwalkan
+          call 30 menit dengan tim finance klien.
+        </blockquote>
+        <p>
+          Ringkasan seperti ini siap ditempel ke WhatsApp grup, Slack, tools manajemen proyek, catatan CRM atau
+          email follow-up. Ringkasannya disusun dari pertanyaan dan jawaban selama sesi, jadi fokus ke apa yang
+          ditanyakan, dijawab dan disepakati, bukan setiap basa-basi.
+        </p>
+
+        <h2 id="thread">Memori antar meeting: thread proyek</h2>
+        <p>
+          Kebanyakan meeting adalah bagian dari rangkaian: sync mingguan dengan klien, rangkaian onboarding,
+          proses sales dengan empat kali call. Kalfi mengelompokkan sesi dalam thread. Saat Anda memulai meeting
+          berikutnya di thread yang sama, konteksnya (klien, scope proyek, tujuan, talking points) ikut terbawa,
+          dan ringkasan sebelumnya ada di riwayat. Anda bisa membuka meeting lama tanpa mengganggu meeting yang
+          sedang berjalan.
+        </p>
+
+        <h2 id="untuk-siapa">Cocok untuk siapa</h2>
+        <ul>
+          <li><strong>Tim yang berhadapan dengan klien</strong>: account manager, agensi, konsultan dan freelancer yang butuh jawaban cepat dan rangkuman rapi. Lihat <a href="ai-untuk-meeting-klien.html">AI untuk meeting dengan klien</a>.</li>
+          <li><strong>Customer service dan customer success</strong>: agen yang menjawab pertanyaan teknis dan tagihan secara live. Lihat <a href="asisten-ai-customer-service.html">asisten AI untuk customer service</a>.</li>
+          <li><strong>Sales dan pre-sales</strong>: demo produk saat prospek bertanya soal integrasi, keamanan atau harga.</li>
+          <li><strong>Manajer dan founder</strong>: meeting beruntun, di mana ringkasan adalah satu-satunya catatan yang benar-benar dibaca.</li>
+          <li><strong>Yang meeting dalam bahasa Inggris</strong>: saat Anda paham isinya tapi butuh bantuan merangkai kalimat.</li>
+          <li><strong>Pencari kerja</strong>: interview juga, karena di situlah Kalfi berawal. Lihat <a href="best-ai-interview-assistant.html">best AI interview assistant</a>.</li>
+        </ul>
+
+        <h2 id="setup">Setup dalam lima menit</h2>
+        <ol>
+          <li>Download Kalfi untuk Mac atau Windows di <a href="../index.html#download">kalfi.app</a> lalu buat akun. Trial 3 hari sudah termasuk Hosted AI, jadi tidak perlu API key.</li>
+          <li>Buat sesi dan pilih jenisnya: Client meeting, Job interview atau General chat.</li>
+          <li>Isi konteks: siapa yang Anda temui, proyeknya, tujuan dan talking points. Dua atau tiga baris saja sudah membantu.</li>
+          <li>Pilih sumber audio: <strong>Both</strong> untuk label pembicara, <strong>System</strong> untuk audio meeting saja, atau <strong>Mic</strong> kalau hanya ada mikrofon.</li>
+          <li>Tekan Start saat meeting dimulai dan Summary saat selesai.</li>
+        </ol>
+
+        <h2 id="perbandingan">Kalfi dibanding bot pencatat meeting</h2>
+        <div class="tablewrap wide">
+          <table>
+            <caption class="dim" style="text-align: left; padding: 14px 18px; font-size: 0.8rem">
+              Perbandingan kategori, bukan vendor tertentu. September 2026.
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col">&nbsp;</th>
+                <th scope="col">Bot pencatat meeting</th>
+                <th scope="col" class="is-us">Kalfi</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="row-label">Bot terlihat di meeting</td>
+                <td>Ya</td>
+                <td class="is-us">Tidak</td>
+              </tr>
+              <tr>
+                <td class="row-label">Bantuan saat Anda bicara</td>
+                <td class="dim">Terbatas atau tidak ada</td>
+                <td class="is-us">Saran jawaban dalam hitungan detik</td>
+              </tr>
+              <tr>
+                <td class="row-label">Ringkasan meeting</td>
+                <td>Ya</td>
+                <td class="is-us">Ya, dengan keputusan dan langkah berikutnya</td>
+              </tr>
+              <tr>
+                <td class="row-label">Rekaman lengkap dan arsip kata per kata</td>
+                <td>Ya</td>
+                <td class="is-us dim">Tidak</td>
+              </tr>
+              <tr>
+                <td class="row-label">Konteks klien atau proyek</td>
+                <td class="dim">Biasanya tidak</td>
+                <td class="is-us">Per sesi dan per thread</td>
+              </tr>
+              <tr>
+                <td class="row-label">Tanpa akses kalender</td>
+                <td class="dim">Biasanya perlu</td>
+                <td class="is-us">Ya</td>
+              </tr>
+              <tr>
+                <td class="row-label">Integrasi CRM dan tools</td>
+                <td>Sering ada</td>
+                <td class="is-us dim">Copy-paste</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          Banyak tim memakai keduanya: bot pencatat untuk meeting internal yang perlu diarsip, dan Kalfi untuk
+          meeting dengan klien dan pelanggan, di mana bot tidak diinginkan dan bantuan real-time justru yang
+          paling penting.
+        </p>
+
+        <h2 id="privasi">Privasi</h2>
+        <p>
+          Kalfi mendengarkan di komputer Anda sendiri dan tidak menyimpan rekaman audio. Potongan audio pendek
+          dikirim ke model speech-to-text untuk ditranskrip, dan jendela Kalfi dilindungi dari tangkapan layar di
+          sistem yang mendukung, jadi seharusnya tidak terlihat saat Anda share screen. Di paket BYOK, API key
+          OpenAI atau OpenRouter Anda tersimpan terenkripsi di perangkat. Seperti tools meeting lainnya, ikuti
+          kebijakan perusahaan dan aturan setempat soal transkripsi percakapan.
+        </p>
+
+        <h2 id="harga">Harga</h2>
+        <dl class="pricecard">
+          <div class="is-us">
+            <dt>Hosted</dt>
+            <dd>$19 / bln</dd>
+            <p>Sekitar Rp 300 ribu. AI sudah termasuk.</p>
+          </div>
+          <div class="is-us">
+            <dt>BYOK</dt>
+            <dd>$14 / bln</dd>
+            <p>Sekitar Rp 220 ribu, pakai API key sendiri.</p>
+          </div>
+        </dl>
+        <p>
+          Team: 49 dolar per bulan untuk 3 seat Hosted. Single Session: 9 dolar untuk satu meeting penting. Semua
+          akun baru dapat trial gratis 3 hari dengan Hosted AI, tanpa kartu.
+        </p>
+
+        <h2 id="faq">Pertanyaan yang sering muncul</h2>
+        <div class="faq">
+          <details open>
+            <summary>Apakah Kalfi bisa membuat notulen rapat otomatis?</summary>
+            <p>
+              Bisa: transkrip live per pembicara selama rapat dan ringkasan terstruktur setelahnya. Kalfi tidak
+              menyimpan rekaman audio atau arsip kata per kata.
+            </p>
+          </details>
+          <details>
+            <summary>Apakah ada bot yang masuk ke meeting?</summary>
+            <p>Tidak. Kalfi berjalan di komputer Anda. Peserta lain tidak melihat apa pun yang baru di meeting.</p>
+          </details>
+          <details>
+            <summary>Apa saja isi ringkasannya?</summary>
+            <p>
+              Pertanyaan yang muncul selama sesi dan jawabannya, disusun jadi gambaran umum, poin penting,
+              keputusan dan langkah berikutnya. Ini rangkuman apa yang ditanyakan dan disepakati, bukan transkrip
+              kata per kata.
+            </p>
+          </details>
+          <details>
+            <summary>Apakah bisa dalam bahasa Indonesia?</summary>
+            <p>Bisa. Atur bahasa meeting di sesi, dan Kalfi mentranskrip serta menulis dalam bahasa itu.</p>
+          </details>
+          <details>
+            <summary>Ada trial gratis?</summary>
+            <p>Ada, 3 hari dengan Hosted AI dan tanpa kartu. Setelah itu mulai 14 dolar per bulan.</p>
+          </details>
+        </div>
+
+        <div class="post__cta">
+          <h2>Dibantu saat rapat, dapat notulen setelahnya</h2>
+          <p>Saran jawaban live, transkrip per pembicara dan ringkasan satu klik. Tanpa bot, Mac dan Windows, gratis 3 hari.</p>
+          <div class="hero__cta">
+            <a class="btn btn--solid" href="https://kalfi.app/#download">Download Kalfi gratis</a>
+            <a class="btn btn--line" href="https://kalfi.app/#pricing">Lihat harga</a>
+          </div>
+        </div>
+      </article>
+
+      <aside class="related">
+        <h2>Baca juga</h2>
+        <ul>
+          <li>
+            <a href="ai-untuk-meeting-klien.html">
+              AI untuk Meeting dengan Klien dan Sales Call
+              <span>Jawab cepat, tetap sesuai scope, ingat semua kesepakatan.</span>
+            </a>
+          </li>
+          <li>
+            <a href="asisten-ai-customer-service.html">
+              Asisten AI untuk Customer Service
+              <span>Jawaban teknis dan soal tagihan selagi klien menunggu.</span>
+            </a>
+          </li>
+          <li>
+            <a href="ai-meeting-assistant-notes-summary.html">
+              AI Meeting Assistant for Notes and Summaries (English)
+              <span>English version of this article.</span>
+            </a>
+          </li>
+        </ul>
+      </aside>
+    </main>
+
+    <footer class="foot">
+      <div class="shell foot__row">
+        <span>&copy; 2026 Kalfi · AI desktop untuk meeting, call dengan klien dan interview.</span>
+        <span>
+          <a href="../index.html">Beranda</a> ·
+          <a href="index.html">Blog</a> ·
+          <a href="https://github.com/haikallfikrii/AI-Meeting-Assistant" target="_blank" rel="noopener">Source</a>
+          · <a href="mailto:hello@kalfi.app">Kontak</a>
+        </span>
+      </div>
+    </footer>
+    <script
+      src="https://chatlm.tech/widget/widget.js"
+      data-api-key="c2c4fe3020681f0625b7835c3d7a105ade36199f7bd58a9d32d1e39465d2aafa"
+      data-base-url="https://chatlm.tech"
+      defer
+    ></script>
+  </body>
+</html>

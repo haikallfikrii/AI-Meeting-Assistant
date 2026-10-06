@@ -1,0 +1,470 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AI Meeting Assistant for Notes and Summaries (No Bot Joins)</title>
+    <meta
+      name="description"
+      content="Kalfi is an AI meeting assistant that transcribes your call live, suggests answers in the moment and writes a summary with decisions and next steps. Works on Zoom, Meet and Teams without a bot."
+    />
+    <link rel="canonical" href="https://kalfi.app/blog/ai-meeting-assistant-notes-summary.html" />
+    <link rel="alternate" hreflang="en" href="https://kalfi.app/blog/ai-meeting-assistant-notes-summary.html" />
+    <link rel="alternate" hreflang="id" href="https://kalfi.app/blog/asisten-meeting-ai-notulen-ringkasan.html" />
+    <link rel="alternate" hreflang="x-default" href="https://kalfi.app/blog/ai-meeting-assistant-notes-summary.html" />
+    <meta name="theme-color" content="#080a0f" />
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="../assets/brand/favicon-32.png" type="image/png" sizes="32x32" />
+    <link rel="icon" href="../assets/brand/favicon-16.png" type="image/png" sizes="16x16" />
+    <link rel="apple-touch-icon" href="../assets/brand/apple-touch-icon.png" sizes="180x180" />
+    <meta property="og:image" content="https://kalfi.app/assets/brand/og-icon.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="512" />
+    <meta property="og:image:height" content="512" />
+    <meta name="twitter:image" content="https://kalfi.app/assets/brand/og-icon.png" />
+
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="Kalfi" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:title" content="AI Meeting Assistant for Notes and Summaries (No Bot Joins)" />
+    <meta
+      property="og:description"
+      content="Live transcript, answers in the moment and a structured summary after every meeting. No bot in the participant list."
+    />
+    <meta property="og:url" content="https://kalfi.app/blog/ai-meeting-assistant-notes-summary.html" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="AI Meeting Assistant for Notes and Summaries" />
+    <meta
+      name="twitter:description"
+      content="Kalfi helps you during the meeting and summarizes it afterwards. No bot joins."
+    />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../css/styles.css" />
+    <link rel="stylesheet" href="blog.css" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "BlogPosting",
+        "headline": "AI Meeting Assistant for Notes and Summaries (No Bot Joins)",
+        "description": "Kalfi is an AI meeting assistant that transcribes your call live, suggests answers in the moment and writes a summary with decisions and next steps. Works on Zoom, Meet and Teams without a bot.",
+        "datePublished": "2026-09-29",
+        "dateModified": "2026-09-29",
+        "inLanguage": "en",
+        "author": { "@type": "Organization", "name": "Kalfi", "url": "https://kalfi.app/" },
+        "publisher": { "@type": "Organization", "name": "Kalfi", "url": "https://kalfi.app/" },
+        "mainEntityOfPage": {
+          "@type": "WebPage",
+          "@id": "https://kalfi.app/blog/ai-meeting-assistant-notes-summary.html"
+        },
+        "about": ["AI meeting assistant", "AI note taker", "meeting summary", "meeting copilot without bot"]
+      }
+    </script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://kalfi.app/" },
+          { "@type": "ListItem", "position": 2, "name": "Blog", "item": "https://kalfi.app/blog/" },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "AI meeting assistant for notes and summaries",
+            "item": "https://kalfi.app/blog/ai-meeting-assistant-notes-summary.html"
+          }
+        ]
+      }
+    </script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Is Kalfi an AI note taker?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Kalfi is a live meeting assistant that also takes notes. During the call it shows a live transcript labelled by speaker and suggests answers to questions. After the call, Summary writes an overview, key points, decisions and commitments, and open questions with next steps. It does not keep a full audio recording or a verbatim transcript archive."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Does Kalfi join my meeting as a bot?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "No. Kalfi is a desktop app for Mac and Windows that listens to the meeting audio on your computer. Nobody else sees an extra participant or a recording notice from a bot."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Which meeting apps does Kalfi support?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Any app that plays audio on your computer, including Zoom, Google Meet, Microsoft Teams, Webex, Slack huddles and WhatsApp Desktop. There is no calendar connection or integration to set up."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can Kalfi remember earlier meetings with the same client?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. Meetings are grouped into project threads. Starting the next meeting in the same thread reuses the context, and summaries of earlier meetings stay in the session history."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How much does Kalfi cost?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "New accounts get a 3-day free trial with Hosted AI included and no card. After that it is $19/month hosted, $14/month with your own OpenAI or OpenRouter key, or $49/month for a team of three."
+            }
+          }
+        ]
+      }
+    </script>
+  </head>
+
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+
+    <header class="topbar blogbar" data-scrolled="true">
+      <div class="shell topbar__inner">
+        <a class="wordmark" href="../index.html">
+          <span class="wordmark__mark" aria-hidden="true">
+            <svg viewBox="0 0 64 64" width="18" height="18" focusable="false">
+              <rect x="8" y="6" width="13" height="52" rx="6.5" fill="currentColor"/>
+              <path d="M23 29.5 23 15c0-1.15 1.3-1.8 2.2-1.1l24.2 18.4c1.15.88.5 2.7-1 2.7H32.4c-.75 0-1.45-.35-1.9-.95L23 29.5Z" fill="currentColor"/>
+              <path d="M23 34.5 23 49c0 1.15 1.3 1.8 2.2 1.1l24.2-18.4c1.15-.88.5-2.7-1-2.7H32.4c-.75 0-1.45.35-1.9.95L23 34.5Z" fill="currentColor"/>
+              <rect x="23" y="27" width="23" height="10" rx="5" fill="currentColor"/>
+            </svg>
+          </span>
+          Kalfi
+        </a>
+        <nav class="topnav" aria-label="Primary">
+          <a href="index.html">Blog</a>
+          <a href="../index.html#stealth">Stealth</a>
+          <a href="../index.html#compare">Compare</a>
+          <a href="../index.html#pricing">Pricing</a>
+        </nav>
+        <div class="topbar__actions">
+          <a class="btn btn--line btn--sm" href="../index.html#download">Download</a>
+          <a class="btn btn--accent btn--sm" href="../index.html#pricing">Start free trial</a>
+        </div>
+      </div>
+    </header>
+
+    <main id="main" class="shell post">
+      <nav class="crumb" aria-label="Breadcrumb">
+        <a href="../index.html">Home</a>
+        <span aria-hidden="true">/</span>
+        <a href="index.html">Blog</a>
+        <span aria-hidden="true">/</span>
+        <span>AI meeting assistant</span>
+      </nav>
+
+      <article class="post__body">
+        <header class="post__head">
+          <span class="tagline">Use cases · Meetings</span>
+          <h1>AI Meeting Assistant for Notes and Summaries (No Bot Joins)</h1>
+          <p class="post__lead">
+            Most AI note takers work after the fact: a bot joins, records everything and emails a summary an
+            hour later. Useful, but it does nothing for the moment that actually matters, when someone asks
+            you a question and the whole call waits for your answer. Kalfi does both. It helps you answer
+            during the meeting, then turns the meeting into notes you can send.
+          </p>
+          <p class="post__meta">
+            <time datetime="2026-09-29">29 September 2026</time>
+            <span aria-hidden="true">·</span>
+            <span>9 min read</span>
+            <span aria-hidden="true">·</span>
+            <span>Kalfi team</span>
+          </p>
+        </header>
+
+        <div class="keybox">
+          <h2>The short version</h2>
+          <ul>
+            <li>Kalfi is a <strong>desktop meeting assistant</strong> for Mac and Windows. It listens to the meeting audio on your computer, so <strong>no bot joins</strong>.</li>
+            <li><strong>During the meeting:</strong> live transcript labelled by speaker, plus a suggested answer whenever someone asks you something.</li>
+            <li><strong>After the meeting:</strong> one click on Summary gives an overview, key points, decisions and commitments, and open questions with next steps.</li>
+            <li><strong>Across meetings:</strong> project threads keep context, so meeting two already knows what meeting one decided.</li>
+            <li>Works with Zoom, Meet, Teams, Webex and WhatsApp. <strong>3-day free trial</strong>, then from $14/month.</li>
+          </ul>
+        </div>
+
+        <h2 id="two-kinds">Two kinds of AI meeting assistant</h2>
+        <p>
+          The phrase "AI meeting assistant" covers two very different products, and it is worth knowing which
+          one you need before you buy.
+        </p>
+        <h3>1. Bot note takers</h3>
+        <p>
+          Tools in this group (Otter, Fireflies and Fathom are well-known examples) connect to your calendar
+          and send a bot into the meeting. The bot records the call, produces a full transcript and sends a
+          summary afterwards. They shine for teams that need a searchable archive of every meeting and CRM
+          sync. The trade-off is that everyone sees the bot, some clients ask you to remove it, and the help
+          arrives after the meeting is over.
+        </p>
+        <h3>2. Live meeting copilots</h3>
+        <p>
+          A live copilot sits on your own screen and helps while the conversation is happening: it hears the
+          question, drafts an answer and keeps you on track. Kalfi belongs here, and adds the after-meeting
+          part too: a structured summary of the session and memory across meetings in the same project.
+        </p>
+        <p>
+          If what hurts is <em>"I froze when the client asked about the timeline"</em> or <em>"I forgot what
+          we promised last week"</em>, you want the second kind.
+        </p>
+
+        <h2 id="during">What Kalfi does during the meeting</h2>
+        <ul>
+          <li>
+            <strong>Live transcript with speakers.</strong> In Both mode Kalfi listens to the meeting audio and
+            your microphone on separate lanes, so each line is labelled as the other person (Client,
+            Interviewer or Them, depending on the session type) or <em>You</em>.
+          </li>
+          <li>
+            <strong>Suggested answers.</strong> When someone asks a question, Kalfi drafts a first line you can
+            say right away and a few supporting points, based on the context you set for the meeting.
+          </li>
+          <li>
+            <strong>Mic Ask.</strong> Missed the question? Press Mic Ask, restate it in your own words, and
+            Kalfi answers what was actually asked.
+          </li>
+          <li>
+            <strong>Ask on any line.</strong> Send any line from the transcript to the AI to get an answer,
+            even if it was not phrased as a question.
+          </li>
+          <li>
+            <strong>Answer style per meeting.</strong> Brief, balanced or detailed; formal, neutral or casual;
+            and the reply language, from English to Indonesian, Spanish or Japanese.
+          </li>
+        </ul>
+
+        <h2 id="summary">What the summary looks like</h2>
+        <p>
+          Press <strong>Summary</strong> when the meeting ends. Kalfi writes a short, scannable recap in four
+          parts. An example from a client project call:
+        </p>
+        <blockquote>
+          <strong>Overview.</strong> Weekly check-in on the checkout redesign. Payment step is done; shipping
+          options are blocked on the client's logistics API.<br />
+          <strong>Key points.</strong> Mobile conversion up after the new address form. Client wants Apple Pay
+          before launch.<br />
+          <strong>Decisions and commitments.</strong> We deliver Apple Pay by 24 Oct. Client sends API keys by
+          Friday.<br />
+          <strong>Open questions and next steps.</strong> Who owns the refund flow? Schedule a 30-minute call
+          with their finance lead.
+        </blockquote>
+        <p>
+          That is ready to paste into Slack, a project tool, a CRM note or a follow-up email. The summary is
+          built from the questions and answers captured during the session, so it focuses on what was asked,
+          answered and agreed rather than every word of small talk.
+        </p>
+
+        <h2 id="threads">Memory across meetings: project threads</h2>
+        <p>
+          Most meetings are part of a series: weekly client syncs, an onboarding sequence, a sales cycle with
+          four calls. Kalfi groups sessions into threads. When you start the next meeting in the same thread,
+          the context (client, project scope, goals, talking points) comes with it, and the earlier summaries
+          are in the history. You can browse past meetings without interrupting the live one.
+        </p>
+
+        <h2 id="who">Who it is for</h2>
+        <ul>
+          <li><strong>Client-facing teams</strong>: account managers, agencies, consultants and freelancers who need fast answers and clean recaps. See <a href="ai-assistant-for-client-meetings.html">AI for client meetings</a>.</li>
+          <li><strong>Customer support and success</strong>: agents who answer technical and billing questions live. See <a href="ai-customer-support-call-assistant.html">AI for support calls</a>.</li>
+          <li><strong>Sales and pre-sales</strong>: demos where the prospect asks about integrations, security or pricing.</li>
+          <li><strong>Managers and founders</strong>: back-to-back meetings where the summary is the only record you will actually read.</li>
+          <li><strong>Non-native speakers</strong>: meetings in English or another second language where phrasing help matters.</li>
+          <li><strong>Job seekers</strong>: interviews too, which is where Kalfi started. See <a href="best-ai-interview-assistant.html">best AI interview assistant</a>.</li>
+        </ul>
+
+        <h2 id="setup">Setting it up in five minutes</h2>
+        <ol>
+          <li>Download Kalfi for Mac or Windows from <a href="../index.html#download">kalfi.app</a> and create an account. The 3-day trial includes Hosted AI, so there is no API key to set up.</li>
+          <li>Create a session and pick the type: Client meeting, Job interview or General chat.</li>
+          <li>Fill in the context: who you are meeting, the project, goals and talking points. Two or three lines already help.</li>
+          <li>Choose the audio source: <strong>Both</strong> for speaker labels, <strong>System</strong> for meeting audio only, or <strong>Mic</strong> when only your microphone is available.</li>
+          <li>Press Start when the meeting begins and Summary when it ends.</li>
+        </ol>
+
+        <h2 id="comparison">Kalfi vs bot note takers</h2>
+        <div class="tablewrap wide">
+          <table>
+            <caption class="dim" style="text-align: left; padding: 14px 18px; font-size: 0.8rem">
+              Categories, not specific vendors. September 2026.
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col">&nbsp;</th>
+                <th scope="col">Bot note takers</th>
+                <th scope="col" class="is-us">Kalfi</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="row-label">Bot visible in the meeting</td>
+                <td>Yes</td>
+                <td class="is-us">No</td>
+              </tr>
+              <tr>
+                <td class="row-label">Help while you are speaking</td>
+                <td class="dim">Limited or none</td>
+                <td class="is-us">Suggested answers in seconds</td>
+              </tr>
+              <tr>
+                <td class="row-label">Meeting summary</td>
+                <td>Yes</td>
+                <td class="is-us">Yes, decisions and next steps</td>
+              </tr>
+              <tr>
+                <td class="row-label">Full recording and verbatim archive</td>
+                <td>Yes</td>
+                <td class="is-us dim">No</td>
+              </tr>
+              <tr>
+                <td class="row-label">Context about the client or project</td>
+                <td class="dim">Usually not</td>
+                <td class="is-us">Per session and per thread</td>
+              </tr>
+              <tr>
+                <td class="row-label">Works without calendar access</td>
+                <td class="dim">Usually needs it</td>
+                <td class="is-us">Yes</td>
+              </tr>
+              <tr>
+                <td class="row-label">CRM and tool integrations</td>
+                <td>Often</td>
+                <td class="is-us dim">Copy and paste</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          Plenty of teams use both: a bot note taker for internal meetings that need an archive, and Kalfi for
+          client and customer calls where a bot is unwelcome and real-time help is the point.
+        </p>
+
+        <h2 id="privacy">Privacy</h2>
+        <p>
+          Kalfi listens on your own computer and does not save audio recordings. Short chunks of audio are sent
+          to the speech-to-text model to be transcribed, and the overlay is protected from screen capture on
+          supported systems, so it should not appear when you share your screen. With the BYOK plan, your
+          OpenAI or OpenRouter key stays encrypted on the device. As with any meeting tool, follow your company
+          policy and local rules about transcribing conversations.
+        </p>
+
+        <h2 id="pricing">Pricing</h2>
+        <dl class="pricecard">
+          <div class="is-us">
+            <dt>Hosted</dt>
+            <dd>$19 / mo</dd>
+            <p>AI included. $180/year.</p>
+          </div>
+          <div class="is-us">
+            <dt>BYOK</dt>
+            <dd>$14 / mo</dd>
+            <p>Your own OpenAI or OpenRouter key. $120/year.</p>
+          </div>
+        </dl>
+        <p>
+          Team: $49/month for three hosted seats. Single Session: $9 for one important meeting. Every new
+          account starts with a 3-day free trial with Hosted AI included, no card required.
+        </p>
+
+        <h2 id="faq">Questions</h2>
+        <div class="faq">
+          <details open>
+            <summary>Is Kalfi an AI note taker?</summary>
+            <p>
+              It is a live meeting assistant that also takes notes: a labelled live transcript during the call
+              and a structured summary afterwards. It does not keep a full audio recording or verbatim archive.
+            </p>
+          </details>
+          <details>
+            <summary>Does a bot join my meeting?</summary>
+            <p>No. Kalfi runs on your computer. Other participants do not see anything new in the meeting.</p>
+          </details>
+          <details>
+            <summary>What goes into the summary?</summary>
+            <p>
+              The questions asked during the session and the answers given, organised into overview, key
+              points, decisions and next steps. It is a recap of what was asked and agreed, not a word-for-word
+              transcript.
+            </p>
+          </details>
+          <details>
+            <summary>Can it summarize meetings in Indonesian or other languages?</summary>
+            <p>Yes. Set the meeting language for the session and Kalfi transcribes and writes in that language.</p>
+          </details>
+          <details>
+            <summary>Is there a free trial?</summary>
+            <p>Yes, 3 days with Hosted AI included and no card. Then from $14/month.</p>
+          </details>
+        </div>
+
+        <div class="post__cta">
+          <h2>Help during the meeting, notes after it</h2>
+          <p>Live answers, speaker-labelled transcript and one-click summaries. No bot, Mac and Windows, 3 days free.</p>
+          <div class="hero__cta">
+            <a class="btn btn--solid" href="https://kalfi.app/#download">Download Kalfi free</a>
+            <a class="btn btn--line" href="https://kalfi.app/#pricing">See pricing</a>
+          </div>
+        </div>
+      </article>
+
+      <aside class="related">
+        <h2>Keep reading</h2>
+        <ul>
+          <li>
+            <a href="ai-assistant-for-client-meetings.html">
+              AI Assistant for Client Meetings and Sales Calls
+              <span>Answer fast, stay inside scope, remember what was agreed.</span>
+            </a>
+          </li>
+          <li>
+            <a href="ai-customer-support-call-assistant.html">
+              AI Assistant for Customer Support Calls
+              <span>Technical and billing answers while the client waits.</span>
+            </a>
+          </li>
+          <li>
+            <a href="asisten-meeting-ai-notulen-ringkasan.html">
+              Asisten Meeting AI: Notulen dan Ringkasan Rapat (Bahasa Indonesia)
+              <span>Versi Indonesia artikel ini.</span>
+            </a>
+          </li>
+        </ul>
+      </aside>
+    </main>
+
+    <footer class="foot">
+      <div class="shell foot__row">
+        <span>&copy; 2026 Kalfi · desktop AI for meetings, client calls and interviews.</span>
+        <span>
+          <a href="../index.html">Home</a> ·
+          <a href="index.html">Blog</a> ·
+          <a href="https://github.com/haikallfikrii/AI-Meeting-Assistant" target="_blank" rel="noopener">Source</a>
+          · <a href="mailto:hello@kalfi.app">Contact</a>
+        </span>
+      </div>
+    </footer>
+    <script
+      src="https://chatlm.tech/widget/widget.js"
+      data-api-key="c2c4fe3020681f0625b7835c3d7a105ade36199f7bd58a9d32d1e39465d2aafa"
+      data-base-url="https://chatlm.tech"
+      defer
+    ></script>
+  </body>
+</html>
