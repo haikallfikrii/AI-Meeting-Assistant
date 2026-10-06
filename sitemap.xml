@@ -1,9 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>https://kalfi.app/</loc>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://kalfi.app/" />
+    <xhtml:link rel="alternate" hreflang="id" href="https://kalfi.app/?lang=id" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://kalfi.app/?lang=es" />
+    <xhtml:link rel="alternate" hreflang="pt" href="https://kalfi.app/?lang=pt" />
+    <xhtml:link rel="alternate" hreflang="vi" href="https://kalfi.app/?lang=vi" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://kalfi.app/" />
   </url>
   <url>
     <loc>https://kalfi.app/docs/</loc>
@@ -12,6 +19,7 @@
   </url>
   <url>
     <loc>https://kalfi.app/blog/</loc>
+    <lastmod>2026-09-29</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -45,35 +53,179 @@
     <lastmod>2026-09-29</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://kalfi.app/blog/ai-meeting-assistant-notes-summary.html</loc>
-    <lastmod>2026-09-29</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://kalfi.app/blog/ai-assistant-for-client-meetings.html</loc>
-    <lastmod>2026-09-29</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://kalfi.app/blog/ai-customer-support-call-assistant.html" />
+    <xhtml:link rel="alternate" hreflang="id" href="https://kalfi.app/blog/asisten-ai-customer-service.html" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://kalfi.app/blog/asistente-ia-atencion-al-cliente.html" />
+    <xhtml:link rel="alternate" hreflang="pt" href="https://kalfi.app/blog/assistente-ia-atendimento-ao-cliente.html" />
+    <xhtml:link rel="alternate" hreflang="vi" href="https://kalfi.app/blog/tro-ly-ai-cham-soc-khach-hang.html" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://kalfi.app/blog/ai-customer-support-call-assistant.html" />
   </url>
   <url>
     <loc>https://kalfi.app/blog/asisten-ai-customer-service.html</loc>
     <lastmod>2026-09-29</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://kalfi.app/blog/ai-customer-support-call-assistant.html" />
+    <xhtml:link rel="alternate" hreflang="id" href="https://kalfi.app/blog/asisten-ai-customer-service.html" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://kalfi.app/blog/asistente-ia-atencion-al-cliente.html" />
+    <xhtml:link rel="alternate" hreflang="pt" href="https://kalfi.app/blog/assistente-ia-atendimento-ao-cliente.html" />
+    <xhtml:link rel="alternate" hreflang="vi" href="https://kalfi.app/blog/tro-ly-ai-cham-soc-khach-hang.html" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://kalfi.app/blog/ai-customer-support-call-assistant.html" />
+  </url>
+  <url>
+    <loc>https://kalfi.app/blog/asistente-ia-atencion-al-cliente.html</loc>
+    <lastmod>2026-09-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://kalfi.app/blog/ai-customer-support-call-assistant.html" />
+    <xhtml:link rel="alternate" hreflang="id" href="https://kalfi.app/blog/asisten-ai-customer-service.html" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://kalfi.app/blog/asistente-ia-atencion-al-cliente.html" />
+    <xhtml:link rel="alternate" hreflang="pt" href="https://kalfi.app/blog/assistente-ia-atendimento-ao-cliente.html" />
+    <xhtml:link rel="alternate" hreflang="vi" href="https://kalfi.app/blog/tro-ly-ai-cham-soc-khach-hang.html" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://kalfi.app/blog/ai-customer-support-call-assistant.html" />
+  </url>
+  <url>
+    <loc>https://kalfi.app/blog/assistente-ia-atendimento-ao-cliente.html</loc>
+    <lastmod>2026-09-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://kalfi.app/blog/ai-customer-support-call-assistant.html" />
+    <xhtml:link rel="alternate" hreflang="id" href="https://kalfi.app/blog/asisten-ai-customer-service.html" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://kalfi.app/blog/asistente-ia-atencion-al-cliente.html" />
+    <xhtml:link rel="alternate" hreflang="pt" href="https://kalfi.app/blog/assistente-ia-atendimento-ao-cliente.html" />
+    <xhtml:link rel="alternate" hreflang="vi" href="https://kalfi.app/blog/tro-ly-ai-cham-soc-khach-hang.html" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://kalfi.app/blog/ai-customer-support-call-assistant.html" />
+  </url>
+  <url>
+    <loc>https://kalfi.app/blog/tro-ly-ai-cham-soc-khach-hang.html</loc>
+    <lastmod>2026-09-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://kalfi.app/blog/ai-customer-support-call-assistant.html" />
+    <xhtml:link rel="alternate" hreflang="id" href="https://kalfi.app/blog/asisten-ai-customer-service.html" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://kalfi.app/blog/asistente-ia-atencion-al-cliente.html" />
+    <xhtml:link rel="alternate" hreflang="pt" href="https://kalfi.app/blog/assistente-ia-atendimento-ao-cliente.html" />
+    <xhtml:link rel="alternate" hreflang="vi" href="https://kalfi.app/blog/tro-ly-ai-cham-soc-khach-hang.html" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://kalfi.app/blog/ai-customer-support-call-assistant.html" />
+  </url>
+  <url>
+    <loc>https://kalfi.app/blog/ai-meeting-assistant-notes-summary.html</loc>
+    <lastmod>2026-09-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://kalfi.app/blog/ai-meeting-assistant-notes-summary.html" />
+    <xhtml:link rel="alternate" hreflang="id" href="https://kalfi.app/blog/asisten-meeting-ai-notulen-ringkasan.html" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://kalfi.app/blog/asistente-reuniones-ia-notas-resumen.html" />
+    <xhtml:link rel="alternate" hreflang="pt" href="https://kalfi.app/blog/assistente-reunioes-ia-ata-resumo.html" />
+    <xhtml:link rel="alternate" hreflang="vi" href="https://kalfi.app/blog/tro-ly-hop-ai-ghi-chu-tom-tat.html" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://kalfi.app/blog/ai-meeting-assistant-notes-summary.html" />
   </url>
   <url>
     <loc>https://kalfi.app/blog/asisten-meeting-ai-notulen-ringkasan.html</loc>
     <lastmod>2026-09-29</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://kalfi.app/blog/ai-meeting-assistant-notes-summary.html" />
+    <xhtml:link rel="alternate" hreflang="id" href="https://kalfi.app/blog/asisten-meeting-ai-notulen-ringkasan.html" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://kalfi.app/blog/asistente-reuniones-ia-notas-resumen.html" />
+    <xhtml:link rel="alternate" hreflang="pt" href="https://kalfi.app/blog/assistente-reunioes-ia-ata-resumo.html" />
+    <xhtml:link rel="alternate" hreflang="vi" href="https://kalfi.app/blog/tro-ly-hop-ai-ghi-chu-tom-tat.html" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://kalfi.app/blog/ai-meeting-assistant-notes-summary.html" />
+  </url>
+  <url>
+    <loc>https://kalfi.app/blog/asistente-reuniones-ia-notas-resumen.html</loc>
+    <lastmod>2026-09-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://kalfi.app/blog/ai-meeting-assistant-notes-summary.html" />
+    <xhtml:link rel="alternate" hreflang="id" href="https://kalfi.app/blog/asisten-meeting-ai-notulen-ringkasan.html" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://kalfi.app/blog/asistente-reuniones-ia-notas-resumen.html" />
+    <xhtml:link rel="alternate" hreflang="pt" href="https://kalfi.app/blog/assistente-reunioes-ia-ata-resumo.html" />
+    <xhtml:link rel="alternate" hreflang="vi" href="https://kalfi.app/blog/tro-ly-hop-ai-ghi-chu-tom-tat.html" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://kalfi.app/blog/ai-meeting-assistant-notes-summary.html" />
+  </url>
+  <url>
+    <loc>https://kalfi.app/blog/assistente-reunioes-ia-ata-resumo.html</loc>
+    <lastmod>2026-09-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://kalfi.app/blog/ai-meeting-assistant-notes-summary.html" />
+    <xhtml:link rel="alternate" hreflang="id" href="https://kalfi.app/blog/asisten-meeting-ai-notulen-ringkasan.html" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://kalfi.app/blog/asistente-reuniones-ia-notas-resumen.html" />
+    <xhtml:link rel="alternate" hreflang="pt" href="https://kalfi.app/blog/assistente-reunioes-ia-ata-resumo.html" />
+    <xhtml:link rel="alternate" hreflang="vi" href="https://kalfi.app/blog/tro-ly-hop-ai-ghi-chu-tom-tat.html" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://kalfi.app/blog/ai-meeting-assistant-notes-summary.html" />
+  </url>
+  <url>
+    <loc>https://kalfi.app/blog/tro-ly-hop-ai-ghi-chu-tom-tat.html</loc>
+    <lastmod>2026-09-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://kalfi.app/blog/ai-meeting-assistant-notes-summary.html" />
+    <xhtml:link rel="alternate" hreflang="id" href="https://kalfi.app/blog/asisten-meeting-ai-notulen-ringkasan.html" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://kalfi.app/blog/asistente-reuniones-ia-notas-resumen.html" />
+    <xhtml:link rel="alternate" hreflang="pt" href="https://kalfi.app/blog/assistente-reunioes-ia-ata-resumo.html" />
+    <xhtml:link rel="alternate" hreflang="vi" href="https://kalfi.app/blog/tro-ly-hop-ai-ghi-chu-tom-tat.html" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://kalfi.app/blog/ai-meeting-assistant-notes-summary.html" />
+  </url>
+  <url>
+    <loc>https://kalfi.app/blog/ai-assistant-for-client-meetings.html</loc>
+    <lastmod>2026-09-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://kalfi.app/blog/ai-assistant-for-client-meetings.html" />
+    <xhtml:link rel="alternate" hreflang="id" href="https://kalfi.app/blog/ai-untuk-meeting-klien.html" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://kalfi.app/blog/ia-para-reuniones-con-clientes.html" />
+    <xhtml:link rel="alternate" hreflang="pt" href="https://kalfi.app/blog/ia-para-reunioes-com-clientes.html" />
+    <xhtml:link rel="alternate" hreflang="vi" href="https://kalfi.app/blog/ai-cho-cuoc-hop-voi-khach-hang.html" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://kalfi.app/blog/ai-assistant-for-client-meetings.html" />
   </url>
   <url>
     <loc>https://kalfi.app/blog/ai-untuk-meeting-klien.html</loc>
     <lastmod>2026-09-29</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://kalfi.app/blog/ai-assistant-for-client-meetings.html" />
+    <xhtml:link rel="alternate" hreflang="id" href="https://kalfi.app/blog/ai-untuk-meeting-klien.html" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://kalfi.app/blog/ia-para-reuniones-con-clientes.html" />
+    <xhtml:link rel="alternate" hreflang="pt" href="https://kalfi.app/blog/ia-para-reunioes-com-clientes.html" />
+    <xhtml:link rel="alternate" hreflang="vi" href="https://kalfi.app/blog/ai-cho-cuoc-hop-voi-khach-hang.html" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://kalfi.app/blog/ai-assistant-for-client-meetings.html" />
+  </url>
+  <url>
+    <loc>https://kalfi.app/blog/ia-para-reuniones-con-clientes.html</loc>
+    <lastmod>2026-09-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://kalfi.app/blog/ai-assistant-for-client-meetings.html" />
+    <xhtml:link rel="alternate" hreflang="id" href="https://kalfi.app/blog/ai-untuk-meeting-klien.html" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://kalfi.app/blog/ia-para-reuniones-con-clientes.html" />
+    <xhtml:link rel="alternate" hreflang="pt" href="https://kalfi.app/blog/ia-para-reunioes-com-clientes.html" />
+    <xhtml:link rel="alternate" hreflang="vi" href="https://kalfi.app/blog/ai-cho-cuoc-hop-voi-khach-hang.html" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://kalfi.app/blog/ai-assistant-for-client-meetings.html" />
+  </url>
+  <url>
+    <loc>https://kalfi.app/blog/ia-para-reunioes-com-clientes.html</loc>
+    <lastmod>2026-09-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://kalfi.app/blog/ai-assistant-for-client-meetings.html" />
+    <xhtml:link rel="alternate" hreflang="id" href="https://kalfi.app/blog/ai-untuk-meeting-klien.html" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://kalfi.app/blog/ia-para-reuniones-con-clientes.html" />
+    <xhtml:link rel="alternate" hreflang="pt" href="https://kalfi.app/blog/ia-para-reunioes-com-clientes.html" />
+    <xhtml:link rel="alternate" hreflang="vi" href="https://kalfi.app/blog/ai-cho-cuoc-hop-voi-khach-hang.html" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://kalfi.app/blog/ai-assistant-for-client-meetings.html" />
+  </url>
+  <url>
+    <loc>https://kalfi.app/blog/ai-cho-cuoc-hop-voi-khach-hang.html</loc>
+    <lastmod>2026-09-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://kalfi.app/blog/ai-assistant-for-client-meetings.html" />
+    <xhtml:link rel="alternate" hreflang="id" href="https://kalfi.app/blog/ai-untuk-meeting-klien.html" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://kalfi.app/blog/ia-para-reuniones-con-clientes.html" />
+    <xhtml:link rel="alternate" hreflang="pt" href="https://kalfi.app/blog/ia-para-reunioes-com-clientes.html" />
+    <xhtml:link rel="alternate" hreflang="vi" href="https://kalfi.app/blog/ai-cho-cuoc-hop-voi-khach-hang.html" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://kalfi.app/blog/ai-assistant-for-client-meetings.html" />
   </url>
 </urlset>
