@@ -49,6 +49,37 @@
   color: var(--fg-dim);
 }
 
+.langbar {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  color: var(--fg-faint);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+  padding: 12px 0 0;
+}
+
+.langbar span {
+  text-transform: uppercase;
+}
+
+.langbar a {
+  color: var(--fg-dim);
+  border-bottom: 1px solid transparent;
+  padding-bottom: 1px;
+}
+
+.langbar a:hover {
+  color: var(--fg);
+}
+
+.langbar a[aria-current="page"] {
+  color: var(--fg);
+  border-bottom-color: var(--accent);
+}
+
 /* ---------- article shell ---------- */
 
 .post {

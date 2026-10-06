@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Trợ lý Họp AI: Ghi chú và Tóm tắt Cuộc họp Tự động, Không cần Bot</title>
+    <meta
+      name="description"
+      content="Kalfi là trợ lý họp AI phiên âm trực tiếp, giúp bạn trả lời ngay trong cuộc họp và tạo bản tóm tắt gồm quyết định và bước tiếp theo. Zoom, Meet, Teams, không có bot."
+    />
+    <link rel="canonical" href="https://kalfi.app/blog/tro-ly-hop-ai-ghi-chu-tom-tat.html" />
+    <link rel="alternate" hreflang="en" href="https://kalfi.app/blog/ai-meeting-assistant-notes-summary.html" />
+    <link rel="alternate" hreflang="id" href="https://kalfi.app/blog/asisten-meeting-ai-notulen-ringkasan.html" />
+    <link rel="alternate" hreflang="es" href="https://kalfi.app/blog/asistente-reuniones-ia-notas-resumen.html" />
+    <link rel="alternate" hreflang="pt" href="https://kalfi.app/blog/assistente-reunioes-ia-ata-resumo.html" />
+    <link rel="alternate" hreflang="vi" href="https://kalfi.app/blog/tro-ly-hop-ai-ghi-chu-tom-tat.html" />
+    <link rel="alternate" hreflang="x-default" href="https://kalfi.app/blog/ai-meeting-assistant-notes-summary.html" />
+    <meta name="theme-color" content="#080a0f" />
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="../assets/brand/favicon-32.png" type="image/png" sizes="32x32" />
+    <link rel="icon" href="../assets/brand/favicon-16.png" type="image/png" sizes="16x16" />
+    <link rel="apple-touch-icon" href="../assets/brand/apple-touch-icon.png" sizes="180x180" />
+    <meta property="og:image" content="https://kalfi.app/assets/brand/og-icon.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="512" />
+    <meta property="og:image:height" content="512" />
+    <meta name="twitter:image" content="https://kalfi.app/assets/brand/og-icon.png" />
+
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="Kalfi" />
+    <meta property="og:locale" content="vi_VN" />
+    <meta property="og:locale:alternate" content="en_US" />
+    <meta property="og:locale:alternate" content="id_ID" />
+    <meta property="og:locale:alternate" content="es_ES" />
+    <meta property="og:locale:alternate" content="pt_BR" />
+    <meta property="og:title" content="Trợ lý họp AI: ghi chú và tóm tắt cuộc họp không cần bot" />
+    <meta
+      property="og:description"
+      content="Phiên âm trực tiếp, hỗ trợ trả lời trong cuộc họp và bản tóm tắt rõ ràng sau đó. Không có bot trong danh sách người tham gia."
+    />
+    <meta property="og:url" content="https://kalfi.app/blog/tro-ly-hop-ai-ghi-chu-tom-tat.html" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Trợ lý họp AI: ghi chú và tóm tắt cuộc họp không cần bot" />
+    <meta
+      name="twitter:description"
+      content="Phiên âm trực tiếp, hỗ trợ trả lời trong cuộc họp và bản tóm tắt rõ ràng sau đó. Không có bot trong danh sách người tham gia."
+    />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../css/styles.css" />
+    <link rel="stylesheet" href="blog.css?v=20260929" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "BlogPosting",
+        "headline": "Trợ lý Họp AI: Ghi chú và Tóm tắt Cuộc họp Tự động, Không cần Bot",
+        "description": "Kalfi là trợ lý họp AI phiên âm trực tiếp, giúp bạn trả lời ngay trong cuộc họp và tạo bản tóm tắt gồm quyết định và bước tiếp theo. Zoom, Meet, Teams, không có bot.",
+        "datePublished": "2026-09-29",
+        "dateModified": "2026-09-29",
+        "inLanguage": "vi",
+        "author": {
+          "@type": "Organization",
+          "name": "Kalfi",
+          "url": "https://kalfi.app/"
+        },
+        "publisher": {
+          "@type": "Organization",
+          "name": "Kalfi",
+          "url": "https://kalfi.app/"
+        },
+        "mainEntityOfPage": {
+          "@type": "WebPage",
+          "@id": "https://kalfi.app/blog/tro-ly-hop-ai-ghi-chu-tom-tat.html"
+        },
+        "about": [
+          "trợ lý họp AI",
+          "ghi chú cuộc họp bằng AI",
+          "tóm tắt cuộc họp AI",
+          "biên bản họp tự động"
+        ]
+      }
+    </script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Trang chủ",
+            "item": "https://kalfi.app/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Blog",
+            "item": "https://kalfi.app/blog/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "Trợ lý họp AI",
+            "item": "https://kalfi.app/blog/tro-ly-hop-ai-ghi-chu-tom-tat.html"
+          }
+        ]
+      }
+    </script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Kalfi có phải là công cụ ghi chú cuộc họp bằng AI không?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Kalfi là trợ lý họp trực tiếp có kèm ghi chú: bản ghi phân biệt người nói trong cuộc gọi và bản tóm tắt có cấu trúc sau đó. Kalfi không lưu bản ghi âm hay bản nguyên văn đầy đủ."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Có bot nào vào cuộc họp của tôi không?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Không. Kalfi chạy trên máy tính của bạn. Những người khác không thấy gì thay đổi trong cuộc họp."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Bản tóm tắt gồm những gì?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Các câu hỏi trong phiên và câu trả lời đã đưa ra, sắp xếp thành tổng quan, ý chính, quyết định và bước tiếp theo. Đây là bản tóm tắt những gì đã hỏi và thống nhất, không phải bản phiên âm từng chữ."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Kalfi có tóm tắt cuộc họp bằng tiếng Việt không?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Có. Chọn ngôn ngữ cuộc họp cho phiên và Kalfi phiên âm và viết bằng ngôn ngữ đó."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Có bản dùng thử miễn phí không?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Có, 3 ngày có Hosted AI và không cần thẻ. Sau đó từ 14 USD/tháng."
+            }
+          }
+        ]
+      }
+    </script>
+  </head>
+
+  <body>
+    <a class="skip" href="#main">Chuyển đến nội dung</a>
+
+    <header class="topbar blogbar" data-scrolled="true">
+      <div class="shell topbar__inner">
+        <a class="wordmark" href="../index.html?lang=vi">
+          <span class="wordmark__mark" aria-hidden="true">
+            <svg viewBox="0 0 64 64" width="18" height="18" focusable="false">
+              <rect x="8" y="6" width="13" height="52" rx="6.5" fill="currentColor"/>
+              <path d="M23 29.5 23 15c0-1.15 1.3-1.8 2.2-1.1l24.2 18.4c1.15.88.5 2.7-1 2.7H32.4c-.75 0-1.45-.35-1.9-.95L23 29.5Z" fill="currentColor"/>
+              <path d="M23 34.5 23 49c0 1.15 1.3 1.8 2.2 1.1l24.2-18.4c1.15-.88.5-2.7-1-2.7H32.4c-.75 0-1.45.35-1.9.95L23 34.5Z" fill="currentColor"/>
+              <rect x="23" y="27" width="23" height="10" rx="5" fill="currentColor"/>
+            </svg>
+          </span>
+          Kalfi
+        </a>
+        <nav class="topnav" aria-label="Điều hướng chính">
+          <a href="index.html">Blog</a>
+          <a href="../index.html?lang=vi#stealth">Stealth</a>
+          <a href="../index.html?lang=vi#compare">So sánh</a>
+          <a href="../index.html?lang=vi#pricing">Bảng giá</a>
+        </nav>
+        <div class="topbar__actions">
+          <a class="btn btn--line btn--sm" href="../index.html?lang=vi#download">Tải về</a>
+          <a class="btn btn--accent btn--sm" href="../index.html?lang=vi#pricing">Dùng thử miễn phí</a>
+        </div>
+      </div>
+    </header>
+
+    <main id="main" class="shell post">
+      <nav class="crumb" aria-label="Breadcrumb">
+        <a href="../index.html?lang=vi">Trang chủ</a>
+        <span aria-hidden="true">/</span>
+        <a href="index.html">Blog</a>
+        <span aria-hidden="true">/</span>
+        <span>Trợ lý họp AI</span>
+      </nav>
+      <nav class="langbar" aria-label="Đọc bằng">
+        <span>Đọc bằng</span>
+        <a href="ai-meeting-assistant-notes-summary.html" hreflang="en" lang="en">English</a>
+        <a href="asisten-meeting-ai-notulen-ringkasan.html" hreflang="id" lang="id">Bahasa Indonesia</a>
+        <a href="asistente-reuniones-ia-notas-resumen.html" hreflang="es" lang="es">Español</a>
+        <a href="assistente-reunioes-ia-ata-resumo.html" hreflang="pt" lang="pt">Português</a>
+        <a href="tro-ly-hop-ai-ghi-chu-tom-tat.html" hreflang="vi" lang="vi" aria-current="page">Tiếng Việt</a>
+      </nav>
+
+      <article class="post__body">
+        <header class="post__head">
+          <span class="tagline">Ứng dụng · Cuộc họp</span>
+          <h1>Trợ lý Họp AI: Ghi chú và Tóm tắt Cuộc họp Tự động, Không cần Bot</h1>
+          <p class="post__lead">
+            Phần lớn công cụ ghi chú AI làm việc sau khi họp xong: một bot vào phòng, ghi lại mọi thứ và gửi bản tóm tắt một tiếng sau. Hữu ích, nhưng không giúp gì vào lúc quan trọng nhất, khi có người hỏi bạn và cả cuộc họp chờ câu trả lời. Kalfi làm cả hai: giúp bạn trả lời trong cuộc họp, rồi biến cuộc họp thành ghi chú sẵn sàng gửi đi.
+          </p>
+          <p class="post__meta">
+            <time datetime="2026-09-29">29 tháng 9, 2026</time>
+            <span aria-hidden="true">·</span>
+            <span>8 phút đọc</span>
+            <span aria-hidden="true">·</span>
+            <span>Đội ngũ Kalfi</span>
+          </p>
+        </header>
+
+        <div class="keybox">
+          <h2>Tóm tắt nhanh</h2>
+          <ul>
+            <li>Kalfi là <strong>trợ lý họp trên máy tính</strong> cho Mac và Windows. Kalfi nghe âm thanh ngay trên máy của bạn, nên <strong>không có bot nào tham gia</strong>.</li>
+            <li><strong>Trong cuộc họp:</strong> bản ghi trực tiếp phân biệt người nói, và câu trả lời gợi ý mỗi khi có người hỏi bạn.</li>
+            <li><strong>Sau cuộc họp:</strong> một cú nhấp vào Summary cho bạn tổng quan, ý chính, quyết định và cam kết, câu hỏi còn mở và bước tiếp theo.</li>
+            <li><strong>Giữa các cuộc họp:</strong> thread dự án giữ lại ngữ cảnh, nên cuộc họp thứ hai đã biết cuộc họp đầu quyết định gì.</li>
+            <li>Dùng được với Zoom, Meet, Teams, Webex và Zalo. <strong>Dùng thử miễn phí 3 ngày</strong>, sau đó từ 14 USD/tháng.</li>
+          </ul>
+        </div>
+
+        <h2 id="hai-loai">Hai loại trợ lý họp AI</h2>
+        <h3>1. Bot ghi chú</h3>
+        <p>
+          Các công cụ như Otter, Fireflies hay Fathom kết nối với lịch của bạn và gửi một bot vào cuộc họp. Bot
+          ghi âm, tạo bản phiên âm đầy đủ và gửi tóm tắt sau đó. Rất phù hợp nếu bạn cần kho lưu trữ có thể tìm
+          kiếm và đồng bộ CRM. Đổi lại, ai cũng thấy bot, một số khách hàng yêu cầu bỏ bot ra, và sự trợ giúp chỉ
+          đến khi cuộc họp đã kết thúc.
+        </p>
+        <h3>2. Copilot trực tiếp</h3>
+        <p>
+          Copilot trực tiếp nằm trên màn hình của bạn và hỗ trợ ngay khi cuộc trò chuyện đang diễn ra: nghe câu
+          hỏi, soạn câu trả lời và giúp bạn đi đúng hướng. Kalfi thuộc nhóm này và còn có thêm phần sau cuộc họp:
+          bản tóm tắt có cấu trúc và trí nhớ giữa các cuộc họp cùng dự án. Nếu vấn đề của bạn là <em>"tôi bị khựng
+          lại khi khách hỏi về tiến độ"</em>, bạn cần loại thứ hai.
+        </p>
+
+        <h2 id="trong-cuoc-hop">Kalfi làm gì trong cuộc họp</h2>
+        <ul>
+          <li><strong>Bản ghi trực tiếp phân biệt người nói.</strong> Ở chế độ Both, Kalfi nghe âm thanh cuộc họp và micro của bạn riêng biệt, nên mỗi dòng được gắn nhãn là người kia (Client, Interviewer hoặc Them) hoặc <em>You</em>.</li>
+          <li><strong>Câu trả lời gợi ý.</strong> Khi có người đặt câu hỏi, Kalfi soạn một câu mở đầu bạn có thể nói ngay và vài ý bổ sung, dựa trên ngữ cảnh của cuộc họp.</li>
+          <li><strong>Mic Ask.</strong> Nghe không rõ câu hỏi? Nhấn Mic Ask, nhắc lại bằng lời của bạn và Kalfi trả lời đúng điều đã được hỏi.</li>
+          <li><strong>Gửi bất kỳ dòng nào cho AI.</strong> Từ bản ghi, bạn có thể yêu cầu trả lời cho bất kỳ câu nào, kể cả khi nó không được nói dưới dạng câu hỏi.</li>
+          <li><strong>Phong cách theo từng cuộc họp.</strong> Ngắn gọn, cân bằng hoặc chi tiết; trang trọng, trung tính hoặc thân mật; và ngôn ngữ trả lời.</li>
+        </ul>
+
+        <h2 id="ban-tom-tat">Bản tóm tắt trông như thế nào</h2>
+        <p>Nhấn <strong>Summary</strong> khi cuộc họp kết thúc. Kalfi viết bản tóm tắt ngắn gồm bốn phần. Ví dụ từ một cuộc họp dự án:</p>
+        <blockquote>
+          <strong>Tổng quan.</strong> Họp hàng tuần về thiết kế lại trang thanh toán. Bước thanh toán đã xong; phần tùy chọn giao hàng đang chờ API vận chuyển của khách.<br />
+          <strong>Ý chính.</strong> Tỷ lệ chuyển đổi trên di động tăng sau khi đổi form địa chỉ. Khách muốn có ví điện tử trước khi ra mắt.<br />
+          <strong>Quyết định và cam kết.</strong> Bên mình giao tính năng ví điện tử trước ngày 24/10. Khách gửi khóa API trước thứ Sáu.<br />
+          <strong>Câu hỏi còn mở và bước tiếp theo.</strong> Ai phụ trách luồng hoàn tiền? Hẹn 30 phút với trưởng bộ phận tài chính của khách.
+        </blockquote>
+        <p>
+          Sẵn sàng dán vào Slack, công cụ quản lý dự án, CRM hoặc email follow-up. Bản tóm tắt được tạo từ các câu
+          hỏi và câu trả lời trong phiên, nên tập trung vào những gì đã hỏi, đã trả lời và đã thống nhất, không
+          phải từng câu xã giao.
+        </p>
+
+        <h2 id="thread">Trí nhớ giữa các cuộc họp</h2>
+        <p>
+          Hầu hết cuộc họp là một chuỗi: họp định kỳ hàng tuần với khách, quy trình onboarding, một chu kỳ bán
+          hàng bốn cuộc gọi. Kalfi nhóm các phiên vào thread. Khi bắt đầu cuộc họp tiếp theo trong cùng thread,
+          ngữ cảnh (khách hàng, phạm vi dự án, mục tiêu, các ý cần nói) đi kèm theo, và các bản tóm tắt trước nằm
+          trong lịch sử.
+        </p>
+
+        <h2 id="danh-cho-ai">Dành cho ai</h2>
+        <ul>
+          <li><strong>Đội ngũ làm việc với khách hàng</strong>: account manager, agency, tư vấn viên và freelancer. Xem <a href="ai-cho-cuoc-hop-voi-khach-hang.html">AI cho cuộc họp với khách hàng</a>.</li>
+          <li><strong>Hỗ trợ và customer success</strong>: nhân viên trả lời câu hỏi kỹ thuật và thanh toán trực tiếp. Xem <a href="tro-ly-ai-cham-soc-khach-hang.html">trợ lý AI cho chăm sóc khách hàng</a>.</li>
+          <li><strong>Bán hàng và presales</strong>: buổi demo khi khách hỏi về tích hợp, bảo mật hoặc giá.</li>
+          <li><strong>Quản lý và nhà sáng lập</strong>: họp liên tục cả ngày, khi bản tóm tắt là thứ duy nhất bạn thực sự đọc.</li>
+          <li><strong>Họp bằng ngoại ngữ</strong>: khi bạn họp bằng tiếng Anh hoặc ngôn ngữ thứ hai và cách diễn đạt rất quan trọng.</li>
+        </ul>
+
+        <h2 id="cai-dat">Cài đặt trong năm phút</h2>
+        <ol>
+          <li>Tải Kalfi cho Mac hoặc Windows tại <a href="../index.html?lang=vi#download">kalfi.app</a> và tạo tài khoản. Bản dùng thử 3 ngày đã có Hosted AI, không cần khóa API.</li>
+          <li>Tạo phiên và chọn loại: Client meeting, Job interview hoặc General chat.</li>
+          <li>Điền ngữ cảnh: họp với ai, dự án gì, mục tiêu và các ý cần nói.</li>
+          <li>Chọn nguồn âm thanh: <strong>Both</strong> để phân biệt người nói, <strong>System</strong> chỉ âm thanh cuộc họp, hoặc <strong>Mic</strong> khi chỉ có micro.</li>
+          <li>Nhấn Start khi bắt đầu và Summary khi kết thúc.</li>
+        </ol>
+
+        <h2 id="so-sanh">So sánh Kalfi với bot ghi chú</h2>
+        <div class="tablewrap wide">
+          <table>
+            <caption class="dim" style="text-align: left; padding: 14px 18px; font-size: 0.8rem">
+              Phân loại chung, không phải nhà cung cấp cụ thể. Tháng 9 năm 2026.
+            </caption>
+            <thead>
+              <tr><th scope="col">&nbsp;</th><th scope="col">Bot ghi chú</th><th scope="col" class="is-us">Kalfi</th></tr>
+            </thead>
+            <tbody>
+              <tr><td class="row-label">Bot xuất hiện trong cuộc họp</td><td>Có</td><td class="is-us">Không</td></tr>
+              <tr><td class="row-label">Hỗ trợ khi bạn đang nói</td><td class="dim">Hạn chế hoặc không có</td><td class="is-us">Gợi ý trả lời trong vài giây</td></tr>
+              <tr><td class="row-label">Tóm tắt cuộc họp</td><td>Có</td><td class="is-us">Có, gồm quyết định và bước tiếp theo</td></tr>
+              <tr><td class="row-label">Ghi âm đầy đủ và lưu nguyên văn</td><td>Có</td><td class="is-us dim">Không</td></tr>
+              <tr><td class="row-label">Ngữ cảnh về khách hàng hoặc dự án</td><td class="dim">Thường không</td><td class="is-us">Theo phiên và theo thread</td></tr>
+              <tr><td class="row-label">Hoạt động không cần quyền truy cập lịch</td><td class="dim">Thường cần</td><td class="is-us">Có</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          Nhiều đội dùng cả hai: bot ghi chú cho họp nội bộ cần lưu trữ, và Kalfi cho cuộc gọi với khách hàng, nơi
+          bot không được chào đón và sự hỗ trợ theo thời gian thực mới là điều quan trọng.
+        </p>
+
+        <h2 id="quyen-rieng-tu">Quyền riêng tư</h2>
+        <p>
+          Kalfi nghe trên chính máy tính của bạn và không lưu bản ghi âm. Các đoạn âm thanh ngắn được gửi tới mô
+          hình chuyển giọng nói thành văn bản để phiên âm, và cửa sổ được bảo vệ khỏi chụp màn hình trên các hệ
+          thống hỗ trợ. Với gói BYOK, khóa của bạn được mã hóa trên thiết bị. Như mọi công cụ họp khác, hãy tuân
+          thủ chính sách công ty và quy định địa phương.
+        </p>
+
+        <h2 id="bang-gia">Bảng giá</h2>
+        <dl class="pricecard">
+          <div class="is-us"><dt>Hosted</dt><dd>19 USD / tháng</dd><p>Đã bao gồm AI. 180 USD/năm.</p></div>
+          <div class="is-us"><dt>BYOK</dt><dd>14 USD / tháng</dd><p>Dùng khóa OpenAI hoặc OpenRouter của bạn.</p></div>
+        </dl>
+        <p>Team: 49 USD/tháng cho ba người dùng Hosted. Single Session: 9 USD cho một cuộc họp quan trọng. Mọi tài khoản mới được dùng thử 3 ngày, không cần thẻ.</p>
+
+        <h2 id="faq">Câu hỏi thường gặp</h2>
+        <div class="faq">
+          <details open>
+            <summary>Kalfi có phải là công cụ ghi chú cuộc họp bằng AI không?</summary>
+            <p>Kalfi là trợ lý họp trực tiếp có kèm ghi chú: bản ghi phân biệt người nói trong cuộc gọi và bản tóm tắt có cấu trúc sau đó. Kalfi không lưu bản ghi âm hay bản nguyên văn đầy đủ.</p>
+          </details>
+          <details>
+            <summary>Có bot nào vào cuộc họp của tôi không?</summary>
+            <p>Không. Kalfi chạy trên máy tính của bạn. Những người khác không thấy gì thay đổi trong cuộc họp.</p>
+          </details>
+          <details>
+            <summary>Bản tóm tắt gồm những gì?</summary>
+            <p>Các câu hỏi trong phiên và câu trả lời đã đưa ra, sắp xếp thành tổng quan, ý chính, quyết định và bước tiếp theo. Đây là bản tóm tắt những gì đã hỏi và thống nhất, không phải bản phiên âm từng chữ.</p>
+          </details>
+          <details>
+            <summary>Kalfi có tóm tắt cuộc họp bằng tiếng Việt không?</summary>
+            <p>Có. Chọn ngôn ngữ cuộc họp cho phiên và Kalfi phiên âm và viết bằng ngôn ngữ đó.</p>
+          </details>
+          <details>
+            <summary>Có bản dùng thử miễn phí không?</summary>
+            <p>Có, 3 ngày có Hosted AI và không cần thẻ. Sau đó từ 14 USD/tháng.</p>
+          </details>
+        </div>
+
+        <div class="post__cta">
+          <h2>Hỗ trợ trong cuộc họp, có ghi chú sau đó</h2>
+          <p>Câu trả lời trực tiếp, bản ghi phân biệt người nói và tóm tắt bằng một cú nhấp. Không bot, Mac và Windows, miễn phí 3 ngày.</p>
+          <div class="hero__cta">
+            <a class="btn btn--solid" href="https://kalfi.app/?lang=vi#download">Tải Kalfi miễn phí</a>
+            <a class="btn btn--line" href="https://kalfi.app/?lang=vi#pricing">Xem bảng giá</a>
+          </div>
+        </div>
+      </article>
+
+      <aside class="related">
+        <h2>Đọc tiếp</h2>
+        <ul>
+          <li>
+            <a href="tro-ly-ai-cham-soc-khach-hang.html">
+              Trợ lý AI cho Chăm sóc Khách hàng
+              <span>Câu trả lời về kỹ thuật và thanh toán khi khách vẫn đang chờ.</span>
+            </a>
+          </li>
+          <li>
+            <a href="ai-cho-cuoc-hop-voi-khach-hang.html">
+              AI cho Cuộc họp với Khách hàng và Cuộc gọi Bán hàng
+              <span>Trả lời nhanh, đúng phạm vi và nhớ những gì đã thống nhất.</span>
+            </a>
+          </li>
+          <li>
+            <a href="ai-meeting-assistant-notes-summary.html" hreflang="en">
+              AI Meeting Assistant for Notes and Summaries (English)
+              <span>Bản gốc tiếng Anh.</span>
+            </a>
+          </li>
+        </ul>
+      </aside>
+    </main>
+
+    <footer class="foot">
+      <div class="shell foot__row">
+        <span>&copy; 2026 Kalfi · AI trên máy tính cho cuộc họp, cuộc gọi với khách hàng và phỏng vấn.</span>
+        <span>
+          <a href="../index.html?lang=vi">Trang chủ</a> ·
+          <a href="index.html">Blog</a> ·
+          <a href="https://github.com/haikallfikrii/AI-Meeting-Assistant" target="_blank" rel="noopener">Source</a>
+          · <a href="mailto:hello@kalfi.app">Liên hệ</a>
+        </span>
+      </div>
+    </footer>
+    <script
+      src="https://chatlm.tech/widget/widget.js"
+      data-api-key="c2c4fe3020681f0625b7835c3d7a105ade36199f7bd58a9d32d1e39465d2aafa"
+      data-base-url="https://chatlm.tech"
+      defer
+    ></script>
+  </body>
+</html>
